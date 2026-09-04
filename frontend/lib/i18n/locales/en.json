@@ -1,0 +1,45 @@
+{
+  "app": {
+    "title": "Restaurant App",
+    "customerPortal": "Public Customer",
+    "adminPortal": "Kitchen Admin",
+    "deliveryPortal": "Delivery Staff",
+    "systemLogs": "System Activity Logs",
+    "language": "Language",
+    "khmer": "Khmer (ភាសាខ្មែរ)",
+    "english": "English"
+  },
+  "customer": {
+    "headerTitle": "Public Customer Ordering",
+    "headerSub": "Browse food items, select pickup or delivery, and checkout easily.",
+    "menuCatalog": "Menu Catalog",
+    "cartTitle": "Cart & Checkout",
+    "delivery": "Delivery",
+    "pickup": "Pickup",
+    "checkout": "Place Order (Cash Only)"
+  },
+  "admin": {
+    "headerTitle": "Kitchen Admin Dashboard",
+    "headerSub": "Manage customer orders, update preparation stages, and audit system events.",
+    "ordersTitle": "Active Kitchen Orders",
+    "logsTitle": "System Audit & Activity Logs",
+    "clearDbLogs": "Clear DB Logs (Auto 1-Week)",
+    "refreshLogs": "Refresh Logs",
+    "totalLogs": "Total Log Entries",
+    "past7Days": "Past 7 Days (1 Week)",
+    "warnings": "Warnings & Audits",
+    "systemErrors": "System Errors",
+    "searchPlaceholder": "Search Action, IP, User, Description...",
+    "logLevel": "Log Level",
+    "category": "Category",
+    "timeRange": "Time Range",
+    "allLevels": "All Levels",
+    "allCategories": "All Categories",
+    "allTime": "All Time"
+  },
+  "delivery": {
+    "headerTitle": "In-House Courier & Cash Settlement",
+    "dispatchBoard": "Dispatch Board",
+    "cashInHand": "Cash In Hand"
+  }
+}
