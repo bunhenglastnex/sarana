@@ -1,56 +1,56 @@
-# 🍔 Sarana - Single Restaurant Online Ordering System (Cash Only)
+# 🍔 Restaurant Online Ordering & In-House Delivery System (Cash Only)
 
-ប្រព័ន្ធគ្រប់គ្រងការកុម្ម៉ង់អាហារសម្រាប់ហាងមួយ (Single Restaurant) ដែលគាំទ្រការដឹកជញ្ជូនដល់ផ្ទះ (Delivery) និងទៅយកផ្ទាល់នៅហាង (Pickup) ដោយទូទាត់ប្រាក់ជាសាច់ប្រាក់សុទ្ធ (Cash Only)។
+A production-ready architecture and implementation for a single-brand restaurant with online menu ordering, in-house delivery dispatch, in-store pickup, and cash settlement.
 
 ---
 
-## 📁 រចនាសម្ព័ន្ធគម្រោង (Project Structure)
+## 📁 System Architecture
 
 ```
-sarana/
-  ├── flow-my-system/        # ឯកសារវិភាគ និងគំនូសប្លង់ Flow នៃប្រព័ន្ធទាំងមូល
-  │     ├── Actors.md        # តួអង្គ៖ ហាង, ភ្ញៀវ, អ្នកដឹក
-  │     ├── Order.md         # លំហូរកុម្ម៉ង់ និងរបៀបគិតលុយ (Delivery vs Pickup)
-  │     ├── Restaurant.md    # វដ្តរៀបចំម្ហូបរបស់ហាង
-  │     ├── Delivery.md      # ដំណើរការដឹក និងបញ្ជាក់ការដឹកដល់
-  │     ├── Customer.md      # ការតាមដានស្ថានភាព (Live Tracking)
-  │     ├── Money.md         # លំហូរចំណូល ១០០% ចូលហាង
-  │     └── importain-cash.md# របៀបគ្រប់គ្រងលុយសុទ្ធ COD និងការទូទាត់ចុងវេន
+restaurant-ordering-system/
+  ├── flow-my-system/        # Business logic specifications & architecture diagrams
+  │     ├── Actors.md        # Roles: Restaurant Admin, Customer, Delivery Staff
+  │     ├── Order.md         # Order flow & pricing (Delivery vs Pickup)
+  │     ├── Restaurant.md    # Kitchen preparation lifecycle
+  │     ├── Delivery.md      # In-house delivery dispatch & cash collection (COD)
+  │     ├── Customer.md      # Customer tracking progression
+  │     ├── Money.md         # 100% direct revenue model (Zero 3rd-party commission)
+  │     └── importain-cash.md# End-of-shift COD remittance & cash settlement
   │
-  ├── backend/               # PHP REST API (រត់តាមរយៈ: php -S localhost:8000)
+  ├── backend/               # Pure PHP REST API (Runs via: php -S localhost:8000)
   │     ├── database/
-  │     │     └── setup.php  # File បង្កើត Tables & Seed Dummy Data ក្នុង MySQL
-  │     ├── config/          # DB & CORS configuration
+  │     │     └── setup.php  # Self-contained MySQL migration & seed script
+  │     ├── config/          # DB connection (PDO) & CORS configuration
   │     └── api/             # Endpoints: foods.php, orders.php, delivery.php, order-status.php
   │
-  └── frontend/              # Next.js 14 + React Frontend (រត់តាមរយៈ: npm run dev)
-        ├── app/page.jsx     # ទំព័រ Customer កុម្ម៉ង់ម្ហូប & Checkout
-        ├── app/admin/       # ផ្ទាំង Restaurant Kitchen គ្រប់គ្រង Order
-        ├── app/delivery/    # ផ្ទាំង Delivery Staff (Confirm Delivered & ប្រមូលលុយ)
-        └── app/track/       # ផ្ទាំងតាមដាន Status Order Real-time
+  └── frontend/              # Next.js 14 + React + TypeScript + Tailwind CSS
+        ├── app/page.tsx     # Customer menu browsing & checkout example
+        ├── app/admin/       # Kitchen admin order management example
+        ├── app/delivery/    # Delivery staff dispatch & cash collection example
+        └── app/track/       # Live order timeline tracking example
 ```
 
 ---
 
-## 🚀 របៀបដំណើរការ (Getting Started on a Dev Machine)
+## 🚀 Running on a Development Machine
 
-### ១. Backend (PHP + MySQL)
-1. បើក XAMPP Start តែ **MySQL** មួយគត់ (Port 3306)។
-2. បើក Terminal ចូល folder `backend/`:
+### 1. Backend (PHP + MySQL)
+1. Start **MySQL** in your environment (Port 3306).
+2. In the `backend/` directory:
    ```bash
    cd backend
-   # បង្កើត Table និងចាក់ទិន្នន័យគំរូ (ធ្វើតែម្ដងគត់)
+   # Setup database tables and seed initial data (Run once)
    php database/setup.php
 
-   # ចាប់ផ្ដើម PHP Server
+   # Start built-in PHP server
    php -S localhost:8000
    ```
 
-### ២. Frontend (Next.js)
-បើក Terminal មួយទៀត ចូល folder `frontend/`:
+### 2. Frontend (Next.js)
+In the `frontend/` directory:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-ចូលមើល Website តាមរយៈ Browser: **`http://localhost:3000`** 🎉
+Open **`http://localhost:3000`** in your browser.

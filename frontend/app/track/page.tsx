@@ -1,216 +1,163 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { Search, CheckCircle2, Clock, MapPin, Truck, ShoppingBag, Banknote } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Order, OrderStatus, FulfillmentType } from '@/types';
+import React, { useState } from 'react';
+import { Order, OrderStatus } from '@/types';
 
-function TrackContent() {
-  const [orderNumber, setOrderNumber] = useState<string>('');
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const initialOrd = params.get('order');
-      if (initialOrd) {
-        setOrderNumber(initialOrd);
-        fetchOrder(initialOrd);
-      }
-    }
-  }, []);
-
-  const fetchOrder = async (ordNum: string) => {
-    if (!ordNum) return;
-    setLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch(`http://localhost:8000/api/orders.php?order_number=${ordNum}`);
-      const data = await res.json();
-      if (data.success && data.orders?.length > 0) {
-        setOrder(data.orders[0]);
-      } else {
-        setError('រកមិនឃើញ Order នេះទេ។ សូមពិនិត្យលេខ Order ឡើងវិញ។');
-      }
-    } catch {
-      // Demo mock fallback
-      setOrder({
-        id: 1,
-        order_number: ordNum || 'ORD-1001',
-        customer_name: 'Dara Roth',
-        customer_phone: '012 999 888',
-        fulfillment_type: 'delivery',
-        delivery_address: 'House #12, St 210, Toul Kork',
-        delivery_fee: '2.00',
-        food_amount: '9.00',
-        status: 'on_the_way',
-        payment_method: 'cash_on_delivery',
-        payment_status: 'pending',
-        total_amount: '11.00',
-        items: [{ food_id: 1, food_name: 'Classic Double Cheeseburger', quantity: 2, price: '4.50' }]
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStepIndex = (status: OrderStatus, fulfillmentType: FulfillmentType) => {
-    if (fulfillmentType === 'pickup') {
-      switch (status) {
-        case 'pending': return 0;
-        case 'accepted': return 1;
-        case 'preparing': return 2;
-        case 'ready_for_pickup': return 3;
-        case 'completed': return 4;
-        default: return 0;
-      }
-    } else {
-      switch (status) {
-        case 'pending': return 0;
-        case 'accepted': return 1;
-        case 'preparing': return 2;
-        case 'ready_for_delivery': return 2;
-        case 'on_the_way': return 3;
-        case 'completed': return 4;
-        default: return 0;
-      }
-    }
-  };
-
-  const deliverySteps = ['Order Placed', 'Accepted', 'Preparing', 'On the Way', 'Delivered'];
-  const pickupSteps = ['Order Placed', 'Accepted', 'Preparing', 'Ready', 'Completed'];
-
-  const currentStep = order ? getStepIndex(order.status, order.fulfillment_type) : 0;
-  const steps = order?.fulfillment_type === 'pickup' ? pickupSteps : deliverySteps;
-
-  return (
-    <div className="container py-8 max-w-xl">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 flex items-center justify-center gap-2">
-          <MapPin className="w-7 h-7 text-primary" />
-          <span>តាមដានស្ថានភាព Order</span>
-        </h1>
-        <p className="text-muted-foreground text-sm">បញ្ចូលលេខ Order របស់អ្នកដើម្បីមើលស្ថានភាពផ្ទាល់</p>
-      </div>
-
-      {/* Search Input */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          fetchOrder(orderNumber);
-        }}
-        className="flex gap-2.5 mb-6"
-      >
-        <Input
-          type="text"
-          value={orderNumber}
-          onChange={(e) => setOrderNumber(e.target.value)}
-          placeholder="ឧ. ORD-1001"
-          className="h-11 bg-card text-base"
-        />
-        <Button type="submit" className="h-11 px-6 gap-2 font-bold">
-          <Search className="w-4 h-4" />
-          <span>{loading ? '...' : 'ស្វែងរក'}</span>
-        </Button>
-      </form>
-
-      {error && <div className="text-sm text-destructive text-center mb-6 font-medium">{error}</div>}
-
-      {/* Order Status Result */}
-      {order && (
-        <Card className="overflow-hidden shadow-xl border-border/70">
-          <CardHeader className="p-6 pb-4 border-b border-border/50">
-            <div className="flex justify-between items-center">
-              <span className="text-2xl font-black text-foreground">{order.order_number}</span>
-              <Badge variant={order.fulfillment_type === 'delivery' ? 'delivery' : 'pickup'}>
-                {order.fulfillment_type === 'delivery' ? (
-                  <span className="flex items-center gap-1.5"><Truck className="w-3.5 h-3.5" /> ដឹកដល់ផ្ទះ</span>
-                ) : (
-                  <span className="flex items-center gap-1.5"><ShoppingBag className="w-3.5 h-3.5" /> មកយកផ្ទាល់</span>
-                )}
-              </Badge>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-6 space-y-6">
-            {/* Graphical Step Progress */}
-            <div className="py-2">
-              <div className="flex justify-between relative">
-                {steps.map((stepLabel, idx) => {
-                  const isPassed = idx <= currentStep;
-                  const isCurrent = idx === currentStep;
-
-                  return (
-                    <div key={idx} className="text-center flex-1 relative z-10">
-                      <div
-                        className={`w-9 h-9 rounded-full mx-auto mb-2 flex items-center justify-center font-bold text-xs transition-all duration-300 ${
-                          isPassed 
-                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' 
-                            : 'bg-muted text-muted-foreground'
-                        } ${isCurrent ? 'ring-4 ring-primary/40 scale-110' : ''}`}
-                      >
-                        {isPassed ? '✓' : idx + 1}
-                      </div>
-                      <div
-                        className={`text-[11px] leading-tight transition-colors ${
-                          isPassed ? 'text-foreground font-semibold' : 'text-muted-foreground'
-                        }`}
-                      >
-                        {stepLabel}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Details Box */}
-            <div className="bg-background/60 border border-border/50 p-4 rounded-xl text-sm space-y-2">
-              <div><strong>👤 អតិថិជន:</strong> {order.customer_name}</div>
-              {order.fulfillment_type === 'delivery' ? (
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span><strong>អាសយដ្ឋានដឹក:</strong> {order.delivery_address}</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span><strong>ម៉ោងមកយក:</strong> {order.pickup_time || 'ឆាប់ៗនេះ'}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1.5 pt-1 border-t border-border/40">
-                <Banknote className="w-4 h-4 text-muted-foreground" />
-                <span><strong>វិធីទូទាត់:</strong> {order.payment_method === 'cash_on_delivery' ? 'លុយសុទ្ធពេលដឹកដល់ (COD)' : 'លុយសុទ្ធនៅបញ្ជរ'}</span>
-              </div>
-              <div className="flex items-center justify-between pt-2 font-bold text-base">
-                <span>សរុបត្រូវបង់:</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-primary text-xl font-extrabold">${Number(order.total_amount).toFixed(2)}</span>
-                  {order.payment_status === 'paid' ? (
-                    <Badge variant="success">បានបង់ប្រាក់រួច ✅</Badge>
-                  ) : (
-                    <Badge variant="warning">រង់ចាំបង់លុយសុទ្ធ ⏳</Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
+// Sample Mock Orders for Tracking (No Fetch API)
+const MOCK_TRACK_DATA: Record<string, Order> = {
+  'ORD-1001': {
+    id: 1,
+    order_number: 'ORD-1001',
+    customer_name: 'Dara Roth',
+    customer_phone: '012 999 888',
+    fulfillment_type: 'delivery',
+    delivery_address: 'House #12, St 210, Toul Kork, Phnom Penh',
+    delivery_fee: '2.00',
+    food_amount: '9.00',
+    total_amount: '11.00',
+    payment_method: 'cash_on_delivery',
+    payment_status: 'pending',
+    status: 'on_the_way',
+    items: [{ food_id: 1, food_name: 'Double Cheeseburger', quantity: 2, price: '4.50' }]
+  },
+  'ORD-1002': {
+    id: 2,
+    order_number: 'ORD-1002',
+    customer_name: 'Kanha Seng',
+    customer_phone: '088 777 666',
+    fulfillment_type: 'pickup',
+    pickup_time: 'Within 20 mins',
+    delivery_fee: '0.00',
+    food_amount: '4.50',
+    total_amount: '4.50',
+    payment_method: 'cash_at_counter',
+    payment_status: 'pending',
+    status: 'ready_for_pickup',
+    items: [{ food_id: 1, food_name: 'Double Cheeseburger', quantity: 1, price: '4.50' }]
+  }
+};
 
 export default function TrackOrderPage() {
+  const [orderQuery, setOrderQuery] = useState('ORD-1001');
+  const [order, setOrder] = useState<Order | null>(MOCK_TRACK_DATA['ORD-1001']);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const found = MOCK_TRACK_DATA[orderQuery.trim().toUpperCase()];
+    setOrder(found || null);
+  };
+
+  const steps = order?.fulfillment_type === 'pickup'
+    ? ['Order Placed', 'Accepted by Kitchen', 'Preparing Food', 'Ready for Pickup', 'Completed']
+    : ['Order Placed', 'Accepted by Kitchen', 'Preparing Food', 'On the Way (Driver)', 'Delivered & Paid'];
+
+  const getStepNumber = (status?: OrderStatus) => {
+    switch (status) {
+      case 'pending': return 1;
+      case 'accepted': return 2;
+      case 'preparing': return 3;
+      case 'ready_for_pickup':
+      case 'ready_for_delivery':
+      case 'on_the_way': return 4;
+      case 'completed': return 5;
+      default: return 1;
+    }
+  };
+
+  const currentStep = getStepNumber(order?.status);
+
   return (
-    <Suspense fallback={<div className="container py-12 text-center text-muted-foreground">កំពុងទាញយក...</div>}>
-      <TrackContent />
-    </Suspense>
+    <div className="space-y-6 max-w-2xl mx-auto font-sans">
+      <div>
+        <h1 className="text-2xl font-bold">Track Order - Status Progression Example</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Text example showing how customers track live status progression from kitchen to doorstep.
+        </p>
+      </div>
+
+      {/* Search Bar */}
+      <form onSubmit={handleSearch} className="flex gap-2">
+        <input
+          type="text"
+          value={orderQuery}
+          onChange={(e) => setOrderQuery(e.target.value)}
+          placeholder="Try ORD-1001 or ORD-1002"
+          className="flex-1 p-2.5 bg-card border border-border rounded text-sm"
+        />
+        <button
+          type="submit"
+          className="px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded text-sm hover:opacity-90"
+        >
+          Search
+        </button>
+      </form>
+
+      {/* Order Status Display */}
+      {order ? (
+        <div className="border border-border rounded-lg p-5 bg-card space-y-5 text-sm">
+          <div className="flex justify-between items-center border-b border-border pb-3">
+            <div>
+              <span className="font-bold text-lg text-primary mr-2">{order.order_number}</span>
+              <span className="text-xs px-2 py-0.5 rounded bg-muted border border-border">
+                {order.fulfillment_type === 'delivery' ? 'Delivery' : 'In-Store Pickup'}
+              </span>
+            </div>
+            <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+              Current: {order.status}
+            </span>
+          </div>
+
+          {/* Text Steps List */}
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase text-muted-foreground">Progress Timeline:</div>
+            <div className="space-y-2">
+              {steps.map((stepText, idx) => {
+                const stepNum = idx + 1;
+                const isPassed = stepNum <= currentStep;
+                const isCurrent = stepNum === currentStep;
+
+                return (
+                  <div
+                    key={idx}
+                    className={`p-2.5 rounded border text-xs flex items-center justify-between ${
+                      isCurrent
+                        ? 'border-primary bg-primary/10 font-bold text-primary'
+                        : isPassed
+                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                        : 'border-border/40 bg-muted/20 text-muted-foreground'
+                    }`}
+                  >
+                    <span>
+                      {isPassed ? '✓' : stepNum}. {stepText}
+                    </span>
+                    {isCurrent && <span className="text-[10px] uppercase font-bold text-primary">In Progress</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Details */}
+          <div className="pt-2 border-t border-border space-y-1.5 text-xs text-muted-foreground">
+            <div><strong>Customer Name:</strong> {order.customer_name}</div>
+            <div>
+              {order.fulfillment_type === 'delivery' ? (
+                <span><strong>Delivery Address:</strong> {order.delivery_address}</span>
+              ) : (
+                <span><strong>Pickup Time:</strong> {order.pickup_time || 'ASAP'}</span>
+              )}
+            </div>
+            <div><strong>Payment Method:</strong> {order.payment_method === 'cash_on_delivery' ? 'Cash on Delivery (COD)' : 'Cash at Counter'}</div>
+            <div className="pt-1 text-sm font-bold text-foreground">
+              Total Payable in Cash: <span className="text-primary">${Number(order.total_amount).toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="border border-border rounded-lg p-6 bg-card text-center text-sm text-muted-foreground">
+          Order not found. Try searching for sample orders <strong>ORD-1001</strong> or <strong>ORD-1002</strong>.
+        </div>
+      )}
+    </div>
   );
 }
