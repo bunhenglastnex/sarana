@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Check, Clock, UtensilsCrossed, Truck, ShoppingBag } from 'lucide-react';
-import { Order, OrderStatus } from '../../types';
+import { RefreshCw, Check, Clock, UtensilsCrossed, Truck, ShoppingBag, Phone, User, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Order, OrderStatus } from '@/types';
 
 // Default mock orders for demo if backend isn't running
 const DEFAULT_ORDERS: Order[] = [
@@ -59,7 +62,7 @@ export default function KitchenAdminPage() {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000); // Poll every 10s
+    const interval = setInterval(fetchOrders, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -74,7 +77,6 @@ export default function KitchenAdminPage() {
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
     } catch {
-      // Local fallback state update
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
@@ -82,123 +84,143 @@ export default function KitchenAdminPage() {
   };
 
   return (
-    <div className="container" style={{ paddingTop: '24px', paddingBottom: '60px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div className="container py-8 max-w-4xl">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 style={{ fontSize: '1.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🏪 ផ្ទាំងគ្រប់គ្រងផ្ទះបាយ និង Order (Kitchen Dashboard)
+          <h1 className="text-2xl sm:text-3xl font-extrabold flex items-center gap-2.5">
+            <span>🏪</span>
+            <span>ផ្ទាំងផ្ទះបាយ និង Order (Kitchen Dashboard)</span>
           </h1>
-          <p style={{ color: 'var(--text-muted)' }}>
+          <p className="text-muted-foreground text-sm mt-1">
             តាមដាន និងផ្លាស់ប្តូរស្ថានភាពកុម្ម៉ង់សម្រាប់ Pickup និង Delivery
           </p>
         </div>
-        <button onClick={fetchOrders} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          {loading ? 'កំពុងទាញយក...' : 'Refresh'}
-        </button>
+        <Button onClick={fetchOrders} variant="outline" size="sm" className="gap-2">
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <span>{loading ? 'កំពុងទាញយក...' : 'Refresh'}</span>
+        </Button>
       </div>
 
       {/* Orders List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="space-y-4">
         {orders.map((order) => (
-          <div key={order.id} className="card" style={{ borderLeft: `6px solid ${order.fulfillment_type === 'delivery' ? '#3b82f6' : '#a855f7'}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
-              <div>
-                <span style={{ fontSize: '1.2rem', fontWeight: 800, marginRight: '10px' }}>
-                  {order.order_number}
-                </span>
-                <span className={`badge ${order.fulfillment_type === 'delivery' ? 'badge-delivery' : 'badge-pickup'}`}>
-                  {order.fulfillment_type === 'delivery' ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Truck size={14} /> Delivery (ដឹកដល់ផ្ទះ)</span>
-                  ) : (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><ShoppingBag size={14} /> Pickup (មកយកនៅហាង)</span>
-                  )}
-                </span>
-              </div>
-              <div>
-                <span className="badge badge-status-preparing" style={{ fontSize: '0.85rem' }}>
+          <Card 
+            key={order.id} 
+            className={`overflow-hidden border-l-4 ${order.fulfillment_type === 'delivery' ? 'border-l-blue-500' : 'border-l-purple-500'}`}
+          >
+            <CardHeader className="p-5 pb-3">
+              <div className="flex justify-between items-center flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl font-black text-foreground">{order.order_number}</span>
+                  <Badge variant={order.fulfillment_type === 'delivery' ? 'delivery' : 'pickup'}>
+                    {order.fulfillment_type === 'delivery' ? (
+                      <span className="flex items-center gap-1"><Truck className="w-3 h-3" /> Delivery</span>
+                    ) : (
+                      <span className="flex items-center gap-1"><ShoppingBag className="w-3 h-3" /> Pickup</span>
+                    )}
+                  </Badge>
+                </div>
+                <Badge variant="warning" className="uppercase text-xs font-bold">
                   Status: {order.status}
-                </span>
+                </Badge>
               </div>
-            </div>
+            </CardHeader>
 
-            {/* Customer Details */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', background: '#0f172a', padding: '12px', borderRadius: '8px', marginBottom: '14px', fontSize: '0.9rem' }}>
-              <div><strong>👤 ភ្ញៀវ:</strong> {order.customer_name} ({order.customer_phone})</div>
-              {order.fulfillment_type === 'delivery' ? (
-                <div><strong>📍 អាសយដ្ឋាន:</strong> {order.delivery_address}</div>
-              ) : (
-                <div><strong>⏰ ម៉ោងមកយក:</strong> {order.pickup_time || 'ឆាប់ៗនេះ'}</div>
-              )}
-              <div><strong>💵 ការបង់ប្រាក់:</strong> {order.payment_method === 'cash_on_delivery' ? 'លុយសុទ្ធពេលដឹកដល់ (COD)' : 'លុយសុទ្ធនៅបញ្ជរ'}</div>
-              <div><strong>💰 តម្លៃសរុប:</strong> <span style={{ color: 'var(--primary)', fontWeight: 700 }}>${Number(order.total_amount).toFixed(2)}</span></div>
-            </div>
-
-            {/* Items */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '6px' }}>មុខម្ហូប៖</div>
-              <ul style={{ paddingLeft: '20px', color: 'var(--text-muted)' }}>
-                {order.items?.map((it, idx) => (
-                  <li key={idx}>
-                    {it.food_name} x <strong>{it.quantity}</strong> (${Number(it.price).toFixed(2)})
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Action Buttons based on status */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {order.status === 'pending' && (
-                <button onClick={() => updateStatus(order.id, 'accepted')} className="btn btn-primary">
-                  <Check size={16} /> ទទួល Order (Accept)
-                </button>
-              )}
-
-              {order.status === 'accepted' && (
-                <button onClick={() => updateStatus(order.id, 'preparing')} className="btn btn-primary">
-                  <UtensilsCrossed size={16} /> ចាប់ផ្ដើមធ្វើម្ហូប (Preparing)
-                </button>
-              )}
-
-              {order.status === 'preparing' && (
-                <>
-                  {order.fulfillment_type === 'delivery' ? (
-                    <button onClick={() => updateStatus(order.id, 'ready_for_delivery')} className="btn btn-success">
-                      <Truck size={16} /> ម្ហូបរួចរាល់ ➔ ផ្ដល់ដំណឹងឱ្យ Delivery
-                    </button>
-                  ) : (
-                    <button onClick={() => updateStatus(order.id, 'ready_for_pickup')} className="btn btn-success">
-                      <ShoppingBag size={16} /> ម្ហូបរួចរាល់ ➔ ផ្ដល់ដំណឹងឱ្យភ្ញៀវមកយក
-                    </button>
-                  )}
-                </>
-              )}
-
-              {order.status === 'ready_for_pickup' && (
-                <button onClick={() => updateStatus(order.id, 'completed')} className="btn btn-primary">
-                  ✅ ប្រគល់ម្ហូប & ទទួលលុយសុទ្ធ (${Number(order.total_amount).toFixed(2)}) ➔ បញ្ចប់
-                </button>
-              )}
-
-              {order.status === 'ready_for_delivery' && (
-                <div style={{ color: '#60a5fa', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Clock size={16} /> កំពុងរង់ចាំអ្នកដឹកជញ្ជូន (Delivery Staff) មកទទួលយកម្ហូប...
+            <CardContent className="p-5 pt-0 space-y-4">
+              {/* Customer Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-background/60 border border-border/50 p-3.5 rounded-xl text-xs sm:text-sm">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span><strong>ភ្ញៀវ:</strong> {order.customer_name} ({order.customer_phone})</span>
                 </div>
-              )}
-
-              {order.status === 'on_the_way' && (
-                <div style={{ color: '#ec4899', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Truck size={16} /> អ្នកដឹកកំពុងធ្វើដំណើរទៅផ្ទះភ្ញៀវ...
+                {order.fulfillment_type === 'delivery' ? (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <span><strong>អាសយដ្ឋាន:</strong> {order.delivery_address}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <span><strong>ម៉ោងមកយក:</strong> {order.pickup_time || 'ឆាប់ៗនេះ'}</span>
+                  </div>
+                )}
+                <div>
+                  <strong>💵 ការបង់ប្រាក់:</strong> {order.payment_method === 'cash_on_delivery' ? 'លុយសុទ្ធពេលដឹកដល់ (COD)' : 'លុយសុទ្ធនៅបញ្ជរ'}
                 </div>
-              )}
-
-              {order.status === 'completed' && (
-                <div style={{ color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Check size={16} /> Order បញ្ចប់ដោយជោគជ័យ
+                <div>
+                  <strong>💰 តម្លៃសរុប:</strong> <span className="text-primary font-bold text-base">${Number(order.total_amount).toFixed(2)}</span>
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+
+              {/* Items */}
+              <div>
+                <div className="font-semibold text-xs text-muted-foreground uppercase tracking-wider mb-1.5">មុខម្ហូប៖</div>
+                <ul className="list-disc pl-5 text-sm text-foreground/90 space-y-0.5">
+                  {order.items?.map((it, idx) => (
+                    <li key={idx}>
+                      {it.food_name} x <strong className="text-primary">{it.quantity}</strong> (${Number(it.price).toFixed(2)})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Action Buttons based on status */}
+              <div className="flex flex-wrap gap-2.5 pt-2 border-t border-border/40">
+                {order.status === 'pending' && (
+                  <Button onClick={() => updateStatus(order.id, 'accepted')} className="gap-2">
+                    <Check className="w-4 h-4" /> ទទួល Order (Accept)
+                  </Button>
+                )}
+
+                {order.status === 'accepted' && (
+                  <Button onClick={() => updateStatus(order.id, 'preparing')} className="gap-2">
+                    <UtensilsCrossed className="w-4 h-4" /> ចាប់ផ្ដើមធ្វើម្ហូប (Preparing)
+                  </Button>
+                )}
+
+                {order.status === 'preparing' && (
+                  <>
+                    {order.fulfillment_type === 'delivery' ? (
+                      <Button onClick={() => updateStatus(order.id, 'ready_for_delivery')} variant="success" className="gap-2">
+                        <Truck className="w-4 h-4" /> ម្ហូបរួចរាល់ ➔ ផ្ដល់ដំណឹងឱ្យ Delivery
+                      </Button>
+                    ) : (
+                      <Button onClick={() => updateStatus(order.id, 'ready_for_pickup')} variant="success" className="gap-2">
+                        <ShoppingBag className="w-4 h-4" /> ម្ហូបរួចរាល់ ➔ ផ្ដល់ដំណឹងឱ្យភ្ញៀវមកយក
+                      </Button>
+                    )}
+                  </>
+                )}
+
+                {order.status === 'ready_for_pickup' && (
+                  <Button onClick={() => updateStatus(order.id, 'completed')} className="gap-2">
+                    <Check className="w-4 h-4" /> ប្រគល់ម្ហូប & ទទួលលុយសុទ្ធ (${Number(order.total_amount).toFixed(2)}) ➔ បញ្ចប់
+                  </Button>
+                )}
+
+                {order.status === 'ready_for_delivery' && (
+                  <div className="flex items-center gap-2 text-xs text-blue-400 font-medium bg-blue-500/10 p-2.5 rounded-lg w-full">
+                    <Clock className="w-4 h-4 animate-pulse" />
+                    <span>កំពុងរង់ចាំអ្នកដឹកជញ្ជូន (Delivery Staff) មកទទួលយកម្ហូប...</span>
+                  </div>
+                )}
+
+                {order.status === 'on_the_way' && (
+                  <div className="flex items-center gap-2 text-xs text-pink-400 font-medium bg-pink-500/10 p-2.5 rounded-lg w-full">
+                    <Truck className="w-4 h-4 animate-bounce" />
+                    <span>អ្នកដឹកកំពុងធ្វើដំណើរទៅផ្ទះភ្ញៀវ...</span>
+                  </div>
+                )}
+
+                {order.status === 'completed' && (
+                  <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-emerald-500/10 p-2.5 rounded-lg w-full">
+                    <Check className="w-4 h-4" />
+                    <span>Order បញ្ចប់ដោយជោគជ័យ</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>

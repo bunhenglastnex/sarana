@@ -1,8 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { Search, CheckCircle2, Clock, MapPin, Truck, ShoppingBag } from 'lucide-react';
-import { Order, OrderStatus, FulfillmentType } from '../../types';
+import { Search, CheckCircle2, Clock, MapPin, Truck, ShoppingBag, Banknote } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Order, OrderStatus, FulfillmentType } from '@/types';
 
 function TrackContent() {
   const [orderNumber, setOrderNumber] = useState<string>('');
@@ -10,7 +14,6 @@ function TrackContent() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  // Read URL search params manually for compatibility
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -80,17 +83,20 @@ function TrackContent() {
     }
   };
 
-  const deliverySteps = ['Order Placed', 'Accepted', 'Preparing Food', 'On the Way (Driver)', 'Delivered'];
-  const pickupSteps = ['Order Placed', 'Accepted', 'Preparing Food', 'Ready for Pickup', 'Completed'];
+  const deliverySteps = ['Order Placed', 'Accepted', 'Preparing', 'On the Way', 'Delivered'];
+  const pickupSteps = ['Order Placed', 'Accepted', 'Preparing', 'Ready', 'Completed'];
 
   const currentStep = order ? getStepIndex(order.status, order.fulfillment_type) : 0;
   const steps = order?.fulfillment_type === 'pickup' ? pickupSteps : deliverySteps;
 
   return (
-    <div className="container" style={{ paddingTop: '30px', paddingBottom: '60px', maxWidth: '650px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '1.8rem', marginBottom: '8px' }}>📍 តាមដានស្ថានភាព Order</h1>
-        <p style={{ color: 'var(--text-muted)' }}>បញ្ចូលលេខ Order របស់អ្នកដើម្បីមើលស្ថានភាពផ្ទាល់</p>
+    <div className="container py-8 max-w-xl">
+      <div className="text-center mb-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2 flex items-center justify-center gap-2">
+          <MapPin className="w-7 h-7 text-primary" />
+          <span>តាមដានស្ថានភាព Order</span>
+        </h1>
+        <p className="text-muted-foreground text-sm">បញ្ចូលលេខ Order របស់អ្នកដើម្បីមើលស្ថានភាពផ្ទាល់</p>
       </div>
 
       {/* Search Input */}
@@ -99,115 +105,103 @@ function TrackContent() {
           e.preventDefault();
           fetchOrder(orderNumber);
         }}
-        style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}
+        className="flex gap-2.5 mb-6"
       >
-        <input
+        <Input
           type="text"
           value={orderNumber}
           onChange={(e) => setOrderNumber(e.target.value)}
           placeholder="ឧ. ORD-1001"
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            borderRadius: '8px',
-            background: '#1e293b',
-            border: '1px solid var(--border)',
-            color: '#fff',
-            fontSize: '1rem'
-          }}
+          className="h-11 bg-card text-base"
         />
-        <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Search size={16} />
-          {loading ? 'កំពុងឆែក...' : 'ស្វែងរក'}
-        </button>
+        <Button type="submit" className="h-11 px-6 gap-2 font-bold">
+          <Search className="w-4 h-4" />
+          <span>{loading ? '...' : 'ស្វែងរក'}</span>
+        </Button>
       </form>
 
-      {error && <div style={{ color: '#ef4444', textAlign: 'center', marginBottom: '16px' }}>{error}</div>}
+      {error && <div className="text-sm text-destructive text-center mb-6 font-medium">{error}</div>}
 
       {/* Order Status Result */}
       {order && (
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <span style={{ fontSize: '1.3rem', fontWeight: 800 }}>{order.order_number}</span>
-            <span className={`badge ${order.fulfillment_type === 'delivery' ? 'badge-delivery' : 'badge-pickup'}`}>
+        <Card className="overflow-hidden shadow-xl border-border/70">
+          <CardHeader className="p-6 pb-4 border-b border-border/50">
+            <div className="flex justify-between items-center">
+              <span className="text-2xl font-black text-foreground">{order.order_number}</span>
+              <Badge variant={order.fulfillment_type === 'delivery' ? 'delivery' : 'pickup'}>
+                {order.fulfillment_type === 'delivery' ? (
+                  <span className="flex items-center gap-1.5"><Truck className="w-3.5 h-3.5" /> ដឹកដល់ផ្ទះ</span>
+                ) : (
+                  <span className="flex items-center gap-1.5"><ShoppingBag className="w-3.5 h-3.5" /> មកយកផ្ទាល់</span>
+                )}
+              </Badge>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-6 space-y-6">
+            {/* Graphical Step Progress */}
+            <div className="py-2">
+              <div className="flex justify-between relative">
+                {steps.map((stepLabel, idx) => {
+                  const isPassed = idx <= currentStep;
+                  const isCurrent = idx === currentStep;
+
+                  return (
+                    <div key={idx} className="text-center flex-1 relative z-10">
+                      <div
+                        className={`w-9 h-9 rounded-full mx-auto mb-2 flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+                          isPassed 
+                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' 
+                            : 'bg-muted text-muted-foreground'
+                        } ${isCurrent ? 'ring-4 ring-primary/40 scale-110' : ''}`}
+                      >
+                        {isPassed ? '✓' : idx + 1}
+                      </div>
+                      <div
+                        className={`text-[11px] leading-tight transition-colors ${
+                          isPassed ? 'text-foreground font-semibold' : 'text-muted-foreground'
+                        }`}
+                      >
+                        {stepLabel}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Details Box */}
+            <div className="bg-background/60 border border-border/50 p-4 rounded-xl text-sm space-y-2">
+              <div><strong>👤 អតិថិជន:</strong> {order.customer_name}</div>
               {order.fulfillment_type === 'delivery' ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Truck size={14} /> ដឹកដល់ផ្ទះ</span>
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <span><strong>អាសយដ្ឋានដឹក:</strong> {order.delivery_address}</span>
+                </div>
               ) : (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><ShoppingBag size={14} /> មកយកផ្ទាល់</span>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span><strong>ម៉ោងមកយក:</strong> {order.pickup_time || 'ឆាប់ៗនេះ'}</span>
+                </div>
               )}
-            </span>
-          </div>
-
-          {/* Graphical Step Progress */}
-          <div style={{ margin: '24px 0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
-              {steps.map((stepLabel, idx) => {
-                const isPassed = idx <= currentStep;
-                const isCurrent = idx === currentStep;
-
-                return (
-                  <div key={idx} style={{ textAlign: 'center', flex: 1, position: 'relative', zIndex: 2 }}>
-                    <div
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        margin: '0 auto 8px auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 700,
-                        fontSize: '0.85rem',
-                        backgroundColor: isPassed ? '#10b981' : '#334155',
-                        color: isPassed ? '#fff' : '#94a3b8',
-                        border: isCurrent ? '3px solid #f59e0b' : 'none'
-                      }}
-                    >
-                      {isPassed ? '✓' : idx + 1}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.75rem',
-                        color: isPassed ? '#f8fafc' : '#64748b',
-                        fontWeight: isCurrent ? 700 : 400
-                      }}
-                    >
-                      {stepLabel}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Details Box */}
-          <div style={{ background: '#0f172a', padding: '16px', borderRadius: '8px', fontSize: '0.9rem' }}>
-            <div><strong>👤 អតិថិជន:</strong> {order.customer_name}</div>
-            {order.fulfillment_type === 'delivery' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <MapPin size={14} /> <strong>អាសយដ្ឋានដឹក:</strong> {order.delivery_address}
+              <div className="flex items-center gap-1.5 pt-1 border-t border-border/40">
+                <Banknote className="w-4 h-4 text-muted-foreground" />
+                <span><strong>វិធីទូទាត់:</strong> {order.payment_method === 'cash_on_delivery' ? 'លុយសុទ្ធពេលដឹកដល់ (COD)' : 'លុយសុទ្ធនៅបញ្ជរ'}</span>
               </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Clock size={14} /> <strong>ម៉ោងមកយក:</strong> {order.pickup_time || 'ឆាប់ៗនេះ'}
+              <div className="flex items-center justify-between pt-2 font-bold text-base">
+                <span>សរុបត្រូវបង់:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-primary text-xl font-extrabold">${Number(order.total_amount).toFixed(2)}</span>
+                  {order.payment_status === 'paid' ? (
+                    <Badge variant="success">បានបង់ប្រាក់រួច ✅</Badge>
+                  ) : (
+                    <Badge variant="warning">រង់ចាំបង់លុយសុទ្ធ ⏳</Badge>
+                  )}
+                </div>
               </div>
-            )}
-            <div style={{ marginTop: '6px' }}>
-              <strong>💵 វិធីទូទាត់:</strong> {order.payment_method === 'cash_on_delivery' ? 'លុយសុទ្ធពេលដឹកដល់ (COD)' : 'លុយសុទ្ធនៅបញ្ជរ'}
             </div>
-            <div style={{ marginTop: '6px', fontSize: '1.1rem' }}>
-              <strong>សរុបត្រូវបង់:</strong>{' '}
-              <span style={{ color: 'var(--primary)', fontWeight: 800 }}>${Number(order.total_amount).toFixed(2)}</span>
-              {order.payment_status === 'paid' ? (
-                <span style={{ color: '#10b981', marginLeft: '8px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <CheckCircle2 size={14} /> (បានបង់ប្រាក់រួច ✅)
-                </span>
-              ) : (
-                <span style={{ color: '#f59e0b', marginLeft: '8px', fontSize: '0.85rem' }}>(មិនទាន់បង់ប្រាក់ - រង់ចាំបង់លុយសុទ្ធ ⏳)</span>
-              )}
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -215,7 +209,7 @@ function TrackContent() {
 
 export default function TrackOrderPage() {
   return (
-    <Suspense fallback={<div className="container" style={{ paddingTop: '40px', textAlign: 'center' }}>កំពុងទាញយក...</div>}>
+    <Suspense fallback={<div className="container py-12 text-center text-muted-foreground">កំពុងទាញយក...</div>}>
       <TrackContent />
     </Suspense>
   );

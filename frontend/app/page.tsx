@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Sandwich, 
   Drumstick, 
@@ -12,9 +13,18 @@ import {
   Plus,
   Minus,
   CheckCircle2,
-  X
+  X,
+  Banknote,
+  Phone,
+  User,
+  MapPin,
+  Clock
 } from 'lucide-react';
-import { Food, CartItem, FulfillmentType, Order } from '../types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Food, CartItem, FulfillmentType, Order } from '@/types';
 
 // Default mock foods in case backend is not running yet
 const DEFAULT_FOODS: Food[] = [
@@ -25,22 +35,6 @@ const DEFAULT_FOODS: Food[] = [
   { id: 5, name: 'Coca Cola Original (Can)', price: 1.00, description: 'កូកាកូឡាត្រជាក់ស្រស់ស្រាយ', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500', category_name: 'Beverages & Soft Drinks' },
   { id: 6, name: 'Iced Lemon Green Tea', price: 1.50, description: 'តែបៃតងក្រូចឆ្មាផ្អែមត្រជាក់', image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500', category_name: 'Beverages & Soft Drinks' }
 ];
-
-// Helper to render Lucide Icons by name
-const renderLucideIcon = (iconName: string, size = 18) => {
-  switch (iconName?.toLowerCase()) {
-    case 'sandwich':
-      return <Sandwich size={size} />;
-    case 'drumstick':
-      return <Drumstick size={size} />;
-    case 'cup-soda':
-      return <CupSoda size={size} />;
-    case 'cake':
-      return <Cake size={size} />;
-    default:
-      return <Utensils size={size} />;
-  }
-};
 
 export default function CustomerMenuPage() {
   const [foods, setFoods] = useState<Food[]>(DEFAULT_FOODS);
@@ -159,115 +153,122 @@ export default function CustomerMenuPage() {
   };
 
   return (
-    <div className="container" style={{ paddingBottom: '100px', paddingTop: '24px' }}>
+    <div className="container py-8">
       {/* Hero Header */}
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '2.2rem', marginBottom: '8px' }}>
+      <div className="text-center max-w-2xl mx-auto mb-10">
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">
           🍽️ អាហារឆ្ងាញ់ៗ កុម្ម៉ង់បានភ្លាមៗ
         </h1>
-        <p style={{ color: 'var(--text-muted)' }}>
+        <p className="text-muted-foreground text-sm sm:text-base">
           កុម្ម៉ង់ដឹកដល់ផ្ទះ (Delivery) ឬ មកយកនៅហាងផ្ទាល់ (Pickup) | 💵 បង់ប្រាក់សុទ្ធ (Cash Only)
         </p>
       </div>
 
       {/* Food Cards Grid */}
-      <div className="food-grid">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {foods.map((food) => (
-          <div key={food.id} className="food-card">
-            <img src={food.image_url} alt={food.name} className="food-image" />
-            <div className="food-body">
-              <h3 className="food-title">{food.name}</h3>
-              <p className="food-desc">{food.description}</p>
-              <div className="food-footer">
-                <span className="food-price">${Number(food.price).toFixed(2)}</span>
-                <button 
-                  onClick={() => addToCart(food)} 
-                  className="btn btn-primary" 
-                  style={{ padding: '6px 14px' }}
-                >
-                  <Plus size={16} /> Add to Cart
-                </button>
+          <Card key={food.id} className="overflow-hidden flex flex-col border-border/60 hover:border-primary/50 transition-all duration-200">
+            <div className="relative h-48 w-full overflow-hidden">
+              <img 
+                src={food.image_url} 
+                alt={food.name} 
+                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" 
+              />
+              <div className="absolute top-3 right-3">
+                <Badge variant="secondary" className="bg-background/80 backdrop-blur-md font-semibold text-xs">
+                  {food.category_name || 'Food'}
+                </Badge>
               </div>
             </div>
-          </div>
+            
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-lg font-bold line-clamp-1">{food.name}</CardTitle>
+              <CardDescription className="line-clamp-2 text-xs text-muted-foreground">
+                {food.description}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="p-4 pt-0 flex-grow" />
+
+            <CardFooter className="p-4 pt-0 flex items-center justify-between border-t border-border/40 mt-auto">
+              <span className="text-xl font-extrabold text-primary">
+                ${Number(food.price).toFixed(2)}
+              </span>
+              <Button 
+                onClick={() => addToCart(food)} 
+                size="sm"
+                className="gap-1.5"
+              >
+                <Plus className="w-4 h-4" /> Add
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
       </div>
 
       {/* Floating Cart Button */}
       {cart.length > 0 && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 90,
-            width: '90%',
-            maxWidth: '500px'
-          }}
-        >
-          <div
-            className="card"
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              backgroundColor: '#1e293b',
-              border: '2px solid var(--primary)',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-              padding: '12px 20px'
-            }}
-          >
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-lg">
+          <div className="flex items-center justify-between p-3.5 px-5 bg-card/95 backdrop-blur-md border-2 border-primary rounded-2xl shadow-2xl shadow-black/50">
             <div>
-              <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>
+              <div className="font-bold text-base text-foreground">
                 🛒 {cart.reduce((a, b) => a + b.quantity, 0)} មុខ | ${foodSubtotal.toFixed(2)}
               </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <div className="text-xs text-muted-foreground">
                 ជ្រើសរើស Delivery ឬ Pickup ពេល Checkout
               </div>
             </div>
-            <button onClick={() => setIsCheckoutOpen(true)} className="btn btn-primary">
+            <Button onClick={() => setIsCheckoutOpen(true)} className="gap-2 font-bold shadow-lg">
               Checkout ➔
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* Checkout Modal */}
       {isCheckoutOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2>🛍️ Checkout & បញ្ជាក់ការកុម្ម៉ង់</h2>
-              <button
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-card border border-border w-full max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-5 pb-3 border-b border-border/60">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-primary" />
+                <span>Checkout & បញ្ជាក់ការកុម្ម៉ង់</span>
+              </h2>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsCheckoutOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
+                className="rounded-full w-8 h-8"
               >
-                <X size={24} />
-              </button>
+                <X className="w-4 h-4" />
+              </Button>
             </div>
 
             {/* Cart Summary */}
-            <div style={{ background: '#0f172a', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '8px' }}>បញ្ជីមុខម្ហូប៖</div>
+            <div className="bg-background/70 border border-border/50 p-3.5 rounded-xl mb-5 text-sm space-y-2.5">
+              <div className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">បញ្ជីមុខម្ហូប៖</div>
               {cart.map((item) => (
-                <div key={item.food_id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span>{item.name}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button 
+                <div key={item.food_id} className="flex justify-between items-center">
+                  <span className="font-medium text-foreground">{item.name}</span>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
                       onClick={() => updateQuantity(item.food_id, -1)} 
-                      style={{ padding: '2px 6px', cursor: 'pointer', background: '#334155', border: 'none', color: '#fff', borderRadius: '4px' }}
+                      className="w-6 h-6 rounded-md"
                     >
-                      <Minus size={12} />
-                    </button>
-                    <span>x{item.quantity}</span>
-                    <button 
+                      <Minus className="w-3 h-3" />
+                    </Button>
+                    <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
                       onClick={() => updateQuantity(item.food_id, 1)} 
-                      style={{ padding: '2px 6px', cursor: 'pointer', background: '#334155', border: 'none', color: '#fff', borderRadius: '4px' }}
+                      className="w-6 h-6 rounded-md"
                     >
-                      <Plus size={12} />
-                    </button>
-                    <span style={{ fontWeight: 700, minWidth: '50px', textAlign: 'right' }}>
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                    <span className="font-bold min-w-[55px] text-right text-primary">
                       ${(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
@@ -276,128 +277,124 @@ export default function CustomerMenuPage() {
             </div>
 
             {/* Fulfillment Selector */}
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px' }}>
+            <div className="mb-5">
+              <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
                 ជ្រើសរើសជម្រើសទទួល (Fulfillment Option):
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <button
+              <div className="grid grid-cols-2 gap-3">
+                <Button
                   type="button"
+                  variant={fulfillmentType === 'delivery' ? 'default' : 'outline'}
                   onClick={() => setFulfillmentType('delivery')}
-                  className={`btn ${fulfillmentType === 'delivery' ? 'btn-primary' : 'btn-outline'}`}
+                  className="gap-2 h-11"
                 >
-                  <Truck size={18} /> ដឹកដល់ផ្ទះ (+$2.00)
-                </button>
-                <button
+                  <Truck className="w-4 h-4" /> ដឹកដល់ផ្ទះ (+$2.00)
+                </Button>
+                <Button
                   type="button"
+                  variant={fulfillmentType === 'pickup' ? 'default' : 'outline'}
                   onClick={() => setFulfillmentType('pickup')}
-                  className={`btn ${fulfillmentType === 'pickup' ? 'btn-primary' : 'btn-outline'}`}
+                  className="gap-2 h-11"
                 >
-                  <ShoppingBag size={18} /> ទៅយកផ្ទាល់ ($0.00)
-                </button>
+                  <ShoppingBag className="w-4 h-4" /> ទៅយកផ្ទាល់ ($0.00)
+                </Button>
               </div>
             </div>
 
             {/* Customer Inputs Form */}
-            <form onSubmit={handlePlaceOrder}>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>ឈ្មោះអតិថិជន *</label>
-                <input
+            <form onSubmit={handlePlaceOrder} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>ឈ្មោះអតិថិជន *</span>
+                </label>
+                <Input
                   type="text"
                   required
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="ឧ. សុខ ដារ៉ា"
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#0f172a', border: '1px solid var(--border)', color: '#fff' }}
                 />
               </div>
 
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>លេខទូរស័ព្ទ *</label>
-                <input
+              <div>
+                <label className="block text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>លេខទូរស័ព្ទ *</span>
+                </label>
+                <Input
                   type="text"
                   required
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="ឧ. 012 345 678"
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#0f172a', border: '1px solid var(--border)', color: '#fff' }}
                 />
               </div>
 
               {fulfillmentType === 'delivery' ? (
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>
-                    អាសយដ្ឋានដឹកជញ្ជូន *
+                <div>
+                  <label className="block text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>អាសយដ្ឋានដឹកជញ្ជូន *</span>
                   </label>
-                  <textarea
+                  <Input
                     required
-                    rows={2}
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
                     placeholder="ផ្ទះលេខ ផ្លូវ សង្កាត់ ខណ្ឌ..."
-                    style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#0f172a', border: '1px solid var(--border)', color: '#fff' }}
                   />
                 </div>
               ) : (
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>
-                    ម៉ោងមកយកនៅហាង
+                <div>
+                  <label className="block text-xs font-medium mb-1.5 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>ម៉ោងមកយកនៅហាង</span>
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={pickupTime}
                     onChange={(e) => setPickupTime(e.target.value)}
                     placeholder="ឧ. ក្នុងរយៈពេល 20 នាទីទៀត"
-                    style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#0f172a', border: '1px solid var(--border)', color: '#fff' }}
                   />
                 </div>
               )}
 
               {/* Payment Notice (Cash Only) */}
-              <div
-                style={{
-                  background: 'rgba(245, 158, 11, 0.1)',
-                  border: '1px solid rgba(245, 158, 11, 0.3)',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  marginBottom: '16px',
-                  fontSize: '0.9rem'
-                }}
-              >
-                <div style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: '4px' }}>
-                  💵 វិធីទូទាត់ប្រាក់៖
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs space-y-1">
+                <div className="font-bold text-amber-400 flex items-center gap-1.5">
+                  <Banknote className="w-4 h-4" />
+                  <span>វិធីទូទាត់ប្រាក់ (Cash Only):</span>
                 </div>
-                {fulfillmentType === 'delivery' ? (
-                  <span>បង់លុយសុទ្ធពេលអ្នកដឹកយកទៅដល់ (Cash on Delivery)</span>
-                ) : (
-                  <span>បង់លុយសុទ្ធនៅបញ្ជរបេឡាហាងពេលមកយក (Pay at Store Counter)</span>
-                )}
+                <div className="text-muted-foreground">
+                  {fulfillmentType === 'delivery'
+                    ? 'បង់លុយសុទ្ធពេលអ្នកដឹកយកទៅដល់ (Cash on Delivery)'
+                    : 'បង់លុយសុទ្ធនៅបញ្ជរបេឡាហាងពេលមកយក (Pay at Store Counter)'}
+                </div>
               </div>
 
               {/* Price Breakdown */}
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>ថ្លៃម្ហូប៖</span>
+              <div className="border-t border-border pt-3 space-y-1.5 text-sm">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>ថ្លៃម្ហូប៖</span>
                   <span>${foodSubtotal.toFixed(2)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>ថ្លៃដឹក (Delivery fee)៖</span>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>ថ្លៃដឹក (Delivery fee)៖</span>
                   <span>${deliveryFee.toFixed(2)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 800 }}>
+                <div className="flex justify-between text-lg font-extrabold pt-1">
                   <span>សរុបត្រូវបង់៖</span>
-                  <span style={{ color: 'var(--primary)' }}>${grandTotal.toFixed(2)}</span>
+                  <span className="text-primary">${grandTotal.toFixed(2)}</span>
                 </div>
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="btn btn-primary"
-                style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+                className="w-full h-11 text-base font-bold gap-2 mt-2"
               >
                 {isSubmitting ? 'កំពុងបញ្ជូន Order...' : '✅ Confirm Order (បញ្ជាទិញ)'}
-              </button>
+              </Button>
             </form>
           </div>
         </div>
@@ -405,47 +402,44 @@ export default function CustomerMenuPage() {
 
       {/* Order Confirmed Success Modal */}
       {orderSuccess && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ textAlign: 'center' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
-              <CheckCircle2 size={56} className="text-emerald-500" color="#10b981" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-card border border-border w-full max-w-md rounded-2xl p-6 text-center shadow-2xl">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4 text-emerald-400">
+              <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h2 style={{ marginBottom: '8px' }}>ការកុម្ម៉ង់ជោគជ័យ!</h2>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
+            <h2 className="text-2xl font-bold mb-2">ការកុម្ម៉ង់ជោគជ័យ!</h2>
+            <p className="text-muted-foreground text-sm mb-5">
               ហាងបានទទួល Order របស់អ្នករួចរាល់ហើយ
             </p>
 
-            <div
-              style={{
-                background: '#0f172a',
-                padding: '16px',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                textAlign: 'left'
-              }}
-            >
-              <div><strong>លេខ Order:</strong> {orderSuccess.order_number}</div>
-              <div><strong>អ្នកទទួល:</strong> {orderSuccess.customer_name}</div>
-              <div><strong>ប្រភេទ:</strong> {orderSuccess.fulfillment_type === 'delivery' ? '🚚 ដឹកដល់ផ្ទះ' : '🛍️ ទៅយកផ្ទាល់'}</div>
-              <div><strong>សរុបត្រូវបង់:</strong> ${Number(orderSuccess.total_amount).toFixed(2)}</div>
-              <div><strong>វិធីបង់ប្រាក់:</strong> {orderSuccess.payment_method === 'cash_on_delivery' ? '💵 លុយសុទ្ធពេលដឹកដល់ (COD)' : '💵 លុយសុទ្ធនៅហាង'}</div>
+            <div className="bg-background/70 border border-border/50 p-4 rounded-xl text-left text-sm space-y-2 mb-6">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">លេខ Order:</span>
+                <span className="font-bold">{orderSuccess.order_number}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">អ្នកទទួល:</span>
+                <span className="font-medium">{orderSuccess.customer_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">ប្រភេទ:</span>
+                <span className="font-medium">{orderSuccess.fulfillment_type === 'delivery' ? '🚚 ដឹកដល់ផ្ទះ' : '🛍️ ទៅយកផ្ទាល់'}</span>
+              </div>
+              <div className="flex justify-between border-t border-border/50 pt-2 font-bold text-base">
+                <span>សរុបត្រូវបង់:</span>
+                <span className="text-primary">${Number(orderSuccess.total_amount).toFixed(2)}</span>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <a
-                href={`/track?order=${orderSuccess.order_number}`}
-                className="btn btn-primary"
-                style={{ flex: 1 }}
-              >
-                📍 តាមដាន Order របស់អ្នក
-              </a>
-              <button
-                onClick={() => setOrderSuccess(null)}
-                className="btn btn-outline"
-                style={{ flex: 1 }}
-              >
+            <div className="grid grid-cols-2 gap-3">
+              <Link href={`/track?order=${orderSuccess.order_number}`} className="w-full">
+                <Button className="w-full gap-1.5">
+                  <MapPin className="w-4 h-4" /> តាមដាន Order
+                </Button>
+              </Link>
+              <Button variant="outline" onClick={() => setOrderSuccess(null)} className="w-full">
                 បិទផ្ទាំងនេះ
-              </button>
+              </Button>
             </div>
           </div>
         </div>
