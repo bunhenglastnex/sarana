@@ -9,7 +9,7 @@ if (!$isCli) {
     header("Content-Type: text/plain; charset=UTF-8");
 }
 
-// Load individual table definition files
+require_once __DIR__ . '/../config/env.php';
 require_once __DIR__ . '/tables/users.php';
 require_once __DIR__ . '/tables/categories.php';
 require_once __DIR__ . '/tables/foods.php';
@@ -17,10 +17,11 @@ require_once __DIR__ . '/tables/orders.php';
 require_once __DIR__ . '/tables/order_items.php';
 require_once __DIR__ . '/seeder.php';
 
-$host = '127.0.0.1';
-$port = '3306';
-$user = 'root';
-$pass = '';
+$host   = env('DB_HOST', '127.0.0.1');
+$port   = env('DB_PORT', '3306');
+$dbName = env('DB_NAME', 'restaurant_db');
+$user   = env('DB_USER', 'root');
+$pass   = env('DB_PASS', '');
 
 echo "===========================================\n";
 echo "🚀 Restaurant System DB Migration & Seeder\n";
@@ -32,9 +33,9 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // 2. Create Database
-    $pdo->exec("CREATE DATABASE IF NOT EXISTS restaurant_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    $pdo->exec("USE restaurant_db");
-    echo "✅ Database 'restaurant_db' checked/created.\n\n";
+    $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("USE `{$dbName}`");
+    echo "✅ Database '{$dbName}' checked/created.\n\n";
 
     // 3. Create Tables in dependency order
     echo "📦 Creating database tables...\n";

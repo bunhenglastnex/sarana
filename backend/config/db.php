@@ -3,16 +3,15 @@
 // Database configuration & PDO Connection
 
 require_once __DIR__ . '/response.php';
-
-$host = '127.0.0.1';
-$port = '3306';
-$db   = 'restaurant_db';
-$user = 'root';
-$pass = ''; // Default XAMPP/MySQL password is empty
-$charset = 'utf8mb4';
+require_once __DIR__ . '/env.php';
 
 function getDB() {
-    global $host, $port, $db, $user, $pass, $charset;
+    $host = env('DB_HOST', '127.0.0.1');
+    $port = env('DB_PORT', '3306');
+    $db   = env('DB_NAME', 'restaurant_db');
+    $user = env('DB_USER', 'root');
+    $pass = env('DB_PASS', '');
+    $charset = 'utf8mb4';
 
     $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
     $options = [
