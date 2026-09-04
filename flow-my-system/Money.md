@@ -1,22 +1,40 @@
-                    CUSTOMER
-                       │
-                       │ $13
-                       ▼
-                 PAYMENT SYSTEM
-                       │
-            ┌──────────┼──────────┐
-            ▼          ▼          ▼
-       Food Amount   Tax/Fee   Delivery
-          $10          $1         $2
-            │          │          │
-            ▼          ▼          ▼
-       Restaurant   Platform/   Delivery
-                    Authority
+# 💰 Money Flow (Single Restaurant Model)
 
-```បន្ទាប់មក Platform គិត Restaurant Fee:
-Restaurant Food Sale
-       $10
-        │
-        ├── Platform Fee 10% = $1
-        │
-        └── Restaurant = $9
+ដោយសារនេះជាប្រព័ន្ធសម្រាប់ហាងផ្ទាល់ខ្លួន (Direct-to-Consumer) គ្មានក្រុមហ៊ុនកណ្ដាលមកកាត់កម្រៃជើងសារ (No 3rd-party Commission) នោះទេ៖
+
+---
+
+### ១. លំហូរប្រាក់កុម្ម៉ង់ (Order Payment Distribution)
+
+#### ករណី Delivery (ឧទាហរណ៍ សរុប $12.00):
+```
+                       CUSTOMER
+                          │
+                          │ បង់ប្រាក់ $12.00 (KHQR ឬ Cash COD)
+                          ▼
+                    RESTAURANT CASHIER
+                          │
+            ┌─────────────┴─────────────┐
+            ▼                           ▼
+       Food Amount                Delivery Fee
+         $10.00                      $2.00
+            │                           │
+            ▼                           ▼
+      ចំណូលរបស់ហាង               ចំណូលរបស់ហាង
+                                 (សម្រាប់បើកប្រាក់ខែ/ថ្លៃសាំង Delivery)
+```
+
+#### ករណី Pickup (ឧទាហរណ៍ សរុប $10.00):
+```
+                       CUSTOMER
+                          │
+                          │ បង់ប្រាក់ $10.00 (KHQR ឬ នៅបញ្ជរហាង)
+                          ▼
+                  ចំណូលរបស់ហាង ១០០% ($10.00)
+```
+
+---
+
+### ២. ភាពខុសគ្នារវាងប្រព័ន្ធមុន និងប្រព័ន្ធថ្មី
+- **ប្រព័ន្ធមុន (Multi-Vendor Platform):** Platform កាត់ 10% ($1.00) ពីហាង និងមានបែងចែកលុយស្មុគស្មាញ។
+- **ប្រព័ន្ធថ្មី (Single Restaurant):** **ហាងទទួលបានចំណូល ១០០% ពេញលេញ** ទាំងថ្លៃម្ហូប និងថ្លៃដឹកជញ្ជូន។

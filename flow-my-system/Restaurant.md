@@ -1,29 +1,56 @@
-Restaurant ទទួលបាន Notification៖
-🔔 New Order #1001
-```Restaurant អាចឃើញ៖
-Order #1001
+# 🏪 Restaurant Flow
 
-Burger x2
-Coke x1
-Total Food: $10
+### ១. ការទទួលការកុម្ម៉ង់ (Order Notification)
 
-Customer:
-Name
-Phone
-Address
+នៅពេលមានការកុម្ម៉ង់ពី Website ផ្ទាំង Admin/Kitchen របស់ហាងនឹងលោត Alert ភ្លាមៗ៖
 
-[ Accept Order ]
-[ Reject Order ]
 ```
-```Accept
-Pending
-   ↓
-Accepted
-   ↓
-Preparing
+🔔 New Order #1001 ── [ Type: Delivery ឬ Pickup ]
+
+Items:
+  - Burger x2
+  - Coke x1
+Total Amount: $12.00
+
+Customer Info:
+  - Name: Dara
+  - Phone: 012 345 678
+  - Fulfillment: Delivery (អាសយដ្ឋាន: Toul Kork, Phnom Penh)
+  - Payment: Paid via KHQR
+
+[ Accept Order ]     [ Reject Order ]
 ```
-```ពេលអាហាររួច៖
-Preparing
-   ↓
-Ready for Pickup
+
+---
+
+### ២. វដ្តនៃការរៀបចំម្ហូប (Preparation Lifecycle)
+
+```
+Pending (រង់ចាំហាងទទួល)
+   │
+   ▼
+Accepted (ហាងយល់ព្រមទទួលធ្វើ)
+   │
+   ▼
+Preparing (កំពុងធ្វើម្ហូបក្នុងផ្ទះបាយ)
+   │
+   ▼
+   ├── បើជា [PICKUP]:
+   │     │
+   │     ▼
+   │   Ready for Pickup (ម្ហូបរួចរាល់ ដំណឹងទៅភ្ញៀវឱ្យមកយក)
+   │     │
+   │     ▼
+   │   Customer មកដល់ហាង & ទទួលម្ហូប
+   │     │
+   │     ▼
+   │   Completed (ហាងចុចបញ្ចប់ Order ✅)
+   │
+   └── បើជា [DELIVERY]:
+         │
+         ▼
+       Ready for Delivery (ម្ហូបរួចរាល់ រុញដំណឹងទៅ Delivery Staff)
+         │
+         ▼
+       Delivery Staff មកយកម្ហូបពីផ្ទះបាយ ➔ ចាប់ផ្ដើមចេញដឹក
 ```
