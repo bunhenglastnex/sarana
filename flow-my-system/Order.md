@@ -1,4 +1,4 @@
-# 🛒 Order Flow & Calculation
+# 🛒 Order Flow & Calculation (Cash Only)
 
 ### ១. ឧទាហរណ៍នៃការគណនាតម្លៃ (Pricing Calculation)
 
@@ -7,15 +7,15 @@
 Food price:        $10.00
 Delivery fee:       $2.00
 -------------------------
-Customer pays:     $12.00
+Customer pays:     $12.00  (បង់លុយសុទ្ធជាមួយអ្នកដឹកពេលម្ហូបទៅដល់ - COD)
 ```
 
 #### ករណីទី ២៖ ទៅយកផ្ទាល់នៅហាង (Pickup / Takeaway)
 ```
 Food price:        $10.00
-Delivery fee:       $0.00 (មិនគិតថ្លៃដឹក)
+Delivery fee:       $0.00  (មិនគិតថ្លៃដឹក)
 -------------------------
-Customer pays:     $10.00
+Customer pays:     $10.00  (បង់លុយសុទ្ធនៅបញ្ជរបេឡាហាងផ្ទាល់)
 ```
 
 ---
@@ -38,14 +38,10 @@ Customer
 ជ្រើសរើសវិធីទទួលម្ហូប (Fulfillment Option):
    │
    ├── [1] 🛍️ Pickup (ទៅយកផ្ទាល់) ───> ដាក់ឈ្មោះ + លេខទូរស័ព្ទ + ម៉ោងមកយក
+   │       └── វិធីបង់ប្រាក់៖ [ បង់លុយសុទ្ធនៅហាង - Cash at Counter ]
    │
    └── [2] 🚚 Delivery (ដឹកដល់ផ្ទះ) ──> ដាក់ឈ្មោះ + លេខទូរស័ព្ទ + អាសយដ្ឋាន/Pin ផែនទី
-   │
-   ▼
-ជ្រើសរើសវិធីទូទាត់ (Payment):
-   │
-   ├── បាញ់ KHQR (Online Payment)
-   └── បង់លុយសុទ្ធ (COD ឬ បង់នៅបញ្ជរបញ្ជាទិញ)
+           └── វិធីបង់ប្រាក់៖ [ បង់លុយសុទ្ធពេលដឹកដល់ - Cash on Delivery ]
    │
    ▼
 Order Created (#1001)

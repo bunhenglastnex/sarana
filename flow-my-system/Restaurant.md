@@ -1,4 +1,4 @@
-# 🏪 Restaurant Flow
+# 🏪 Restaurant Flow (Cash-Only Model)
 
 ### ១. ការទទួលការកុម្ម៉ង់ (Order Notification)
 
@@ -16,7 +16,7 @@ Customer Info:
   - Name: Dara
   - Phone: 012 345 678
   - Fulfillment: Delivery (អាសយដ្ឋាន: Toul Kork, Phnom Penh)
-  - Payment: Paid via KHQR
+  - Payment: Cash on Delivery (បង់លុយសុទ្ធពេលដឹកដល់)
 
 [ Accept Order ]     [ Reject Order ]
 ```
@@ -41,7 +41,7 @@ Preparing (កំពុងធ្វើម្ហូបក្នុងផ្ទះ
    │   Ready for Pickup (ម្ហូបរួចរាល់ ដំណឹងទៅភ្ញៀវឱ្យមកយក)
    │     │
    │     ▼
-   │   Customer មកដល់ហាង & ទទួលម្ហូប
+   │   Customer មកដល់ហាង ➔ បង់លុយសុទ្ធនៅបញ្ជរ ➔ ទទួលម្ហូប
    │     │
    │     ▼
    │   Completed (ហាងចុចបញ្ចប់ Order ✅)

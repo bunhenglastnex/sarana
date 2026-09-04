@@ -1,6 +1,6 @@
-# 👤 Customer Flow & Tracking
+# 👤 Customer Flow & Tracking (Cash-Only Model)
 
-Customer អាចតាមដានស្ថានភាព (Real-time Status Tracking) លើ Website ទៅតាមជម្រើសដែលខ្លួនបានជ្រើសរើស៖
+Customer អាចតាមដានស្ថានភាព (Real-time Status Tracking) លើ Website ទៅតាមជម្រើសដែលខ្លួនបានជ្រើសរើស ដោយទូទាត់ជាសាច់ប្រាក់សុទ្ធ៖
 
 ---
 
@@ -9,7 +9,7 @@ Customer អាចតាមដានស្ថានភាព (Real-time Status T
 Customer នឹងឃើញ Progress Bar ដូចខាងក្រោម៖
 
 ```
-Order #1001 (Delivery)
+Order #1001 (Delivery - Cash on Delivery: $12.00)
 
 [✓] Order Placed          (បានបញ្ជាទិញរួចរាល់)
 [✓] Restaurant Accepted   (ហាងបានទទួល Order)
@@ -24,10 +24,10 @@ Order #1001 (Delivery)
 Driver មកដល់មុខផ្ទះ
        │
        ▼
-Customer ទទួលយកម្ហូប (និងបង់លុយ ប្រសិនបង់សាច់ប្រាក់ COD)
+Customer ហុចលុយសុទ្ធ ($12.00) ទៅឱ្យ Driver
        │
        ▼
-Driver ចុច "Confirm Delivered" លើទូរស័ព្ទរបស់គាត់
+Driver ហុចម្ហូបជូន និងចុច "Confirm Delivered" លើទូរស័ព្ទរបស់គាត់
        │
        ▼
 Website របស់ Customer លោតផ្ទាំង: "Order Completed! Enjoy your meal 🎉"
@@ -38,7 +38,7 @@ Website របស់ Customer លោតផ្ទាំង: "Order Completed! Enj
 ### ២. ករណីរើសយក "ទៅយកផ្ទាល់នៅហាង" (Pickup Tracking)
 
 ```
-Order #1002 (Pickup)
+Order #1002 (Pickup - Pay at Counter: $10.00)
 
 [✓] Order Placed          (បានបញ្ជាទិញរួចរាល់)
 [✓] Restaurant Accepted   (ហាងបានទទួល Order)
@@ -49,13 +49,13 @@ Order #1002 (Pickup)
 
 **ពេលមកយកនៅហាង៖**
 ```
-Customer មកដល់បញ្ជរហាង បង្ហាញលេខ Order #1002
+Customer មកដល់បញ្ជរបេឡាហាង បង្ហាញលេខ Order #1002
        │
        ▼
-បុគ្គលិកហាងប្រគល់ម្ហូបជូន
+Customer បង់លុយសុទ្ធ ($10.00) នៅបញ្ជរបេឡា
        │
        ▼
-បុគ្គលិកហាងចុច Complete លើប្រព័ន្ធ
+បុគ្គលិកហាងប្រគល់ម្ហូបជូន & ចុច Complete លើប្រព័ន្ធ
        │
        ▼
 Website បង្ហាញថា "Order Completed! 🎉"
