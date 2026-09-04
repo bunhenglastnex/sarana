@@ -23,6 +23,12 @@ php -S localhost:8000
 ```
 API របស់អ្នកនឹងដំណើរការនៅ: **`http://localhost:8000`** 🎉
 
+#### ជំហានទី ៤៖ (Optional) Telegram Bot Local Listener
+ដើម្បីទទួលសារពី Telegram Bot (ដូចជា `/start` ដើម្បី Link គណនី) នៅលើ Localhost ដោយមិនបាច់មាន Webhook / Ngrok វាយ៖
+```bash
+php telegram-poll.php
+```
+
 ---
 
 ### 📡 បញ្ជី API Endpoints
@@ -37,3 +43,5 @@ API របស់អ្នកនឹងដំណើរការនៅ: **`http://l
 | `PATCH` | `/api/order-status.php` | ហាងកែប្រែ Status (`accepted`, `preparing`, `ready_for_pickup`, `ready_for_delivery`, `completed`) |
 | `GET` | `/api/delivery.php` | បញ្ជី Order ដែលអ្នកដឹកត្រូវទៅយក + របាយការណ៍ Cash in Hand |
 | `POST` | `/api/delivery.php` | អ្នកដឹកចុច `pickup_from_kitchen` ឬ `confirm_delivered` |
+| `POST` | `/api/telegram-link.php` | ភ្ជាប់លេខទូរស័ព្ទ Customer ទៅកាន់ Telegram Chat ID |
+| `POST` | `/api/telegram-webhook.php` | Telegram Bot Webhook endpoint (សម្រាប់ Production) |

@@ -44,6 +44,9 @@ restaurant-ordering-system/
 
    # Start built-in PHP server
    php -S localhost:8000
+
+   # (Optional) Start Telegram Bot Local Long-Polling listener
+   php telegram-poll.php
    ```
 
 ### 2. Frontend (Next.js)

@@ -312,12 +312,30 @@ async function executeRequest<T = any>(
         };
       }
 
-      // Handle API responses where backend returns { success: false, message: '...' }
+      // Handle API responses with { code: 1|0, msg: '...', data: ... }
+      if (parsedData && typeof parsedData === 'object' && 'code' in parsedData) {
+        const isSuccessCode = parsedData.code === 1 || parsedData.code === 200;
+        if (!isSuccessCode) {
+          return {
+            success: false,
+            data: parsedData.data ?? null,
+            error: parsedData.msg || parsedData.message || 'Operation failed',
+            status: response.status,
+            fromCache: false,
+          };
+        }
+        // Extract data payload if code === 1
+        if (parsedData.data !== undefined) {
+          parsedData = parsedData.data;
+        }
+      }
+
+      // Handle legacy API responses where backend returns { success: false, message: '...' }
       if (parsedData && typeof parsedData === 'object' && parsedData.success === false) {
         return {
           success: false,
           data: parsedData,
-          error: parsedData.message || 'Operation failed',
+          error: parsedData.message || parsedData.msg || 'Operation failed',
           status: response.status,
           fromCache: false,
         };
