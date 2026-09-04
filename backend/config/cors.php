@@ -1,6 +1,6 @@
 <?php
 // backend/config/cors.php
-// Allow Cross-Origin Requests (CORS) from Next.js (localhost:3000) or any client
+// Allow Cross-Origin Requests (CORS) from Next.js (localhost:3001) or any client
 
 require_once __DIR__ . '/env.php';
 

@@ -51,7 +51,7 @@ From the project root directory (`D:\learning\Sarana\Online-Ordering`):
 
 This launches:
 - **Backend API**: `http://localhost:8000` (PHP Server)
-- **Frontend App**: `http://localhost:3000` (Next.js App)
+- **Frontend App**: `http://localhost:3001` (Next.js App)
 
 ---
 
