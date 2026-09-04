@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Order, OrderStatus } from '@/types';
+import { Order, OrderStatus, OrdersApiResponse } from '@/types';
+import { Api } from '@/lib/api';
 
-// Sample Mock Orders for Tracking (No Fetch API)
+// Sample Mock Orders for Tracking (Fallback if backend offline)
 const MOCK_TRACK_DATA: Record<string, Order> = {
   'ORD-1001': {
     id: 1,
@@ -40,16 +41,37 @@ const MOCK_TRACK_DATA: Record<string, Order> = {
 export default function TrackOrderPage() {
   const [orderQuery, setOrderQuery] = useState('ORD-1001');
   const [order, setOrder] = useState<Order | null>(MOCK_TRACK_DATA['ORD-1001']);
+  const [loading, setLoading] = useState(false);
+  const [isCached, setIsCached] = useState(false);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const found = MOCK_TRACK_DATA[orderQuery.trim().toUpperCase()];
-    setOrder(found || null);
+  const handleSearch = async (e?: React.FormEvent, force = false) => {
+    if (e) e.preventDefault();
+    const query = orderQuery.trim().toUpperCase();
+    if (!query) return;
+
+    setLoading(true);
+
+    // Call Backend API with query param: /api/orders.php?order_number=ORD-1001
+    const res = await Api.get<OrdersApiResponse>('/api/orders.php', { order_number: query }, {
+      forceRefresh: force,
+    });
+
+    if (res.success && res.data?.orders && res.data.orders.length > 0) {
+      setOrder(res.data.orders[0]);
+      setIsCached(res.fromCache);
+    } else {
+      // Fallback to local mock data
+      const mock = MOCK_TRACK_DATA[query];
+      setOrder(mock || null);
+      setIsCached(false);
+    }
+    setLoading(false);
   };
 
   const steps = order?.fulfillment_type === 'pickup'
     ? ['Order Placed', 'Accepted by Kitchen', 'Preparing Food', 'Ready for Pickup', 'Completed']
     : ['Order Placed', 'Accepted by Kitchen', 'Preparing Food', 'On the Way (Driver)', 'Delivered & Paid'];
+
 
   const getStepNumber = (status?: OrderStatus) => {
     switch (status) {
@@ -86,11 +108,29 @@ export default function TrackOrderPage() {
         />
         <button
           type="submit"
-          className="px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded text-sm hover:opacity-90"
+          disabled={loading}
+          className="px-4 py-2.5 bg-primary text-primary-foreground font-semibold rounded text-sm hover:opacity-90 disabled:opacity-50"
         >
-          Search
+          {loading ? 'Searching...' : 'Search'}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleSearch(undefined, true)}
+          disabled={loading}
+          title="Force Refresh bypassing cache"
+          className="px-3 py-2.5 bg-muted text-muted-foreground hover:text-foreground font-medium rounded text-sm border border-border"
+        >
+          🔄
         </button>
       </form>
+
+      {/* Cache Indicator */}
+      {isCached && (
+        <div className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded flex items-center justify-between">
+          <span>⚡ Retrieved from Client Cache (មិនទាញឡើងវិញពេលប្ដូរ page)</span>
+          <span className="font-mono text-[11px]">Api.get(..., &#123; cache: true &#125;)</span>
+        </div>
+      )}
 
       {/* Order Status Display */}
       {order ? (

@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Order } from '@/types';
+import React, { useState, useEffect } from 'react';
+import { Order, DeliveryApiResponse } from '@/types';
+import { Api } from '@/lib/api';
 
-// Sample Mock Delivery Orders (No Fetch API)
+// Sample Mock Delivery Orders (Fallback if backend offline)
 const INITIAL_DELIVERY_TASKS: Order[] = [
   {
     id: 1,
@@ -45,27 +46,62 @@ const INITIAL_DELIVERY_TASKS: Order[] = [
 
 export default function DeliveryStaffPage() {
   const [tasks, setTasks] = useState<Order[]>(INITIAL_DELIVERY_TASKS);
-  const [cashInHand, setCashInHand] = useState(25.00); // Sample starting cash
-  const [completedCount, setCompletedCount] = useState(2); // Sample completed count
+  const [cashInHand, setCashInHand] = useState(25.00);
+  const [completedCount, setCompletedCount] = useState(2);
+  const [loading, setLoading] = useState(false);
+  const [isCached, setIsCached] = useState(false);
 
-  const handlePickup = (orderId: number) => {
+  const loadDeliveries = async (force = false) => {
+    setLoading(true);
+    const res = await Api.get<DeliveryApiResponse>('/api/delivery.php', undefined, {
+      forceRefresh: force,
+    });
+
+    if (res.success && res.data?.orders && res.data.orders.length > 0) {
+      setTasks(res.data.orders);
+      if (res.data.cash_summary) {
+        setCashInHand(Number(res.data.cash_summary.cash_in_hand || 0));
+        setCompletedCount(Number(res.data.cash_summary.deliveries_completed || 0));
+      }
+      setIsCached(res.fromCache);
+    } else {
+      setIsCached(false);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadDeliveries();
+  }, []);
+
+  const handlePickup = async (orderId: number) => {
     setTasks((prev) =>
       prev.map((t) => (t.id === orderId ? { ...t, status: 'on_the_way' } : t))
     );
+
+    await Api.post('/api/delivery.php', {
+      action: 'pickup_from_kitchen',
+      order_id: orderId,
+    });
   };
 
-  const handleConfirmDelivered = (orderId: number, amount: number | string) => {
+  const handleConfirmDelivered = async (orderId: number, amount: number | string) => {
     setTasks((prev) => prev.filter((t) => t.id !== orderId));
     setCashInHand((prev) => prev + Number(amount));
     setCompletedCount((prev) => prev + 1);
+
+    await Api.post('/api/delivery.php', {
+      action: 'confirm_delivered',
+      order_id: orderId,
+    });
   };
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto font-sans">
       <div>
-        <h1 className="text-2xl font-bold">Delivery Staff - Dispatch & Cash Collection Example</h1>
+        <h1 className="text-2xl font-bold">Delivery Staff - Dispatch & Cash Collection</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Text example showing assigned delivery jobs, doorstep cash collection, and end-of-shift remittance.
+          Connected to <code className="text-primary font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Api.get('/api/delivery.php')</code> and <code className="text-primary font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Api.post('/api/delivery.php')</code>.
         </p>
       </div>
 
@@ -80,9 +116,26 @@ export default function DeliveryStaffPage() {
 
       {/* Tasks List */}
       <div className="border border-border rounded-lg p-5 bg-card space-y-4">
-        <div className="flex justify-between items-center border-b border-border pb-3">
-          <h2 className="text-lg font-semibold">Assigned Deliveries ({tasks.length})</h2>
-          <span className="text-xs text-muted-foreground">Mock State (No API Dependency)</span>
+        <div className="flex justify-between items-center border-b border-border pb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Assigned Deliveries ({tasks.length})</h2>
+            {isCached ? (
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-mono">
+                ⚡ From Cache (មិនទាញឡើងវិញពេលប្ដូរ page)
+              </span>
+            ) : (
+              <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-mono">
+                🌐 From Server
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => loadDeliveries(true)}
+            disabled={loading}
+            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded bg-muted/60 border border-border"
+          >
+            {loading ? 'កំពុងទាញ...' : '🔄 Force Refresh'}
+          </button>
         </div>
 
         {tasks.length === 0 ? (
