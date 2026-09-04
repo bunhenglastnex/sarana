@@ -6,6 +6,7 @@ export interface Food {
   category_name?: string;
   image_url?: string;
   is_available?: boolean;
+  status?: 'public' | 'draft';
 }
 
 export interface CartItem {
@@ -76,3 +77,37 @@ export interface DeliveryApiResponse {
   orders: Order[];
   cash_in_hand?: string | number;
 }
+
+export type LogLevel = 'info' | 'warning' | 'error';
+
+export interface SystemLog {
+  id: number;
+  action: string;
+  category: string;
+  level: LogLevel;
+  description: string;
+  user_id?: number | null;
+  user_name?: string | null;
+  ip_address?: string;
+  user_agent?: string | null;
+  created_at: string;
+}
+
+export interface SystemLogStats {
+  total_all: number;
+  errors_count: number;
+  warnings_count: number;
+  logs_past_7_days: number;
+}
+
+export interface LogsApiResponse {
+  logs: SystemLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total_items: number;
+    total_pages: number;
+  };
+  stats: SystemLogStats;
+}
+

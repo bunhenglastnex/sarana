@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { ClipboardList, ScrollText } from 'lucide-react';
 
 export default function AdminLayout({
   children,
@@ -20,9 +21,17 @@ export default function AdminLayout({
         <nav className="space-y-1 text-sm font-medium">
           <Link
             href="/admin"
-            className="flex items-center gap-2 px-3 py-2 rounded-md bg-primary/10 text-primary font-semibold"
+            className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted text-foreground transition-colors"
           >
-            📋 Orders Management
+            <ClipboardList className="w-4 h-4 text-muted-foreground" />
+            <span>Orders Management</span>
+          </Link>
+          <Link
+            href="/admin/logs"
+            className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted text-foreground transition-colors"
+          >
+            <ScrollText className="w-4 h-4 text-muted-foreground" />
+            <span>System Activity Logs</span>
           </Link>
         </nav>
       </aside>

@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { Bike } from 'lucide-react';
 
 export default function DeliveryLayout({
   children,
@@ -21,9 +22,10 @@ export default function DeliveryLayout({
           <nav className="flex items-center gap-2 text-sm font-medium">
             <Link
               href="/delivery"
-              className="px-3 py-1.5 rounded-md bg-primary/10 text-primary font-semibold"
+              className="px-3 py-1.5 rounded-md bg-primary/10 text-primary font-semibold flex items-center gap-1.5"
             >
-              🛵 Dispatch Board
+              <Bike className="w-4 h-4" />
+              <span>Dispatch Board</span>
             </Link>
           </nav>
         </div>

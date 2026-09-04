@@ -6,6 +6,7 @@ require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
 require_once __DIR__ . '/../lib/telegram.php';
+require_once __DIR__ . '/../lib/logger.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
@@ -101,6 +102,17 @@ if ($method === 'GET') {
                 notifyCustomerTelegram($order['telegram_chat_id'], $statusMsg);
             }
 
+            // 📜 Log System Action
+            logSystemAction(
+                $pdo,
+                'DELIVERY_PICKUP',
+                'DELIVERY',
+                "Rider '{$riderName}' picked up order '{$order['order_number']}' from kitchen (Status: On The Way).",
+                'info',
+                $staffId,
+                $riderName
+            );
+
             jsonResponse(1, 'Order picked up from kitchen. Status is now On The Way.', [
                 'order_id' => $orderId,
                 'status'   => 'on_the_way'
@@ -120,6 +132,17 @@ if ($method === 'GET') {
             if (!empty($order['telegram_chat_id'])) {
                 notifyCustomerTelegram($order['telegram_chat_id'], $statusMsg);
             }
+
+            // 📜 Log System Action
+            logSystemAction(
+                $pdo,
+                'DELIVERY_COMPLETED',
+                'DELIVERY',
+                "Order '{$order['order_number']}' successfully delivered by rider '{$riderName}'. Cash on Delivery collected.",
+                'info',
+                $staffId,
+                $riderName
+            );
 
             jsonResponse(1, 'Order completed and Cash on Delivery collected!', [
                 'order_id'       => $orderId,

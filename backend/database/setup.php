@@ -15,6 +15,7 @@ require_once __DIR__ . '/tables/categories.php';
 require_once __DIR__ . '/tables/foods.php';
 require_once __DIR__ . '/tables/orders.php';
 require_once __DIR__ . '/tables/order_items.php';
+require_once __DIR__ . '/tables/system_logs.php';
 require_once __DIR__ . '/seeder.php';
 
 $host   = env('DB_HOST', '127.0.0.1');
@@ -44,6 +45,7 @@ try {
     createFoodsTable($pdo);
     createOrdersTable($pdo);
     createOrderItemsTable($pdo);
+    createSystemLogsTable($pdo);
     echo "\n";
 
     // 4. Seed Dummy Data

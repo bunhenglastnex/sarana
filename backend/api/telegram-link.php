@@ -6,6 +6,7 @@ require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
 require_once __DIR__ . '/../lib/telegram.php';
+require_once __DIR__ . '/../lib/logger.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
@@ -30,6 +31,17 @@ if ($method === 'POST') {
             if (!empty($telegramChatId)) {
                 $updateStmt = $pdo->prepare("UPDATE users SET telegram_chat_id = ?, telegram_username = ? WHERE id = ?");
                 $updateStmt->execute([$telegramChatId, $telegramUsername, $user['id']]);
+
+                // 📜 Log System Action
+                logSystemAction(
+                    $pdo,
+                    'TELEGRAM_LINK',
+                    'TELEGRAM',
+                    "User '{$user['name']}' ({$user['phone']}) linked Telegram chat ID {$telegramChatId}.",
+                    'info',
+                    (int)$user['id'],
+                    $user['name']
+                );
             }
 
             $botUsername = env('TELEGRAM_BOT_USERNAME', 'YourRestaurantBot');
