@@ -4,45 +4,66 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;           /* Light clean background #f8fafc */
-    --foreground: 222.2 84% 4.9%;       /* Slate dark text #020817 */
+    --background: 40 40% 97%;           /* Surface #fcf9f3 */
+    --foreground: 60 4% 10%;           /* On-Surface #1c1c18 */
 
-    --card: 0 0% 100%;                 /* Pure crisp white card #ffffff */
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;                 /* Surface Container Lowest #ffffff */
+    --card-foreground: 60 4% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 60 4% 10%;
 
-    --primary: 38 92% 50%;             /* Vibrant Amber Gold */
-    --primary-foreground: 0 0% 100%;   /* White text on primary button */
+    --primary: 20 100% 32%;            /* Amber Primary #a43700 */
+    --primary-foreground: 0 0% 100%;   /* White */
 
-    --secondary: 210 40% 96.1%;        /* Soft light grey */
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 33 100% 28%;          /* Secondary #8f4e00 */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;            /* Light muted background */
-    --muted-foreground: 215.4 16.3% 46.9%; /* Muted text */
+    --muted: 40 16% 92%;
+    --muted-foreground: 18 21% 29%;    /* On-surface-variant #58423a */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 25 100% 88%;             /* Secondary Fixed #ffdcc2 */
+    --accent-foreground: 28 100% 9%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 42%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;        /* Light grey border #e2e8f0 */
-    --input: 214.3 31.8% 91.4%;
-    --ring: 38 92% 50%;
+    --border: 17 29% 80%;               /* Outline Variant #e0c0b5 */
+    --input: 17 29% 80%;
+    --ring: 20 100% 32%;
 
     --radius: 0.75rem;
   }
-}
 
-@layer base {
-  * {
-    @apply border-border;
+  html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Khmer", sans-serif;
+    overscroll-behavior-y: none;
   }
 }
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
