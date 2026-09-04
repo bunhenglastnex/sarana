@@ -24,7 +24,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // 1. Types & Interfaces
 // ==========================================
 
-export interface RequestOptions extends Omit<RequestInit, 'body'> {
+export interface RequestOptions extends Omit<RequestInit, 'body' | 'cache'> {
   params?: Record<string, any>;
   body?: any;
   /**
