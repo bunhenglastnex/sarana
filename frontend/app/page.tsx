@@ -1,32 +1,61 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Sandwich, 
+  Drumstick, 
+  CupSoda, 
+  Cake, 
+  Utensils, 
+  ShoppingBag, 
+  Truck,
+  Plus,
+  Minus,
+  CheckCircle2,
+  X
+} from 'lucide-react';
+import { Food, CartItem, FulfillmentType, Order } from '../types';
 
 // Default mock foods in case backend is not running yet
-const DEFAULT_FOODS = [
-  { id: 1, name: 'Classic Double Cheeseburger', price: 4.50, description: 'សាច់គោ ២ បន្ទះ ឈីសក្រាស់ និងបន្លែស្រស់', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', category_name: 'Burgers' },
-  { id: 2, name: 'Crispy Chicken Burger', price: 3.80, description: 'សាច់មាន់បំពងស្រួយ ទឹកជ្រលក់ហឹរតិចៗ', image_url: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500', category_name: 'Burgers' },
-  { id: 3, name: 'Spicy Fried Chicken Wings (6pcs)', price: 4.20, description: 'ស្លាបមាន់បំពងហឹរបែបកូរ៉េ', image_url: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=500', category_name: 'Chicken' },
-  { id: 4, name: 'French Fries (Large)', price: 2.00, description: 'ដំឡូងបារាំងបំពងស្រួយជាមួយទឹកប៉េងប៉ោះ', image_url: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=500', category_name: 'Sides' },
-  { id: 5, name: 'Coca Cola Original (Can)', price: 1.00, description: 'កូកាកូឡាត្រជាក់ស្រស់ស្រាយ', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500', category_name: 'Drinks' },
-  { id: 6, name: 'Iced Lemon Green Tea', price: 1.50, description: 'តែបៃតងក្រូចឆ្មាផ្អែមត្រជាក់', image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500', category_name: 'Drinks' }
+const DEFAULT_FOODS: Food[] = [
+  { id: 1, name: 'Classic Double Cheeseburger', price: 4.50, description: 'សាច់គោ ២ បន្ទះ ឈីសក្រាស់ និងបន្លែស្រស់', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', category_name: 'Burgers & Sandwiches' },
+  { id: 2, name: 'Crispy Chicken Burger', price: 3.80, description: 'សាច់មាន់បំពងស្រួយ ទឹកជ្រលក់ហឹរតិចៗ', image_url: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500', category_name: 'Burgers & Sandwiches' },
+  { id: 3, name: 'Spicy Fried Chicken Wings (6pcs)', price: 4.20, description: 'ស្លាបមាន់បំពងហឹរបែបកូរ៉េ', image_url: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=500', category_name: 'Fried Chicken & Sides' },
+  { id: 4, name: 'French Fries (Large)', price: 2.00, description: 'ដំឡូងបារាំងបំពងស្រួយជាមួយទឹកប៉េងប៉ោះ', image_url: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=500', category_name: 'Fried Chicken & Sides' },
+  { id: 5, name: 'Coca Cola Original (Can)', price: 1.00, description: 'កូកាកូឡាត្រជាក់ស្រស់ស្រាយ', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500', category_name: 'Beverages & Soft Drinks' },
+  { id: 6, name: 'Iced Lemon Green Tea', price: 1.50, description: 'តែបៃតងក្រូចឆ្មាផ្អែមត្រជាក់', image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500', category_name: 'Beverages & Soft Drinks' }
 ];
 
+// Helper to render Lucide Icons by name
+const renderLucideIcon = (iconName: string, size = 18) => {
+  switch (iconName?.toLowerCase()) {
+    case 'sandwich':
+      return <Sandwich size={size} />;
+    case 'drumstick':
+      return <Drumstick size={size} />;
+    case 'cup-soda':
+      return <CupSoda size={size} />;
+    case 'cake':
+      return <Cake size={size} />;
+    default:
+      return <Utensils size={size} />;
+  }
+};
+
 export default function CustomerMenuPage() {
-  const [foods, setFoods] = useState(DEFAULT_FOODS);
-  const [cart, setCart] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState(null);
+  const [foods, setFoods] = useState<Food[]>(DEFAULT_FOODS);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
+  const [orderSuccess, setOrderSuccess] = useState<Partial<Order> | null>(null);
 
   // Form State
-  const [fulfillmentType, setFulfillmentType] = useState('delivery'); // 'delivery' or 'pickup'
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [pickupTime, setPickupTime] = useState('Within 20-30 mins');
-  const [notes, setNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fulfillmentType, setFulfillmentType] = useState<FulfillmentType>('delivery');
+  const [customerName, setCustomerName] = useState<string>('');
+  const [customerPhone, setCustomerPhone] = useState<string>('');
+  const [deliveryAddress, setDeliveryAddress] = useState<string>('');
+  const [pickupTime, setPickupTime] = useState<string>('Within 20-30 mins');
+  const [notes, setNotes] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Fetch foods from PHP API
   useEffect(() => {
@@ -43,7 +72,7 @@ export default function CustomerMenuPage() {
   }, []);
 
   // Cart operations
-  const addToCart = (food) => {
+  const addToCart = (food: Food) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.food_id === food.id);
       if (existing) {
@@ -55,7 +84,7 @@ export default function CustomerMenuPage() {
     });
   };
 
-  const updateQuantity = (foodId, delta) => {
+  const updateQuantity = (foodId: number, delta: number) => {
     setCart((prev) =>
       prev
         .map((item) => {
@@ -65,7 +94,7 @@ export default function CustomerMenuPage() {
           }
           return item;
         })
-        .filter(Boolean)
+        .filter((item): item is CartItem => item !== null)
     );
   };
 
@@ -74,7 +103,7 @@ export default function CustomerMenuPage() {
   const grandTotal = foodSubtotal + deliveryFee;
 
   // Handle Checkout submission
-  const handlePlaceOrder = async (e) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName || !customerPhone) {
       alert('សូមបញ្ចូលឈ្មោះ និងលេខទូរស័ព្ទ!');
@@ -113,8 +142,8 @@ export default function CustomerMenuPage() {
         alert(data.message || 'Error placing order');
       }
     } catch {
-      // Mock order if PHP is offline
-      const mockOrder = {
+      // Mock order if PHP server is offline
+      const mockOrder: Partial<Order> = {
         order_number: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
         customer_name: customerName,
         fulfillment_type: fulfillmentType,
@@ -151,8 +180,12 @@ export default function CustomerMenuPage() {
               <p className="food-desc">{food.description}</p>
               <div className="food-footer">
                 <span className="food-price">${Number(food.price).toFixed(2)}</span>
-                <button onClick={() => addToCart(food)} className="btn btn-primary" style={{ padding: '6px 14px' }}>
-                  + Add to Cart
+                <button 
+                  onClick={() => addToCart(food)} 
+                  className="btn btn-primary" 
+                  style={{ padding: '6px 14px' }}
+                >
+                  <Plus size={16} /> Add to Cart
                 </button>
               </div>
             </div>
@@ -160,7 +193,7 @@ export default function CustomerMenuPage() {
         ))}
       </div>
 
-      {/* Floating Cart Button (shows when items in cart) */}
+      {/* Floating Cart Button */}
       {cart.length > 0 && (
         <div
           style={{
@@ -208,9 +241,9 @@ export default function CustomerMenuPage() {
               <h2>🛍️ Checkout & បញ្ជាក់ការកុម្ម៉ង់</h2>
               <button
                 onClick={() => setIsCheckoutOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.5rem', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
               >
-                ✕
+                <X size={24} />
               </button>
             </div>
 
@@ -221,9 +254,19 @@ export default function CustomerMenuPage() {
                 <div key={item.food_id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span>{item.name}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button onClick={() => updateQuantity(item.food_id, -1)} style={{ padding: '2px 6px', cursor: 'pointer' }}>-</button>
+                    <button 
+                      onClick={() => updateQuantity(item.food_id, -1)} 
+                      style={{ padding: '2px 6px', cursor: 'pointer', background: '#334155', border: 'none', color: '#fff', borderRadius: '4px' }}
+                    >
+                      <Minus size={12} />
+                    </button>
                     <span>x{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.food_id, 1)} style={{ padding: '2px 6px', cursor: 'pointer' }}>+</button>
+                    <button 
+                      onClick={() => updateQuantity(item.food_id, 1)} 
+                      style={{ padding: '2px 6px', cursor: 'pointer', background: '#334155', border: 'none', color: '#fff', borderRadius: '4px' }}
+                    >
+                      <Plus size={12} />
+                    </button>
                     <span style={{ fontWeight: 700, minWidth: '50px', textAlign: 'right' }}>
                       ${(item.price * item.quantity).toFixed(2)}
                     </span>
@@ -243,14 +286,14 @@ export default function CustomerMenuPage() {
                   onClick={() => setFulfillmentType('delivery')}
                   className={`btn ${fulfillmentType === 'delivery' ? 'btn-primary' : 'btn-outline'}`}
                 >
-                  🚚 ដឹកដល់ផ្ទះ (+$2.00)
+                  <Truck size={18} /> ដឹកដល់ផ្ទះ (+$2.00)
                 </button>
                 <button
                   type="button"
                   onClick={() => setFulfillmentType('pickup')}
                   className={`btn ${fulfillmentType === 'pickup' ? 'btn-primary' : 'btn-outline'}`}
                 >
-                  🛍️ ទៅយកផ្ទាល់ ($0.00)
+                  <ShoppingBag size={18} /> ទៅយកផ្ទាល់ ($0.00)
                 </button>
               </div>
             </div>
@@ -288,7 +331,7 @@ export default function CustomerMenuPage() {
                   </label>
                   <textarea
                     required
-                    rows="2"
+                    rows={2}
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
                     placeholder="ផ្ទះលេខ ផ្លូវ សង្កាត់ ខណ្ឌ..."
@@ -364,7 +407,9 @@ export default function CustomerMenuPage() {
       {orderSuccess && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎉</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+              <CheckCircle2 size={56} className="text-emerald-500" color="#10b981" />
+            </div>
             <h2 style={{ marginBottom: '8px' }}>ការកុម្ម៉ង់ជោគជ័យ!</h2>
             <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
               ហាងបានទទួល Order របស់អ្នករួចរាល់ហើយ

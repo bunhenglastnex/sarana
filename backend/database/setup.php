@@ -44,7 +44,7 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS categories (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
-        icon VARCHAR(50) DEFAULT '🍔',
+        icon VARCHAR(50) DEFAULT 'utensils',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     echo "✅ Table 'categories' ready.\n";
@@ -134,12 +134,12 @@ try {
         (3, 'Sokha Delivery', '099555666', 'delivery2@restaurant.com', 'delivery', ?)");
     $stmt->execute([$adminPassword, $driverPassword, $driverPassword]);
 
-    // Seed Categories
+    // Seed Categories (Using Lucide Icon Names)
     $pdo->exec("INSERT IGNORE INTO categories (id, name, icon) VALUES
-        (1, 'Burgers & Sandwiches', '🍔'),
-        (2, 'Fried Chicken & Sides', '🍗'),
-        (3, 'Beverages & Soft Drinks', '🥤'),
-        (4, 'Desserts & Sweets', '🍰')");
+        (1, 'Burgers & Sandwiches', 'sandwich'),
+        (2, 'Fried Chicken & Sides', 'drumstick'),
+        (3, 'Beverages & Soft Drinks', 'cup-soda'),
+        (4, 'Desserts & Sweets', 'cake')");
 
     // Seed Foods
     $pdo->exec("INSERT IGNORE INTO foods (id, category_id, name, price, description, image_url, is_available) VALUES

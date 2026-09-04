@@ -1,26 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Bike, CheckCircle2, Phone, MapPin, DollarSign, Package, RefreshCw } from 'lucide-react';
+import { Order } from '../../types';
 
-const DEFAULT_DELIVERY_ORDERS = [
+const DEFAULT_DELIVERY_ORDERS: Order[] = [
   {
     id: 1,
     order_number: 'ORD-1001',
     customer_name: 'Dara Roth',
     customer_phone: '012 999 888',
+    fulfillment_type: 'delivery',
     delivery_address: 'House #12, St 210, Toul Kork, Phnom Penh',
+    delivery_fee: '2.00',
+    food_amount: '9.00',
     total_amount: '11.00',
+    payment_method: 'cash_on_delivery',
+    payment_status: 'pending',
     status: 'ready_for_delivery',
     notes: 'Please call before arriving',
-    items: [{ food_name: 'Classic Double Cheeseburger', quantity: 2, price: '4.50' }]
+    items: [{ food_id: 1, food_name: 'Classic Double Cheeseburger', quantity: 2, price: '4.50' }]
   }
 ];
 
 export default function DeliveryStaffPage() {
-  const [deliveryOrders, setDeliveryOrders] = useState(DEFAULT_DELIVERY_ORDERS);
-  const [cashInHand, setCashInHand] = useState(0.00);
-  const [completedCount, setCompletedCount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [deliveryOrders, setDeliveryOrders] = useState<Order[]>(DEFAULT_DELIVERY_ORDERS);
+  const [cashInHand, setCashInHand] = useState<number>(0.00);
+  const [completedCount, setCompletedCount] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const fetchDeliveryOrders = async () => {
     setLoading(true);
@@ -35,7 +42,7 @@ export default function DeliveryStaffPage() {
         }
       }
     } catch {
-      // Offline mock
+      // Offline mock fallback
     } finally {
       setLoading(false);
     }
@@ -47,7 +54,7 @@ export default function DeliveryStaffPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleAction = async (orderId, action, amount) => {
+  const handleAction = async (orderId: number, action: 'pickup_from_kitchen' | 'confirm_delivered', amount: number | string) => {
     try {
       await fetch('http://localhost:8000/api/delivery.php', {
         method: 'POST',
@@ -74,7 +81,7 @@ export default function DeliveryStaffPage() {
       {/* Rider Header */}
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ fontSize: '1.6rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          🛵 ផ្ទាំងបុគ្គលិកដឹកជញ្ជូន (Delivery Staff)
+          <Bike size={26} color="#f59e0b" /> ផ្ទាំងបុគ្គលិកដឹកជញ្ជូន (Delivery Staff)
         </h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
           ឆែកមើលការងារដឹកជញ្ជូន និងប្រមូលលុយសុទ្ធ (Cash on Delivery)
@@ -92,7 +99,9 @@ export default function DeliveryStaffPage() {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>💵 លុយសុទ្ធកំពុងកាន់ក្នុងដៃ (Cash In Hand):</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <DollarSign size={16} /> លុយសុទ្ធកំពុងកាន់ក្នុងដៃ (Cash In Hand):
+            </div>
             <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary)' }}>
               ${cashInHand.toFixed(2)}
             </div>
@@ -100,15 +109,15 @@ export default function DeliveryStaffPage() {
               ដឹកបានជោគជ័យ: {completedCount} Order (ត្រូវទូទាត់ជាមួយហាងចុងវេន)
             </div>
           </div>
-          <button onClick={fetchDeliveryOrders} className="btn btn-outline" style={{ padding: '6px 12px' }}>
-            🔄 {loading ? '...' : 'Refresh'}
+          <button onClick={fetchDeliveryOrders} className="btn btn-outline" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> {loading ? '...' : 'Refresh'}
           </button>
         </div>
       </div>
 
       {/* Active Delivery Orders */}
-      <h2 style={{ fontSize: '1.2rem', marginBottom: '12px' }}>
-        📦 ការងារដែលត្រូវដឹក ({deliveryOrders.length})
+      <h2 style={{ fontSize: '1.2rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Package size={18} /> ការងារដែលត្រូវដឹក ({deliveryOrders.length})
       </h2>
 
       {deliveryOrders.length === 0 ? (
@@ -132,8 +141,15 @@ export default function DeliveryStaffPage() {
               {/* Delivery Details */}
               <div style={{ background: '#0f172a', padding: '12px', borderRadius: '8px', marginBottom: '12px', fontSize: '0.9rem' }}>
                 <div><strong>👤 អតិថិជន:</strong> {order.customer_name}</div>
-                <div><strong>📞 ទូរស័ព្ទ:</strong> <a href={`tel:${order.customer_phone}`} style={{ color: 'var(--primary)', fontWeight: 600 }}>{order.customer_phone}</a></div>
-                <div><strong>📍 អាសយដ្ឋាន:</strong> {order.delivery_address}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Phone size={14} /> <strong>ទូរស័ព្ទ:</strong>{' '}
+                  <a href={`tel:${order.customer_phone}`} style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                    {order.customer_phone}
+                  </a>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <MapPin size={14} /> <strong>អាសយដ្ឋាន:</strong> {order.delivery_address}
+                </div>
                 {order.notes && <div style={{ color: '#f59e0b' }}><strong>📝 កំណត់សម្គាល់:</strong> {order.notes}</div>}
               </div>
 
@@ -150,7 +166,9 @@ export default function DeliveryStaffPage() {
                   alignItems: 'center'
                 }}
               >
-                <span>💵 ត្រូវទារលុយសុទ្ធពីភ្ញៀវ៖</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <DollarSign size={16} /> ត្រូវទារលុយសុទ្ធពីភ្ញៀវ៖
+                </span>
                 <span style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--primary)' }}>
                   ${Number(order.total_amount).toFixed(2)}
                 </span>
@@ -163,7 +181,7 @@ export default function DeliveryStaffPage() {
                   className="btn btn-primary"
                   style={{ width: '100%', padding: '12px' }}
                 >
-                  📦 យកម្ហូបពីផ្ទះបាយ ➔ ចាប់ផ្ដើមចេញដឹក
+                  <Package size={18} /> យកម្ហូបពីផ្ទះបាយ ➔ ចាប់ផ្ដើមចេញដឹក
                 </button>
               ) : (
                 <button
@@ -171,7 +189,7 @@ export default function DeliveryStaffPage() {
                   className="btn btn-success"
                   style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                 >
-                  ✅ បានប្រគល់ម្ហូប & បានលុយសុទ្ធ (${Number(order.total_amount).toFixed(2)}) រួចរាល់
+                  <CheckCircle2 size={18} /> បានប្រគល់ម្ហូប & បានលុយសុទ្ធ (${Number(order.total_amount).toFixed(2)}) រួចរាល់
                 </button>
               )}
             </div>

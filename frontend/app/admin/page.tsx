@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, Check, Clock, UtensilsCrossed, Truck, ShoppingBag } from 'lucide-react';
+import { Order, OrderStatus } from '../../types';
 
 // Default mock orders for demo if backend isn't running
-const DEFAULT_ORDERS = [
+const DEFAULT_ORDERS: Order[] = [
   {
     id: 1,
     order_number: 'ORD-1001',
@@ -15,8 +17,9 @@ const DEFAULT_ORDERS = [
     food_amount: '9.00',
     total_amount: '11.00',
     payment_method: 'cash_on_delivery',
+    payment_status: 'pending',
     status: 'ready_for_delivery',
-    items: [{ food_name: 'Classic Double Cheeseburger', quantity: 2, price: '4.50' }]
+    items: [{ food_id: 1, food_name: 'Classic Double Cheeseburger', quantity: 2, price: '4.50' }]
   },
   {
     id: 2,
@@ -29,14 +32,15 @@ const DEFAULT_ORDERS = [
     food_amount: '4.50',
     total_amount: '4.50',
     payment_method: 'cash_at_counter',
+    payment_status: 'pending',
     status: 'preparing',
-    items: [{ food_name: 'Classic Double Cheeseburger', quantity: 1, price: '4.50' }]
+    items: [{ food_id: 1, food_name: 'Classic Double Cheeseburger', quantity: 1, price: '4.50' }]
   }
 ];
 
 export default function KitchenAdminPage() {
-  const [orders, setOrders] = useState(DEFAULT_ORDERS);
-  const [loading, setLoading] = useState(false);
+  const [orders, setOrders] = useState<Order[]>(DEFAULT_ORDERS);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -47,7 +51,7 @@ export default function KitchenAdminPage() {
         setOrders(data.orders);
       }
     } catch {
-      // Keep mock orders if offline
+      // Keep mock orders if backend is offline
     } finally {
       setLoading(false);
     }
@@ -59,7 +63,7 @@ export default function KitchenAdminPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const updateStatus = async (orderId, newStatus) => {
+  const updateStatus = async (orderId: number, newStatus: OrderStatus) => {
     try {
       await fetch('http://localhost:8000/api/order-status.php', {
         method: 'PATCH',
@@ -70,7 +74,7 @@ export default function KitchenAdminPage() {
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
     } catch {
-      // Local update if offline
+      // Local fallback state update
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
@@ -88,8 +92,9 @@ export default function KitchenAdminPage() {
             តាមដាន និងផ្លាស់ប្តូរស្ថានភាពកុម្ម៉ង់សម្រាប់ Pickup និង Delivery
           </p>
         </div>
-        <button onClick={fetchOrders} className="btn btn-outline">
-          🔄 {loading ? 'កំពុងទាញយក...' : 'Refresh'}
+        <button onClick={fetchOrders} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          {loading ? 'កំពុងទាញយក...' : 'Refresh'}
         </button>
       </div>
 
@@ -103,7 +108,11 @@ export default function KitchenAdminPage() {
                   {order.order_number}
                 </span>
                 <span className={`badge ${order.fulfillment_type === 'delivery' ? 'badge-delivery' : 'badge-pickup'}`}>
-                  {order.fulfillment_type === 'delivery' ? '🚚 Delivery (ដឹកដល់ផ្ទះ)' : '🛍️ Pickup (មកយកនៅហាង)'}
+                  {order.fulfillment_type === 'delivery' ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Truck size={14} /> Delivery (ដឹកដល់ផ្ទះ)</span>
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><ShoppingBag size={14} /> Pickup (មកយកនៅហាង)</span>
+                  )}
                 </span>
               </div>
               <div>
@@ -141,13 +150,13 @@ export default function KitchenAdminPage() {
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               {order.status === 'pending' && (
                 <button onClick={() => updateStatus(order.id, 'accepted')} className="btn btn-primary">
-                  ✓ ទទួល Order (Accept)
+                  <Check size={16} /> ទទួល Order (Accept)
                 </button>
               )}
 
               {order.status === 'accepted' && (
                 <button onClick={() => updateStatus(order.id, 'preparing')} className="btn btn-primary">
-                  🍳 ចាប់ផ្ដើមធ្វើម្ហូប (Preparing)
+                  <UtensilsCrossed size={16} /> ចាប់ផ្ដើមធ្វើម្ហូប (Preparing)
                 </button>
               )}
 
@@ -155,11 +164,11 @@ export default function KitchenAdminPage() {
                 <>
                   {order.fulfillment_type === 'delivery' ? (
                     <button onClick={() => updateStatus(order.id, 'ready_for_delivery')} className="btn btn-success">
-                      📦 ម្ហូបរួចរាល់ ➔ ផ្ដល់ដំណឹងឱ្យ Delivery
+                      <Truck size={16} /> ម្ហូបរួចរាល់ ➔ ផ្ដល់ដំណឹងឱ្យ Delivery
                     </button>
                   ) : (
                     <button onClick={() => updateStatus(order.id, 'ready_for_pickup')} className="btn btn-success">
-                      🛍️ ម្ហូបរួចរាល់ ➔ ផ្ដល់ដំណឹងឱ្យភ្ញៀវមកយក
+                      <ShoppingBag size={16} /> ម្ហូបរួចរាល់ ➔ ផ្ដល់ដំណឹងឱ្យភ្ញៀវមកយក
                     </button>
                   )}
                 </>
@@ -172,20 +181,20 @@ export default function KitchenAdminPage() {
               )}
 
               {order.status === 'ready_for_delivery' && (
-                <div style={{ color: '#60a5fa', fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
-                  ⏳ កំពុងរង់ចាំអ្នកដឹកជញ្ជូន (Delivery Staff) មកទទួលយកម្ហូប...
+                <div style={{ color: '#60a5fa', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Clock size={16} /> កំពុងរង់ចាំអ្នកដឹកជញ្ជូន (Delivery Staff) មកទទួលយកម្ហូប...
                 </div>
               )}
 
               {order.status === 'on_the_way' && (
-                <div style={{ color: '#ec4899', fontSize: '0.9rem', display: 'flex', alignItems: 'center' }}>
-                  🛵 អ្នកដឹកកំពុងធ្វើដំណើរទៅផ្ទះភ្ញៀវ...
+                <div style={{ color: '#ec4899', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Truck size={16} /> អ្នកដឹកកំពុងធ្វើដំណើរទៅផ្ទះភ្ញៀវ...
                 </div>
               )}
 
               {order.status === 'completed' && (
-                <div style={{ color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center' }}>
-                  ✓ Order បញ្ចប់ដោយជោគជ័យ
+                <div style={{ color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Check size={16} /> Order បញ្ចប់ដោយជោគជ័យ
                 </div>
               )}
             </div>
