@@ -32,28 +32,32 @@ restaurant-ordering-system/
 
 ---
 
-## 🚀 Running on a Development Machine
+## 🚀 Running Frontend & Backend with ONE Command
 
-### 1. Backend (PHP + MySQL)
-1. Start **MySQL** in your environment (Port 3306).
-2. In the `backend/` directory:
+### ⚡ Quick Start (Single Command)
+
+From the project root directory (`D:\learning\Sarana\Online-Ordering`):
+
+1. **Install dependencies once**:
    ```bash
-   cd backend
-   # Setup database tables and seed initial data (Run once)
-   php database/setup.php
-
-   # Start built-in PHP server
-   php -S localhost:8000
-
-   # (Optional) Start Telegram Bot Local Long-Polling listener
-   php telegram-poll.php
+   npm install
+   cd frontend && npm install && cd ..
    ```
 
-### 2. Frontend (Next.js)
-In the `frontend/` directory:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Open **`http://localhost:3000`** in your browser.
+2. **Run both Backend (PHP) & Frontend (Next.js) together**:
+   ```bash
+   npm run dev
+   ```
+
+This launches:
+- **Backend API**: `http://localhost:8000` (PHP Server)
+- **Frontend App**: `http://localhost:3000` (Next.js App)
+
+---
+
+### 🛠️ Individual Commands
+
+- **Setup Database**: `npm run setup:db` *(or `php backend/database/setup.php`)*
+- **Start Backend Only**: `npm run backend` *(or `php -S localhost:8000 -t backend`)*
+- **Start Frontend Only**: `npm run frontend` *(or `npm run dev --prefix frontend`)*
+- **Start Telegram Bot Listener**: `npm run telegram:poll` *(or `php backend/telegram-poll.php`)*

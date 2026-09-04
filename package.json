@@ -1,0 +1,17 @@
+{
+  "name": "restaurant-online-ordering",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Single Restaurant Online Ordering & In-House Delivery System",
+  "scripts": {
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan.bold,magenta.bold\" \"php -S localhost:8000 -t backend\" \"npm run dev --prefix frontend\"",
+    "start": "npm run dev",
+    "backend": "php -S localhost:8000 -t backend",
+    "frontend": "npm run dev --prefix frontend",
+    "setup:db": "php backend/database/setup.php",
+    "telegram:poll": "php backend/telegram-poll.php"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
