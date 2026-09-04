@@ -5,6 +5,7 @@
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
+require_once __DIR__ . '/../lib/telegram.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
@@ -74,6 +75,16 @@ if ($method === 'GET') {
     $staffId = isset($input['staff_id']) ? (int)$input['staff_id'] : 2;
 
     try {
+        // Fetch order details & rider details
+        $orderStmt = $pdo->prepare("SELECT id, order_number, customer_name, customer_phone, telegram_chat_id, status FROM orders WHERE id = ?");
+        $orderStmt->execute([$orderId]);
+        $order = $orderStmt->fetch();
+
+        $staffStmt = $pdo->prepare("SELECT name FROM users WHERE id = ?");
+        $staffStmt->execute([$staffId]);
+        $staff = $staffStmt->fetch();
+        $riderName = $staff['name'] ?? 'Delivery Rider';
+
         if ($action === 'pickup_from_kitchen') {
             // Rider picks up order -> status becomes on_the_way
             $stmt = $pdo->prepare("
@@ -82,6 +93,13 @@ if ($method === 'GET') {
                 WHERE id = ? AND fulfillment_type = 'delivery'
             ");
             $stmt->execute([$staffId, $orderId]);
+
+            // 📲 TELEGRAM ALERT
+            $statusMsg = formatOrderStatusUpdateMessage($order, 'on_the_way', "Assigned Rider: {$riderName}");
+            notifyTelegramGroup($statusMsg);
+            if (!empty($order['telegram_chat_id'])) {
+                notifyCustomerTelegram($order['telegram_chat_id'], $statusMsg);
+            }
 
             jsonResponse(1, 'Order picked up from kitchen. Status is now On The Way.', [
                 'order_id' => $orderId,
@@ -95,6 +113,13 @@ if ($method === 'GET') {
                 WHERE id = ? AND fulfillment_type = 'delivery'
             ");
             $stmt->execute([$staffId, $orderId]);
+
+            // 📲 TELEGRAM ALERT
+            $statusMsg = formatOrderStatusUpdateMessage($order, 'completed', "Delivered by {$riderName}. Cash Collected!");
+            notifyTelegramGroup($statusMsg);
+            if (!empty($order['telegram_chat_id'])) {
+                notifyCustomerTelegram($order['telegram_chat_id'], $statusMsg);
+            }
 
             jsonResponse(1, 'Order completed and Cash on Delivery collected!', [
                 'order_id'       => $orderId,

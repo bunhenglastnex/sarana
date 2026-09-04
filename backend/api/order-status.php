@@ -5,6 +5,7 @@
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
+require_once __DIR__ . '/../lib/telegram.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
@@ -32,11 +33,27 @@ if ($method === 'PATCH' || $method === 'POST') {
     }
 
     try {
+        // Fetch order details before update
+        $orderStmt = $pdo->prepare("SELECT id, order_number, customer_name, customer_phone, telegram_chat_id, status FROM orders WHERE id = ?");
+        $orderStmt->execute([$input['order_id']]);
+        $order = $orderStmt->fetch();
+
+        if (!$order) {
+            jsonResponse(0, 'Order not found', null, 404);
+        }
+
         $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
         $stmt->execute([$input['status'], $input['order_id']]);
 
-        if ($stmt->rowCount() === 0) {
-            jsonResponse(0, 'Order not found or status unchanged', null, 404);
+        // 📲 SEND TELEGRAM NOTIFICATIONS
+        $statusMsg = formatOrderStatusUpdateMessage($order, $input['status']);
+
+        // 1. Notify Admin/Delivery Group
+        notifyTelegramGroup($statusMsg);
+
+        // 2. Notify Customer (if customer has linked Telegram)
+        if (!empty($order['telegram_chat_id'])) {
+            notifyCustomerTelegram($order['telegram_chat_id'], $statusMsg);
         }
 
         jsonResponse(1, "Order status updated to {$input['status']}", [

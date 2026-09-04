@@ -16,7 +16,9 @@ jsonResponse(1, 'Single Restaurant Online Ordering API (Cash Only)', [
         'POST /api/orders.php'        => 'Create new order (supports delivery & pickup, cash only)',
         'PATCH /api/order-status.php' => 'Update order status',
         'GET  /api/delivery.php'      => 'List orders assigned/ready for delivery staff',
-        'POST /api/delivery.php'      => 'Delivery actions (pickup, confirm delivered)'
+        'POST /api/delivery.php'      => 'Delivery actions (pickup, confirm delivered)',
+        'POST /api/telegram-link.php'  => 'Link customer phone to Telegram Bot chat_id',
+        'POST /api/telegram-webhook.php' => 'Telegram Bot Webhook endpoint'
     ]
 ]);
 

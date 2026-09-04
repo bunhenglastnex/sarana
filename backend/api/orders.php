@@ -5,6 +5,7 @@
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
+require_once __DIR__ . '/../lib/telegram.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
@@ -63,13 +64,22 @@ if ($method === 'GET') {
         jsonResponse(0, 'Invalid fulfillment type. Must be delivery or pickup', null, 400);
     }
 
+    $customerPhone   = trim($input['customer_phone']);
     $deliveryAddress = ($fulfillmentType === 'delivery') ? ($input['delivery_address'] ?? '') : null;
-    $deliveryFee = ($fulfillmentType === 'delivery') ? 2.00 : 0.00;
-    $paymentMethod = ($fulfillmentType === 'delivery') ? 'cash_on_delivery' : 'cash_at_counter';
+    $deliveryFee     = ($fulfillmentType === 'delivery') ? 2.00 : 0.00;
+    $paymentMethod   = ($fulfillmentType === 'delivery') ? 'cash_on_delivery' : 'cash_at_counter';
 
     $orderNumber = 'ORD-' . strtoupper(substr(uniqid(), -6));
 
     try {
+        // Check if customer phone is linked to a user/telegram account
+        $userStmt = $pdo->prepare("SELECT id, telegram_chat_id FROM users WHERE phone = ?");
+        $userStmt->execute([$customerPhone]);
+        $userMatch = $userStmt->fetch();
+
+        $userId = $userMatch ? (int)$userMatch['id'] : null;
+        $telegramChatId = $userMatch['telegram_chat_id'] ?? ($input['telegram_chat_id'] ?? null);
+
         $pdo->beginTransaction();
 
         // Calculate Food Subtotal from items
@@ -107,15 +117,17 @@ if ($method === 'GET') {
         // Insert Order Record
         $orderStmt = $pdo->prepare("
             INSERT INTO orders (
-                order_number, customer_name, customer_phone, fulfillment_type,
-                delivery_address, delivery_fee, food_amount, total_amount,
+                order_number, user_id, customer_name, customer_phone, telegram_chat_id,
+                fulfillment_type, delivery_address, delivery_fee, food_amount, total_amount,
                 payment_method, payment_status, status, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?)
         ");
         $orderStmt->execute([
             $orderNumber,
+            $userId,
             $input['customer_name'],
-            $input['customer_phone'],
+            $customerPhone,
+            $telegramChatId,
             $fulfillmentType,
             $deliveryAddress,
             $deliveryFee,
@@ -144,6 +156,30 @@ if ($method === 'GET') {
         }
 
         $pdo->commit();
+
+        // 📲 SEND TELEGRAM NOTIFICATIONS
+        $orderData = [
+            'order_number'     => $orderNumber,
+            'customer_name'    => $input['customer_name'],
+            'customer_phone'   => $customerPhone,
+            'fulfillment_type' => $fulfillmentType,
+            'delivery_address' => $deliveryAddress,
+            'delivery_fee'     => $deliveryFee,
+            'food_amount'      => $foodAmount,
+            'total_amount'     => $totalAmount,
+            'payment_method'   => $paymentMethod,
+            'notes'            => $input['notes'] ?? ''
+        ];
+
+        // 1. Notify Admin & Delivery Group
+        $groupMsg = formatNewOrderGroupMessage($orderData, $itemsToInsert);
+        notifyTelegramGroup($groupMsg);
+
+        // 2. Notify Customer directly if Telegram is linked
+        if (!empty($telegramChatId)) {
+            $custMsg = "🎉 <b>Order Received!</b>\n\nYour order <code>{$orderNumber}</code> has been received. Total: <b>\${$totalAmount}</b> ({$fulfillmentType}). We will update you here as your food is prepared!";
+            notifyCustomerTelegram($telegramChatId, $custMsg);
+        }
 
         jsonResponse(1, 'Order created successfully (Cash Payment)', [
             'order_id'       => $orderId,
