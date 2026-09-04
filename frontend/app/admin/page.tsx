@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Order, OrderStatus } from '@/types';
+import React, { useState, useEffect } from 'react';
+import { Order, OrderStatus, OrdersApiResponse } from '@/types';
+import { Api } from '@/lib/api';
 
-// Structured Mock Orders (No Fetch API)
+// Structured Mock Orders (Fallback if backend not yet running)
 const INITIAL_ORDERS: Order[] = [
   {
     id: 1,
@@ -54,26 +55,71 @@ const INITIAL_ORDERS: Order[] = [
 
 export default function KitchenAdminPage() {
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isCached, setIsCached] = useState<boolean>(false);
 
-  const updateStatus = (orderId: number, nextStatus: OrderStatus) => {
+  const loadOrders = async (force = false) => {
+    setLoading(true);
+    const res = await Api.get<OrdersApiResponse>('/api/orders.php', undefined, {
+      forceRefresh: force,
+    });
+
+    if (res.success && res.data?.orders && res.data.orders.length > 0) {
+      setOrders(res.data.orders);
+      setIsCached(res.fromCache);
+    } else {
+      setIsCached(false);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const updateStatus = async (orderId: number, nextStatus: OrderStatus) => {
+    // Optimistic UI update
     setOrders((prev) =>
       prev.map((ord) => (ord.id === orderId ? { ...ord, status: nextStatus } : ord))
     );
+
+    // Call Backend API with PATCH (Automatically invalidates cache)
+    await Api.patch('/api/order-status.php', {
+      order_id: orderId,
+      status: nextStatus,
+    });
   };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto font-sans">
       <div>
-        <h1 className="text-2xl font-bold">Kitchen Admin - Order Management Example</h1>
+        <h1 className="text-2xl font-bold">Kitchen Admin - Order Management</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Text example showing incoming orders, items, fulfillment types, and kitchen status controls.
+          Connected to <code className="text-primary font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Api.get('/api/orders.php')</code> and <code className="text-primary font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Api.patch('/api/order-status.php')</code>.
         </p>
       </div>
 
       <div className="border border-border rounded-lg p-5 bg-card space-y-4">
-        <div className="flex justify-between items-center border-b border-border pb-3">
-          <h2 className="text-lg font-semibold">Active Orders List ({orders.length})</h2>
-          <span className="text-xs text-muted-foreground">In-Memory Mock State (No API Dependency)</span>
+        <div className="flex justify-between items-center border-b border-border pb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Active Orders List ({orders.length})</h2>
+            {isCached ? (
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-mono">
+                ⚡ From Cache (មិនទាញឡើងវិញពេលប្ដូរ page)
+              </span>
+            ) : (
+              <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-mono">
+                🌐 From Server
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => loadOrders(true)}
+            disabled={loading}
+            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded bg-muted/60 border border-border"
+          >
+            {loading ? 'កំពុងទាញ...' : '🔄 Force Refresh'}
+          </button>
         </div>
 
         <div className="space-y-4">

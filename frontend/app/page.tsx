@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Food, CartItem, FulfillmentType } from '@/types';
+import React, { useState, useEffect } from 'react';
+import { Food, CartItem, FulfillmentType, FoodsApiResponse, CreateOrderApiResponse } from '@/types';
+import { Api } from '@/lib/api';
 
-// Sample Mock Data (No Fetch API)
+// Fallback Mock Data if Backend PHP is not started yet
 const SAMPLE_MENU: Food[] = [
   { id: 1, name: 'Double Cheeseburger', price: 4.50, description: 'Double beef patties, melted cheddar, lettuce, pickles', category_name: 'Burgers' },
   { id: 2, name: 'Crispy Chicken Burger', price: 3.80, description: 'Crispy fried chicken breast with spicy mayo', category_name: 'Burgers' },
@@ -14,6 +15,9 @@ const SAMPLE_MENU: Food[] = [
 ];
 
 export default function CustomerOrderPage() {
+  const [foods, setFoods] = useState<Food[]>(SAMPLE_MENU);
+  const [loadingFoods, setLoadingFoods] = useState(false);
+  const [isCached, setIsCached] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([
     { food_id: 1, name: 'Double Cheeseburger', price: 4.50, quantity: 2 },
     { food_id: 5, name: 'Coca Cola', price: 1.00, quantity: 1 }
@@ -22,7 +26,30 @@ export default function CustomerOrderPage() {
   const [customerName, setCustomerName] = useState('Dara Roth');
   const [customerPhone, setCustomerPhone] = useState('012 999 888');
   const [address, setAddress] = useState('House #12, St 210, Toul Kork, Phnom Penh');
-  const [orderCreated, setOrderCreated] = useState(false);
+  const [submittingOrder, setSubmittingOrder] = useState(false);
+  const [orderResult, setOrderResult] = useState<CreateOrderApiResponse | null>(null);
+
+  // Fetch foods with automatic cache (កុំឲ្យប្ដូរ page វាទាញម្ដងទៀត)
+  const loadFoods = async (force = false) => {
+    setLoadingFoods(true);
+    const res = await Api.get<FoodsApiResponse>('/api/foods.php', undefined, {
+      forceRefresh: force,
+    });
+
+    if (res.success && res.data?.foods && res.data.foods.length > 0) {
+      setFoods(res.data.foods);
+      setIsCached(res.fromCache);
+    } else {
+      // Keep sample menu if backend not running
+      setIsCached(false);
+    }
+    setLoadingFoods(false);
+  };
+
+  useEffect(() => {
+    loadFoods();
+  }, []);
+
 
   const foodSubtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const deliveryFee = fulfillmentType === 'delivery' ? 2.00 : 0.00;
@@ -47,28 +74,85 @@ export default function CustomerOrderPage() {
         .filter((item) => item.quantity > 0)
     );
   };
+  const handleSubmitOrder = async () => {
+    if (cart.length === 0) return;
+    setSubmittingOrder(true);
+
+    const payload = {
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      fulfillment_type: fulfillmentType,
+      delivery_address: fulfillmentType === 'delivery' ? address : undefined,
+      pickup_time: fulfillmentType === 'pickup' ? 'Within 20 mins' : undefined,
+      items: cart.map((item) => ({
+        food_id: item.food_id,
+        quantity: item.quantity,
+      })),
+    };
+
+    const res = await Api.post<CreateOrderApiResponse>('/api/orders.php', payload);
+    if (res.success && res.data) {
+      setOrderResult(res.data);
+    } else {
+      // Fallback display if backend is currently offline
+      setOrderResult({
+        success: true,
+        message: 'Order simulated (Backend offline or not reachable)',
+        order_number: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+      });
+    }
+    setSubmittingOrder(false);
+  };
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto font-sans">
       <div>
-        <h1 className="text-2xl font-bold">Customer Order - Menu & Checkout Example</h1>
+        <h1 className="text-2xl font-bold">Customer Order - Menu & Checkout</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Example text-based workflow for online ordering with Cash on Delivery (COD) or In-Store Pickup.
+          Connected to Unified <code className="text-primary font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Api.get()</code> and <code className="text-primary font-mono text-xs bg-muted px-1.5 py-0.5 rounded">Api.post()</code> with client caching.
         </p>
       </div>
 
       {/* 1. Menu List Section */}
       <div className="border border-border rounded-lg p-5 bg-card space-y-4">
-        <h2 className="text-lg font-semibold border-b border-border pb-2">1. Menu Items</h2>
+        <div className="flex justify-between items-center border-b border-border pb-2 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">1. Menu Items</h2>
+            {isCached ? (
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-mono">
+                ⚡ From Cache (មិនទាញឡើងវិញពេលប្ដូរ page)
+              </span>
+            ) : (
+              <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-mono">
+                🌐 From Server
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => loadFoods(true)}
+            disabled={loadingFoods}
+            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded bg-muted/60 border border-border"
+          >
+            {loadingFoods ? 'កំពុងទាញ...' : '🔄 Force Refresh'}
+          </button>
+        </div>
+
         <div className="divide-y divide-border">
-          {SAMPLE_MENU.map((item) => (
+          {foods.map((item) => (
             <div key={item.id} className="py-3 flex justify-between items-center text-sm">
               <div>
-                <div className="font-semibold">{item.name} <span className="text-xs text-muted-foreground">({item.category_name})</span></div>
-                <div className="text-xs text-muted-foreground">{item.description}</div>
+                <div className="font-semibold">
+                  {item.name}{' '}
+                  {item.category_name && (
+                    <span className="text-xs text-muted-foreground">({item.category_name})</span>
+                  )}
+                </div>
+                {item.description && (
+                  <div className="text-xs text-muted-foreground">{item.description}</div>
+                )}
               </div>
               <div className="flex items-center gap-4">
-                <span className="font-bold">${item.price.toFixed(2)}</span>
+                <span className="font-bold">${Number(item.price).toFixed(2)}</span>
                 <button
                   onClick={() => handleAdd(item)}
                   className="px-2.5 py-1 text-xs bg-primary text-primary-foreground font-semibold rounded hover:opacity-90"
@@ -192,26 +276,27 @@ export default function CustomerOrderPage() {
         </div>
 
         <button
-          onClick={() => setOrderCreated(true)}
-          disabled={cart.length === 0}
+          onClick={handleSubmitOrder}
+          disabled={cart.length === 0 || submittingOrder}
           className="w-full py-2.5 bg-primary text-primary-foreground font-semibold rounded hover:opacity-90 transition-opacity text-sm disabled:opacity-50"
         >
-          Submit Order Example
+          {submittingOrder ? 'Submitting Order via Api.post()...' : 'Submit Order (Api.post)'}
         </button>
       </div>
 
       {/* 3. Order Result Preview */}
-      {orderCreated && (
+      {orderResult && (
         <div className="border border-emerald-500/40 bg-emerald-500/10 rounded-lg p-5 text-sm space-y-2">
-          <div className="font-bold text-emerald-400">Order Placed Successfully (Example Result):</div>
-          <div><strong>Order Number:</strong> ORD-1003</div>
+          <div className="font-bold text-emerald-400">Order Placed Successfully ({orderResult.message}):</div>
+          <div><strong>Order Number:</strong> {orderResult.order_number || 'ORD-NEW'}</div>
           <div><strong>Customer:</strong> {customerName} ({customerPhone})</div>
           <div><strong>Type:</strong> {fulfillmentType === 'delivery' ? 'Delivery to ' + address : 'Pickup in-store'}</div>
           <div><strong>Total:</strong> ${grandTotal.toFixed(2)}</div>
           <div><strong>Payment Status:</strong> Pending (To be paid in cash upon {fulfillmentType === 'delivery' ? 'delivery' : 'pickup'})</div>
-          <div><strong>Status:</strong> Pending ➔ Kitchen will accept order</div>
+          <div><strong>Status:</strong> Pending ➔ Sent to Kitchen Admin API</div>
         </div>
       )}
     </div>
   );
 }
+

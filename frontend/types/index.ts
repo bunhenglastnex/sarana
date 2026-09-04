@@ -69,3 +69,50 @@ export interface Order {
   created_at?: string;
   items?: OrderItem[];
 }
+
+// API Payload & Response Types
+export interface FoodsApiResponse {
+  success: boolean;
+  categories: Category[];
+  foods: Food[];
+  message?: string;
+}
+
+export interface OrdersApiResponse {
+  success: boolean;
+  orders: Order[];
+  message?: string;
+}
+
+export interface CreateOrderPayload {
+  customer_name: string;
+  customer_phone: string;
+  fulfillment_type: FulfillmentType;
+  delivery_address?: string;
+  pickup_time?: string;
+  notes?: string;
+  items: { food_id: number; quantity: number }[];
+}
+
+export interface CreateOrderApiResponse {
+  success: boolean;
+  message: string;
+  order_id?: number;
+  order_number?: string;
+}
+
+export interface UpdateOrderStatusPayload {
+  order_id: number;
+  status: OrderStatus;
+}
+
+export interface DeliveryApiResponse {
+  success: boolean;
+  orders: Order[];
+  cash_summary: {
+    cash_in_hand: number | string;
+    deliveries_completed: number | string;
+  };
+  message?: string;
+}
+
