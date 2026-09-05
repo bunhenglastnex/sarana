@@ -30,6 +30,7 @@ export const AdminHeader: React.FC = () => {
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
           <input
             ref={searchInputRef}
+            suppressHydrationWarning
             className="w-full pl-9 pr-space-md py-1.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-sm placeholder:text-on-surface-variant outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/40 transition-all border border-border/40"
             placeholder="Quick search Order #, Dish, or Customer (Press '/' to focus)..."
             type="text"

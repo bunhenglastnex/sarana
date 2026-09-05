@@ -204,6 +204,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
             <input
               type="text"
+              suppressHydrationWarning
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
               placeholder="Search by #ID, customer, phone..."

@@ -7,7 +7,6 @@ import { RhythmChart } from "@/components/admin/RhythmChart";
 import { OrderMixChart } from "@/components/admin/OrderMixChart";
 import { SignatureItemCard } from "@/components/admin/SignatureItemCard";
 import { LiveOrdersTable } from "@/components/admin/LiveOrdersTable";
-import { OperationalAlertsBar } from "@/components/admin/OperationalAlertsBar";
 
 export default function AdminDashboardPage() {
   return (
@@ -34,9 +33,6 @@ export default function AdminDashboardPage() {
 
       {/* Operational Orders Table Section */}
       <LiveOrdersTable />
-
-      {/* Operational Alert & Live Courier Dispatch Bar */}
-      <OperationalAlertsBar />
     </div>
   );
 }
