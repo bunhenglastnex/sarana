@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { KdsTicket } from "@/types/kds";
 import { KdsSubHeader } from "@/components/admin/kds/KdsSubHeader";
 import { KdsKanbanColumn } from "@/components/admin/kds/KdsKanbanColumn";
-import { KdsBottomBar } from "@/components/admin/kds/KdsBottomBar";
 
 const initialTickets: KdsTicket[] = [
   // COLUMN 1: PENDING
@@ -321,9 +320,6 @@ export default function LiveOrderBoardPage() {
           onAction={handleAction}
         />
       </div>
-
-      {/* Operational Bottom Analytics & Cook Capacity Bar */}
-      <KdsBottomBar />
     </div>
   );
 }

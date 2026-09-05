@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Flame,
   RefreshCw,
@@ -8,6 +8,8 @@ import {
   Volume2,
   VolumeX,
   Kanban,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
 interface KdsSubHeaderProps {
@@ -28,6 +30,25 @@ export const KdsSubHeader: React.FC<KdsSubHeaderProps> = ({
   onFilterChange,
 }) => {
   const [isSoundOn, setIsSoundOn] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  };
 
   return (
     <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm border border-border/40 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-space-md">
@@ -111,6 +132,22 @@ export const KdsSubHeader: React.FC<KdsSubHeaderProps> = ({
           )}
           <span className="font-label-sm text-xs font-semibold">
             Bell: {isSoundOn ? "ON" : "MUTED"}
+          </span>
+        </button>
+
+        {/* Fullscreen Toggle for Kitchen Monitor */}
+        <button
+          onClick={toggleFullscreen}
+          className="flex items-center gap-space-2xs px-space-sm py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors border border-border/30"
+          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen Monitor Mode"}
+        >
+          {isFullscreen ? (
+            <Minimize2 className="w-4 h-4 text-primary" />
+          ) : (
+            <Maximize2 className="w-4 h-4 text-on-surface-variant" />
+          )}
+          <span className="font-label-sm text-xs font-semibold">
+            {isFullscreen ? "Exit Full" : "Fullscreen"}
           </span>
         </button>
       </div>

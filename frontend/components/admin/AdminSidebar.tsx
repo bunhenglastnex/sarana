@@ -84,19 +84,26 @@ export const AdminSidebar: React.FC = () => {
 
           <Link
             href="/admin/live-order-board"
-            className={`flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
+            className={`flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors font-medium ${
               isNavActive("/admin/live-order-board")
-                ? "bg-primary-container text-on-primary-container font-bold"
+                ? "bg-primary-container text-on-primary-container font-bold shadow-xs"
                 : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
             }`}
           >
-            <div className="flex items-center gap-space-sm">
+            <div className="flex items-center gap-space-sm min-w-0 pr-1">
               <CookingPot className="w-5 h-5 shrink-0" />
-              <span className="font-label-lg text-label-lg">
+              <span className="font-label-lg text-label-lg truncate">
                 Live Kitchen Board
               </span>
             </div>
-            <span className="font-label-sm text-[10px] bg-primary text-on-primary px-space-xs py-0.5 rounded-full font-bold">
+            <span
+              className={`font-label-sm text-[10px] px-2 py-0.5 rounded-full font-extrabold shrink-0 flex items-center gap-1.5 transition-colors ${
+                isNavActive("/admin/live-order-board")
+                  ? "bg-surface-container-lowest text-primary shadow-xs"
+                  : "bg-primary-fixed text-on-primary-fixed"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               6 Live
             </span>
           </Link>

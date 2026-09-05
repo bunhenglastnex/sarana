@@ -35,7 +35,7 @@ export const KdsKanbanColumn: React.FC<KdsKanbanColumnProps> = ({
 
   return (
     <div
-      className={`flex flex-col gap-space-sm p-space-sm rounded-xl border border-border/40 min-h-[500px] transition-colors ${containerClass}`}
+      className={`flex flex-col gap-space-sm p-space-sm rounded-xl border border-border/40 min-h-[500px] h-full transition-colors ${containerClass}`}
     >
       {/* Column Header */}
       <div className="flex items-center justify-between px-space-xs py-1 border-b border-border/30 pb-2">
@@ -56,7 +56,7 @@ export const KdsKanbanColumn: React.FC<KdsKanbanColumnProps> = ({
       </div>
 
       {/* Column Cards Queue */}
-      <div className="flex flex-col gap-space-sm overflow-y-auto max-h-[calc(100vh-220px)] custom-scrollbar pr-0.5">
+      <div className="flex flex-col gap-space-sm overflow-y-auto max-h-[calc(100vh-210px)] custom-scrollbar pr-1.5 pb-4">
         {tickets.length === 0 ? (
           <div className="py-12 text-center text-xs text-on-surface-variant font-medium bg-surface-container-lowest/50 rounded-lg border border-dashed border-border/40">
             No orders in queue

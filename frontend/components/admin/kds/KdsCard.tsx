@@ -24,7 +24,7 @@ export const KdsCard: React.FC<KdsCardProps> = ({ ticket, onAction }) => {
 
   return (
     <div
-      className={`bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col gap-space-sm hover:shadow-md transition-shadow relative overflow-hidden border border-border/40 ${
+      className={`bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col gap-space-sm hover:shadow-md transition-shadow relative overflow-hidden border border-border/40 shrink-0 ${
         ticket.readySubtype === "pickup"
           ? "border-l-4 border-l-primary"
           : ticket.readySubtype === "delivery"
