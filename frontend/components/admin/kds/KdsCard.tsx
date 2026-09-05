@@ -28,15 +28,17 @@ export const KdsCard: React.FC<KdsCardProps> = ({ ticket, onAction }) => {
         ticket.readySubtype === "pickup"
           ? "border-l-4 border-l-primary"
           : ticket.readySubtype === "delivery"
-          ? "border-l-4 border-l-secondary"
-          : ""
+            ? "border-l-4 border-l-secondary"
+            : ""
       }`}
     >
       {/* Visual Accent Bar for Preparing State */}
       {ticket.status === "preparing" && (
         <div
           className={`absolute top-0 left-0 right-0 h-1 ${
-            (ticket.prepProgress || 0) > 70 ? "bg-primary" : "bg-secondary-container"
+            (ticket.prepProgress || 0) > 70
+              ? "bg-primary"
+              : "bg-secondary-container"
           }`}
         />
       )}
@@ -154,8 +156,8 @@ export const KdsCard: React.FC<KdsCardProps> = ({ ticket, onAction }) => {
                         mod.isAlert
                           ? "bg-error-container text-on-error-container font-bold flex items-center gap-0.5"
                           : mod.isPrimary
-                          ? "bg-surface-container-lowest text-primary font-bold border border-primary/20"
-                          : "bg-surface-container-lowest text-on-surface-variant"
+                            ? "bg-surface-container-lowest text-primary font-bold border border-primary/20"
+                            : "bg-surface-container-lowest text-on-surface-variant"
                       }`}
                     >
                       {mod.isAlert && <AlertTriangle className="w-2.5 h-2.5" />}

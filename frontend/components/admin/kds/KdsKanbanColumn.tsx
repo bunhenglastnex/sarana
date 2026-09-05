@@ -72,7 +72,11 @@ export const KdsKanbanColumn: React.FC<KdsKanbanColumnProps> = ({
                 </div>
                 <div className="flex flex-col gap-space-sm">
                   {pickupReady.map((ticket) => (
-                    <KdsCard key={ticket.id} ticket={ticket} onAction={onAction} />
+                    <KdsCard
+                      key={ticket.id}
+                      ticket={ticket}
+                      onAction={onAction}
+                    />
                   ))}
                 </div>
               </div>
@@ -83,11 +87,17 @@ export const KdsKanbanColumn: React.FC<KdsKanbanColumnProps> = ({
               <div className="flex flex-col gap-space-2xs">
                 <div className="flex items-center gap-1 px-1 font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">
                   <Bike className="w-3.5 h-3.5 text-secondary" />
-                  <span>Ready for Delivery Courier ({deliveryReady.length})</span>
+                  <span>
+                    Ready for Delivery Courier ({deliveryReady.length})
+                  </span>
                 </div>
                 <div className="flex flex-col gap-space-sm">
                   {deliveryReady.map((ticket) => (
-                    <KdsCard key={ticket.id} ticket={ticket} onAction={onAction} />
+                    <KdsCard
+                      key={ticket.id}
+                      ticket={ticket}
+                      onAction={onAction}
+                    />
                   ))}
                 </div>
               </div>

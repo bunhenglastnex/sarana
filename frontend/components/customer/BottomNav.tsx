@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Store, Heart, ShoppingBag, Receipt, User } from 'lucide-react';
 
 export type NavTab = 'home' | 'favorites' | 'search' | 'cart' | 'orders' | 'profile';
@@ -10,6 +11,15 @@ interface BottomNavProps {
   onTabChange?: (tab: NavTab) => void;
   cartBadgeCount?: number;
 }
+
+const TAB_HREFS: Record<NavTab, string> = {
+  home: '/',
+  favorites: '/favorites',
+  search: '/',
+  cart: '/cart',
+  orders: '/orders',
+  profile: '/customer-profile',
+};
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   activeTab = 'home',
@@ -30,10 +40,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.id === activeTab;
+          const href = TAB_HREFS[tab.id] || '/';
           return (
-            <button
+            <Link
               key={tab.id}
-              type="button"
+              href={href}
+              prefetch={true}
               onClick={() => onTabChange?.(tab.id)}
               className={`flex flex-col items-center justify-center gap-0.5 min-w-[56px] min-h-[44px] py-1 transition-colors relative ${
                 isActive
@@ -50,7 +62,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 )}
               </div>
               <span className="text-[11px] leading-tight">{tab.label}</span>
-            </button>
+            </Link>
           );
         })}
       </div>

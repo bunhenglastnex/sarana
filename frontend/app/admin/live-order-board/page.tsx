@@ -5,7 +5,6 @@ import { KdsTicket } from "@/types/kds";
 import { KdsSubHeader } from "@/components/admin/kds/KdsSubHeader";
 import { KdsKanbanColumn } from "@/components/admin/kds/KdsKanbanColumn";
 import { KdsBottomBar } from "@/components/admin/kds/KdsBottomBar";
-import { PassStationSheet } from "@/components/admin/kds/PassStationSheet";
 
 const initialTickets: KdsTicket[] = [
   // COLUMN 1: PENDING
@@ -231,10 +230,22 @@ export default function LiveOrderBoardPage() {
         if (t.id !== ticketId) return t;
         if (action === "accept") return { ...t, status: "accepted" };
         if (action === "reject") return { ...t, status: "ready" }; // or dismiss
-        if (action === "start_prep") return { ...t, status: "preparing", prepProgress: 15, timerLabel: "02m / 15m" };
-        if (action === "mark_ready") return { ...t, status: "ready", readySubtype: t.channel, readyTimeAgo: "Just ready" };
+        if (action === "start_prep")
+          return {
+            ...t,
+            status: "preparing",
+            prepProgress: 15,
+            timerLabel: "02m / 15m",
+          };
+        if (action === "mark_ready")
+          return {
+            ...t,
+            status: "ready",
+            readySubtype: t.channel,
+            readyTimeAgo: "Just ready",
+          };
         return t;
-      })
+      }),
     );
   };
 
@@ -245,8 +256,12 @@ export default function LiveOrderBoardPage() {
   });
 
   const pendingTickets = filteredTickets.filter((t) => t.status === "pending");
-  const acceptedTickets = filteredTickets.filter((t) => t.status === "accepted");
-  const preparingTickets = filteredTickets.filter((t) => t.status === "preparing");
+  const acceptedTickets = filteredTickets.filter(
+    (t) => t.status === "accepted",
+  );
+  const preparingTickets = filteredTickets.filter(
+    (t) => t.status === "preparing",
+  );
   const readyTickets = filteredTickets.filter((t) => t.status === "ready");
 
   const activeCount = tickets.length;
@@ -263,7 +278,6 @@ export default function LiveOrderBoardPage() {
         readyCount={readyTickets.length}
         currentFilter={filter}
         onFilterChange={setFilter}
-        onOpenPassStation={() => setIsPassStationOpen(true)}
       />
 
       {/* 3-Column Expediter Workflow Kanban Grid */}
@@ -310,14 +324,6 @@ export default function LiveOrderBoardPage() {
 
       {/* Operational Bottom Analytics & Cook Capacity Bar */}
       <KdsBottomBar />
-
-      {/* Pass Station Drawer Sheet */}
-      <PassStationSheet
-        isOpen={isPassStationOpen}
-        onClose={() => setIsPassStationOpen(false)}
-        readyTickets={readyTickets}
-        onAction={handleAction}
-      />
     </div>
   );
 }

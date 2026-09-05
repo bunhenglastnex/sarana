@@ -17,7 +17,6 @@ interface KdsSubHeaderProps {
   readyCount?: number;
   currentFilter: "all" | "delivery" | "pickup";
   onFilterChange: (filter: "all" | "delivery" | "pickup") => void;
-  onOpenPassStation?: () => void;
 }
 
 export const KdsSubHeader: React.FC<KdsSubHeaderProps> = ({
@@ -27,7 +26,6 @@ export const KdsSubHeader: React.FC<KdsSubHeaderProps> = ({
   readyCount,
   currentFilter,
   onFilterChange,
-  onOpenPassStation,
 }) => {
   const [isSoundOn, setIsSoundOn] = useState(true);
 
@@ -114,21 +112,6 @@ export const KdsSubHeader: React.FC<KdsSubHeaderProps> = ({
           <span className="font-label-sm text-xs font-semibold">
             Bell: {isSoundOn ? "ON" : "MUTED"}
           </span>
-        </button>
-
-        {/* Pass Station Sheet Drawer Toggle */}
-        <button
-          onClick={onOpenPassStation}
-          className="p-1.5 rounded-lg transition-colors border bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface border-border/30 relative flex items-center gap-1.5"
-          title="Open Pass Station (4. READY Drawer)"
-        >
-          <Kanban className="w-4 h-4" />
-          <span className="font-label-sm text-xs font-bold hidden sm:inline">Pass Station</span>
-          {readyCount !== undefined && readyCount > 0 && (
-            <span className="ml-0.5 px-1.5 py-0.2 bg-secondary text-on-secondary text-[10px] font-extrabold rounded-full">
-              {readyCount}
-            </span>
-          )}
         </button>
       </div>
     </div>
