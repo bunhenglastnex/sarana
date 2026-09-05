@@ -30,6 +30,8 @@ const initialCustomers: CustomerRecord[] = [
         channel: "delivery",
         paymentBadge: "KHQR PAID",
         paymentIsPaid: true,
+        proofImageUrl:
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10",
       },
       {
         id: "#1026",
@@ -39,6 +41,8 @@ const initialCustomers: CustomerRecord[] = [
         channel: "delivery",
         paymentBadge: "KHQR PAID",
         paymentIsPaid: true,
+        proofImageUrl:
+          "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=500&auto=format&fit=crop",
       },
       {
         id: "#0998",
@@ -107,6 +111,8 @@ const initialCustomers: CustomerRecord[] = [
         channel: "delivery",
         paymentBadge: "KHQR PAID",
         paymentIsPaid: true,
+        proofImageUrl:
+          "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop",
       },
       {
         id: "#1022",
@@ -175,6 +181,8 @@ const initialCustomers: CustomerRecord[] = [
         channel: "delivery",
         paymentBadge: "PAID (KHQR)",
         paymentIsPaid: true,
+        proofImageUrl:
+          "https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop",
       },
     ],
   },
@@ -200,6 +208,8 @@ const initialCustomers: CustomerRecord[] = [
         channel: "pickup",
         paymentBadge: "PAID (KHQR)",
         paymentIsPaid: true,
+        proofImageUrl:
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10",
       },
     ],
   },

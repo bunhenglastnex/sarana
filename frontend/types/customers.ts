@@ -8,6 +8,7 @@ export interface CustomerOrder {
   channel: "delivery" | "pickup";
   paymentBadge: string;
   paymentIsPaid: boolean;
+  proofImageUrl?: string;
 }
 
 export interface CustomerRecord {

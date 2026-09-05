@@ -48,6 +48,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
     delivery: allOrders.filter((o) => o.channel === "delivery").length,
     pickup: allOrders.filter((o) => o.channel === "pickup").length,
     completed: allOrders.filter((o) => o.status === "delivered" || o.status === "picked_up").length,
+    cancelled: allOrders.filter((o) => o.status === "cancelled").length,
   };
 
   const getStatusBadge = (order: OrderRecord) => {
@@ -92,6 +93,13 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm text-xs bg-surface-container-high text-on-surface-variant font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-tertiary" />
             PICKED UP
+          </span>
+        );
+      case "cancelled":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm text-xs bg-error-container text-on-error-container font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-error" />
+            CANCELLED
           </span>
         );
       default:
@@ -194,6 +202,17 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
           }`}
         >
           Completed ({counts.completed})
+        </button>
+
+        <button
+          onClick={() => onStatusFilterChange("cancelled")}
+          className={`px-space-md py-2 rounded-lg font-label-md text-xs transition-colors shrink-0 ${
+            statusFilter === "cancelled"
+              ? "bg-error text-on-error font-bold shadow-xs"
+              : "text-error hover:bg-error-container/30 font-medium"
+          }`}
+        >
+          Cancelled ({counts.cancelled})
         </button>
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Phone,
   Mail,
@@ -10,8 +10,11 @@ import {
   Star,
   Sparkles,
   ChevronDown,
+  CheckCircle2,
+  ZoomIn,
+  X,
 } from "lucide-react";
-import { CustomerRecord, CustomerTag } from "@/types/customers";
+import { CustomerRecord, CustomerTag, CustomerOrder } from "@/types/customers";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -31,6 +34,8 @@ export const CustomerInspector: React.FC<CustomerInspectorProps> = ({
   customer,
   onUpdateTag,
 }) => {
+  const [selectedOrderForProof, setSelectedOrderForProof] = useState<CustomerOrder | null>(null);
+
   const getTagBadge = (tag: CustomerTag) => {
     switch (tag) {
       case "VIP":
@@ -68,7 +73,7 @@ export const CustomerInspector: React.FC<CustomerInspectorProps> = ({
   };
 
   return (
-    <div className="xl:col-span-5 flex flex-col bg-surface-container-lowest rounded-2xl shadow-xl border border-border/40 overflow-hidden min-h-[600px]">
+    <div className="xl:col-span-5 flex flex-col bg-surface-container-lowest rounded-2xl shadow-xl border border-border/40 overflow-hidden min-h-[600px] relative">
       {/* Inspector Header */}
       <div className="p-space-md bg-surface-container-low border-b border-border/30 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
@@ -219,47 +224,140 @@ export const CustomerInspector: React.FC<CustomerInspectorProps> = ({
           </div>
 
           <div className="space-y-space-xs">
-            {customer.orders.map((order) => (
-              <div
-                key={order.id}
-                className="bg-surface-container-low p-space-sm rounded-xl flex flex-col gap-1.5 border border-border/20"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-headline-sm text-xs font-bold text-on-surface">
-                      {order.id}
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-surface-container-high font-label-sm text-[10px] text-on-surface-variant font-bold">
-                      {order.channel.toUpperCase()}
+            {customer.orders.map((order) => {
+              const isKhqr =
+                order.paymentBadge.toUpperCase().includes("KHQR") ||
+                order.proofImageUrl;
+
+              return (
+                <div
+                  key={order.id}
+                  onClick={() => {
+                    if (isKhqr) setSelectedOrderForProof(order);
+                  }}
+                  className={`bg-surface-container-low p-space-sm rounded-xl flex flex-col gap-1.5 border border-border/20 transition-all ${
+                    isKhqr ? "cursor-pointer hover:border-emerald-500/40 hover:bg-surface-container" : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-headline-sm text-xs font-bold text-on-surface">
+                        {order.id}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-surface-container-high font-label-sm text-[10px] text-on-surface-variant font-bold">
+                        {order.channel.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <span className="font-price-lg text-xs font-bold text-emerald-700">
+                      ${order.totalPrice.toFixed(2)}
                     </span>
                   </div>
 
-                  <span className="font-price-lg text-xs font-bold text-emerald-700">
-                    ${order.totalPrice.toFixed(2)}
-                  </span>
-                </div>
+                  <div className="font-body-sm text-xs text-on-surface truncate">
+                    {order.itemsSummary}
+                  </div>
 
-                <div className="font-body-sm text-xs text-on-surface truncate">
-                  {order.itemsSummary}
+                  <div className="flex items-center justify-between text-[11px] text-on-surface-variant pt-1 border-t border-border/10">
+                    <span>{order.dateLabel}</span>
+                    {isKhqr ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedOrderForProof(order);
+                        }}
+                        className="font-label-sm text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border border-emerald-500/30 flex items-center gap-1 transition-colors shadow-xs"
+                      >
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>{order.paymentBadge}</span>
+                        <ZoomIn className="w-3 h-3 ml-0.5 text-emerald-700" />
+                      </button>
+                    ) : (
+                      <span
+                        className={`font-label-sm text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                          order.paymentIsPaid
+                            ? "bg-secondary-fixed text-on-secondary-fixed"
+                            : "bg-error-container text-on-error-container"
+                        }`}
+                      >
+                        {order.paymentBadge}
+                      </span>
+                    )}
+                  </div>
                 </div>
-
-                <div className="flex items-center justify-between text-[11px] text-on-surface-variant pt-1 border-t border-border/10">
-                  <span>{order.dateLabel}</span>
-                  <span
-                    className={`font-label-sm text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                      order.paymentIsPaid
-                        ? "bg-secondary-fixed text-on-secondary-fixed"
-                        : "bg-error-container text-on-error-container"
-                    }`}
-                  >
-                    {order.paymentBadge}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
+
+      {/* KHQR Payment Proof Slip Modal */}
+      {selectedOrderForProof && (
+        <div
+          onClick={() => setSelectedOrderForProof(null)}
+          className="fixed inset-0 bg-on-surface/60 backdrop-blur-xs z-[100] flex items-center justify-center p-space-md animate-fadeIn"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-surface-container-lowest rounded-2xl max-w-md w-full p-space-md shadow-2xl space-y-space-sm border border-border/40"
+          >
+            <div className="flex items-center justify-between border-b border-border/30 pb-2">
+              <div className="flex items-center gap-2">
+                <span className="font-headline-sm text-sm font-bold text-on-surface">
+                  KHQR Payment Slip ({selectedOrderForProof.id})
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-[10px] font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  VERIFIED PAID
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedOrderForProof(null)}
+                className="p-1 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="w-full h-64 rounded-xl overflow-hidden bg-surface-container-highest border border-border/20 relative">
+              <img
+                src={
+                  selectedOrderForProof.proofImageUrl ||
+                  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10"
+                }
+                alt="Full KHQR Payment Slip"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs text-on-surface-variant bg-surface-container-low p-2.5 rounded-xl border border-border/20">
+              <div>
+                <div className="font-bold text-on-surface">{customer.name}</div>
+                <div className="text-[11px]">KHQR Instant Transfer • {selectedOrderForProof.dateLabel}</div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-emerald-700 text-sm">
+                  ${selectedOrderForProof.totalPrice.toFixed(2)}
+                </div>
+                <div className="text-[10px] text-emerald-600 font-semibold">
+                  Transaction Verified
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setSelectedOrderForProof(null)}
+                className="w-full py-2 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Close Preview</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

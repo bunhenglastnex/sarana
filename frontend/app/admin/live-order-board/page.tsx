@@ -227,16 +227,49 @@ const initialTickets: KdsTicket[] = [
 ];
 
 export default function LiveOrderBoardPage() {
-  const [tickets, setTickets] = useState<KdsTicket[]>(initialTickets);
-  const [filter, setFilter] = useState<"all" | "delivery" | "pickup">("all");
-  const [isPassStationOpen, setIsPassStationOpen] = useState(false);
+  const [tickets, setTickets] = useState<KdsTicket[]>([
+    ...initialTickets,
+    // Pre-loaded rejected ticket demo
+    {
+      id: "#1077",
+      channel: "delivery",
+      status: "rejected",
+      timerLabel: "Cancelled 15m ago",
+      customerName: "Elena Vance",
+      paymentBadge: "REFUNDED KHQR",
+      paymentIsPaid: false,
+      rejectReason: "Out of stock: Hearth-Smoked Angus Beef Ribs unavailable tonight.",
+      totalPrice: 48.0,
+      items: [
+        {
+          name: "Hearth-Smoked Angus Ribs",
+          price: 32.0,
+          quantity: 1,
+        },
+        {
+          name: "Truffle Fries",
+          price: 6.5,
+          quantity: 1,
+        },
+        {
+          name: "Craft IPA Beer",
+          price: 9.5,
+          quantity: 1,
+        },
+      ],
+    },
+  ]);
+  const [filter, setFilter] = useState<"all" | "delivery" | "pickup" | "rejected">("all");
 
   const handleAction = (action: string, ticketId: string, reason?: string) => {
     if (action === "reject") {
-      setTickets((prev) => prev.filter((t) => t.id !== ticketId));
-      if (reason) {
-        alert(`Ticket ${ticketId} rejected.\nRejection reason sent to customer: "${reason}"`);
-      }
+      setTickets((prev) =>
+        prev.map((t) =>
+          t.id === ticketId
+            ? { ...t, status: "rejected", rejectReason: reason || "Kitchen rejected order" }
+            : t
+        )
+      );
       return;
     }
     setTickets((prev) =>
@@ -258,28 +291,27 @@ export default function LiveOrderBoardPage() {
             readyTimeAgo: "Just ready",
           };
         return t;
-      }),
+      })
     );
   };
 
   const filteredTickets = tickets.filter((t) => {
-    if (filter === "delivery") return t.channel === "delivery";
-    if (filter === "pickup") return t.channel === "pickup";
+    if (filter === "delivery") return t.channel === "delivery" && t.status !== "rejected";
+    if (filter === "pickup") return t.channel === "pickup" && t.status !== "rejected";
+    if (filter === "rejected") return t.status === "rejected";
     return true;
   });
 
   const pendingTickets = filteredTickets.filter((t) => t.status === "pending");
-  const acceptedTickets = filteredTickets.filter(
-    (t) => t.status === "accepted",
-  );
-  const preparingTickets = filteredTickets.filter(
-    (t) => t.status === "preparing",
-  );
+  const acceptedTickets = filteredTickets.filter((t) => t.status === "accepted");
+  const preparingTickets = filteredTickets.filter((t) => t.status === "preparing");
   const readyTickets = filteredTickets.filter((t) => t.status === "ready");
+  const rejectedTickets = tickets.filter((t) => t.status === "rejected");
 
-  const activeCount = tickets.length;
-  const deliveryCount = tickets.filter((t) => t.channel === "delivery").length;
-  const pickupCount = tickets.filter((t) => t.channel === "pickup").length;
+  const activeCount = tickets.filter((t) => t.status !== "rejected").length;
+  const deliveryCount = tickets.filter((t) => t.channel === "delivery" && t.status !== "rejected").length;
+  const pickupCount = tickets.filter((t) => t.channel === "pickup" && t.status !== "rejected").length;
+  const rejectedCount = rejectedTickets.length;
 
   return (
     <div className="flex flex-col w-full gap-space-lg">
@@ -288,52 +320,70 @@ export default function LiveOrderBoardPage() {
         activeCount={activeCount}
         deliveryCount={deliveryCount}
         pickupCount={pickupCount}
+        rejectedCount={rejectedCount}
         readyCount={readyTickets.length}
         currentFilter={filter}
         onFilterChange={setFilter}
       />
 
-      {/* 3-Column Expediter Workflow Kanban Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-space-md items-start">
-        {/* Column 1: Pending */}
-        <KdsKanbanColumn
-          title="PENDING"
-          stepNumber={1}
-          status="pending"
-          count={pendingTickets.length}
-          sublabel="Action Req."
-          dotColorClass="bg-error animate-pulse"
-          badgeClass="bg-error-container text-on-error-container"
-          tickets={pendingTickets}
-          onAction={handleAction}
-        />
+      {/* 3-Column or 4-Column Expediter Workflow Kanban Grid */}
+      {filter === "rejected" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-space-md items-start">
+          <KdsKanbanColumn
+            title="REJECTED / CANCELLED ORDERS"
+            stepNumber={0}
+            status="rejected"
+            count={rejectedTickets.length}
+            sublabel="Audit Log"
+            dotColorClass="bg-error font-bold"
+            badgeClass="bg-error-container text-on-error-container"
+            containerClass="bg-error-container/10 border-error/20"
+            tickets={rejectedTickets}
+            onAction={handleAction}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-space-md items-start">
+          {/* Column 1: Pending */}
+          <KdsKanbanColumn
+            title="PENDING"
+            stepNumber={1}
+            status="pending"
+            count={pendingTickets.length}
+            sublabel="Action Req."
+            dotColorClass="bg-error animate-pulse"
+            badgeClass="bg-error-container text-on-error-container"
+            tickets={pendingTickets}
+            onAction={handleAction}
+          />
 
-        {/* Column 2: Accepted */}
-        <KdsKanbanColumn
-          title="ACCEPTED"
-          stepNumber={2}
-          status="accepted"
-          count={acceptedTickets.length}
-          sublabel="Queue"
-          dotColorClass="bg-secondary-container"
-          badgeClass="bg-surface-container-high text-on-surface"
-          tickets={acceptedTickets}
-          onAction={handleAction}
-        />
+          {/* Column 2: Accepted */}
+          <KdsKanbanColumn
+            title="ACCEPTED"
+            stepNumber={2}
+            status="accepted"
+            count={acceptedTickets.length}
+            sublabel="Queue"
+            dotColorClass="bg-secondary-container"
+            badgeClass="bg-surface-container-high text-on-surface"
+            tickets={acceptedTickets}
+            onAction={handleAction}
+          />
 
-        {/* Column 3: Preparing */}
-        <KdsKanbanColumn
-          title="PREPARING"
-          stepNumber={3}
-          status="preparing"
-          count={preparingTickets.length}
-          sublabel="Hearth Active"
-          dotColorClass="bg-primary animate-pulse"
-          badgeClass="bg-primary-fixed text-on-primary-fixed"
-          tickets={preparingTickets}
-          onAction={handleAction}
-        />
-      </div>
+          {/* Column 3: Preparing */}
+          <KdsKanbanColumn
+            title="PREPARING"
+            stepNumber={3}
+            status="preparing"
+            count={preparingTickets.length}
+            sublabel="Hearth Active"
+            dotColorClass="bg-primary animate-pulse"
+            badgeClass="bg-primary-fixed text-on-primary-fixed"
+            tickets={preparingTickets}
+            onAction={handleAction}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -59,4 +59,5 @@ export interface OrderRecord {
   proofImageUrl?: string;
   isCodVerifiedByDriver?: boolean;
   isAdminVerified?: boolean;
+  cancelReason?: string;
 }

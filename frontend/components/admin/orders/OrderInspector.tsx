@@ -239,6 +239,22 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
 
       {/* Scrollable Inspector Body */}
       <div className="p-space-md flex flex-col gap-space-md overflow-y-auto max-h-[calc(100vh-300px)] custom-scrollbar">
+        {/* Cancelled Alert Banner */}
+        {order.status === "cancelled" && (
+          <div className="p-space-md rounded-xl bg-error-container/20 border border-error/40 flex flex-col gap-1.5 text-on-surface">
+            <div className="flex items-center gap-2 font-headline-sm text-xs font-extrabold text-error uppercase tracking-wider">
+              <XCircle className="w-4 h-4 fill-error text-on-error shrink-0" />
+              <span>ORDER CANCELLED &amp; REFUNDED</span>
+            </div>
+            <p className="font-body-sm text-xs text-on-surface-variant font-medium">
+              Reason: <span className="font-bold text-on-surface">{order.cancelReason || "Cancelled by kitchen expediter / customer request."}</span>
+            </p>
+            <div className="flex items-center gap-2 font-label-sm text-[11px] text-error font-bold mt-1">
+              <span>Status: Settled (Payment Reversed / Voided)</span>
+            </div>
+          </div>
+        )}
+
         {/* Customer Identity & Drop-off Compact Card */}
         <div className="bg-surface-container-low p-space-sm rounded-xl flex flex-col gap-2 border border-border/20">
           <div className="flex items-center justify-between">

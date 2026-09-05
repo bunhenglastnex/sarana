@@ -261,41 +261,41 @@ const mockOrders: OrderRecord[] = [
     ],
   },
   {
-    id: "#1020",
-    customerName: "Devon Brooks",
-    customerPhone: "+1 (555) 612-8801",
-    channel: "pickup",
-    channelLabel: "Counter Pickup",
-    placedTimeLabel: "18:30",
-    timeAgoLabel: "57m ago",
-    status: "picked_up",
-    statusLabel: "PICKED UP",
-    itemsSummary: "1x Brisket Plate, 1x Slaw",
-    totalItemsCount: 3,
-    totalPrice: 31.0,
-    subtotal: 31.0,
+    id: "#1019",
+    customerName: "Elena Vance",
+    customerPhone: "+1 (555) 301-4490",
+    channel: "delivery",
+    channelLabel: "Direct Delivery",
+    placedTimeLabel: "18:15",
+    timeAgoLabel: "1h 12m ago",
+    status: "cancelled",
+    statusLabel: "CANCELLED",
+    cancelReason: "Customer requested cancellation due to address change & item sold out.",
+    itemsSummary: "1x Hearth-Smoked Angus Ribs, 1x Truffle Fries",
+    totalItemsCount: 2,
+    totalPrice: 38.5,
+    subtotal: 38.5,
     deliveryFee: 0,
     discount: 0,
-    tax: 2.63,
-    paymentMethod: "cash",
-    paymentBadgeLabel: "Paid • Cash",
-    paymentIsPaid: true,
-    kitchenStation: "Smoker",
+    tax: 3.12,
+    paymentMethod: "khqr",
+    paymentBadgeLabel: "REFUNDED KHQR",
+    paymentIsPaid: false,
+    kitchenStation: "Hearth Smoker",
     estimatedPrepMinutes: 0,
-    lifecycleStep: 6,
+    lifecycleStep: 1,
     items: [
       {
-        id: "item-8",
-        name: "Smoked Oak Brisket Plate",
-        price: 25.0,
+        id: "item-19a",
+        name: "Hearth-Smoked Angus Ribs",
+        price: 32.0,
         quantity: 1,
       },
       {
-        id: "item-9",
-        name: "Creamy Citrus Slaw",
-        price: 6.0,
-        quantity: 2,
-        basePrice: 3.0,
+        id: "item-19b",
+        name: "Truffle Parmesan Fries",
+        price: 6.5,
+        quantity: 1,
       },
     ],
   },
@@ -325,6 +325,7 @@ export default function OrdersPage() {
         )
       );
     } else if (action === "cancel") {
+      const reason = prompt("Enter cancellation reason for customer:", "Out of stock / Kitchen reject") || "Cancelled by expediter";
       setOrders((prev) =>
         prev.map((o) =>
           o.id === orderId
@@ -332,6 +333,9 @@ export default function OrdersPage() {
                 ...o,
                 status: "cancelled",
                 statusLabel: "CANCELLED",
+                cancelReason: reason,
+                paymentBadgeLabel: "REFUNDED / CANCELLED",
+                paymentIsPaid: false,
               }
             : o
         )
@@ -360,6 +364,7 @@ export default function OrdersPage() {
     if (statusFilter === "pickup") return o.channel === "pickup";
     if (statusFilter === "completed")
       return o.status === "delivered" || o.status === "picked_up";
+    if (statusFilter === "cancelled") return o.status === "cancelled";
 
     if (searchQuery.trim() !== "") {
       const q = searchQuery.toLowerCase();

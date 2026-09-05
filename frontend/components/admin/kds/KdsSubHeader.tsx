@@ -16,15 +16,17 @@ interface KdsSubHeaderProps {
   activeCount: number;
   deliveryCount: number;
   pickupCount: number;
+  rejectedCount?: number;
   readyCount?: number;
-  currentFilter: "all" | "delivery" | "pickup";
-  onFilterChange: (filter: "all" | "delivery" | "pickup") => void;
+  currentFilter: "all" | "delivery" | "pickup" | "rejected";
+  onFilterChange: (filter: "all" | "delivery" | "pickup" | "rejected") => void;
 }
 
 export const KdsSubHeader: React.FC<KdsSubHeaderProps> = ({
   activeCount,
   deliveryCount,
   pickupCount,
+  rejectedCount = 0,
   readyCount,
   currentFilter,
   onFilterChange,
@@ -115,6 +117,16 @@ export const KdsSubHeader: React.FC<KdsSubHeaderProps> = ({
             }`}
           >
             Pickup ({pickupCount})
+          </button>
+          <button
+            onClick={() => onFilterChange("rejected")}
+            className={`px-space-sm py-1 rounded-md font-label-sm text-xs transition-all ${
+              currentFilter === "rejected"
+                ? "bg-error text-on-error shadow-sm font-bold"
+                : "text-error hover:bg-error-container/30 font-medium"
+            }`}
+          >
+            Rejected / Cancelled ({rejectedCount})
           </button>
         </div>
 

@@ -1,6 +1,6 @@
 export type KdsOrderChannel = "delivery" | "pickup";
 
-export type KdsOrderStatus = "pending" | "accepted" | "preparing" | "ready";
+export type KdsOrderStatus = "pending" | "accepted" | "preparing" | "ready" | "rejected";
 
 export interface KdsOrderItem {
   name: string;
@@ -31,4 +31,5 @@ export interface KdsTicket {
   shelfOrBag?: string;
   readyTimeAgo?: string;
   readySubtype?: "pickup" | "delivery";
+  rejectReason?: string;
 }

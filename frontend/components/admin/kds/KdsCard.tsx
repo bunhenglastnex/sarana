@@ -304,6 +304,20 @@ export const KdsCard: React.FC<KdsCardProps> = ({ ticket, onAction }) => {
         </button>
       )}
 
+      {ticket.status === "rejected" && (
+        <div className="bg-error-container/20 p-2.5 rounded-lg border border-error/30 mt-1 flex flex-col gap-1 text-xs">
+          <div className="font-bold text-error flex items-center gap-1">
+            <XCircle className="w-4 h-4 text-error" />
+            <span>ORDER REJECTED / CANCELLED</span>
+          </div>
+          {ticket.rejectReason && (
+            <div className="text-on-surface-variant font-medium text-[11px] italic">
+              Reason: “{ticket.rejectReason}”
+            </div>
+          )}
+        </div>
+      )}
+
       {/* KHQR Payment Proof Preview Modal */}
       {showProofModal && (
         <div
