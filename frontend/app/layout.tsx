@@ -1,12 +1,12 @@
-import './globals.css';
-import type { Metadata } from 'next';
-import React from 'react';
-import { I18nProvider } from '@/components/I18nProvider';
-
+import "./globals.css";
+import type { Metadata } from "next";
+import React from "react";
+import { I18nProvider } from "@/components/I18nProvider";
 
 export const metadata: Metadata = {
-  title: 'Restaurant Online Ordering & Delivery System',
-  description: 'Single-brand restaurant online ordering, kitchen admin, and in-house delivery system.',
+  title: "Restaurant Online Ordering & Delivery System",
+  description:
+    "Single-brand restaurant online ordering, kitchen admin, and in-house delivery system.",
 };
 
 export default function RootLayout({
@@ -18,7 +18,11 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin=""
+        />
         <link
           href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"

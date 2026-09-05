@@ -66,7 +66,9 @@ export const FavoritesView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState("244 Oak Street, Apt 4B");
+  const [currentAddress, setCurrentAddress] = useState(
+    "244 Oak Street, Apt 4B",
+  );
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({});
 
   const handleTabChange = (tab: NavTab) => {
@@ -220,7 +222,7 @@ export const FavoritesView: React.FC = () => {
                           <h3
                             onClick={() =>
                               router.push(
-                                `/items-detail/${item.slug || item.id}`
+                                `/items-detail/${item.slug || item.id}`,
                               )
                             }
                             className="font-bold text-sm text-on-surface truncate cursor-pointer hover:text-primary transition-colors"

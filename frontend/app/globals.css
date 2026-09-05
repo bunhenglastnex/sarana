@@ -4,38 +4,39 @@
 
 @layer base {
   :root {
-    --background: 40 40% 97%;           /* Surface #fcf9f3 */
-    --foreground: 60 4% 10%;           /* On-Surface #1c1c18 */
+    --background: 40 40% 97%; /* Surface #fcf9f3 */
+    --foreground: 60 4% 10%; /* On-Surface #1c1c18 */
 
-    --card: 0 0% 100%;                 /* Surface Container Lowest #ffffff */
+    --card: 0 0% 100%; /* Surface Container Lowest #ffffff */
     --card-foreground: 60 4% 10%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 60 4% 10%;
 
-    --primary: 20 100% 32%;            /* Amber Primary #a43700 */
-    --primary-foreground: 0 0% 100%;   /* White */
+    --primary: 20 100% 32%; /* Amber Primary #a43700 */
+    --primary-foreground: 0 0% 100%; /* White */
 
-    --secondary: 33 100% 28%;          /* Secondary #8f4e00 */
+    --secondary: 33 100% 28%; /* Secondary #8f4e00 */
     --secondary-foreground: 0 0% 100%;
 
     --muted: 40 16% 92%;
-    --muted-foreground: 18 21% 29%;    /* On-surface-variant #58423a */
+    --muted-foreground: 18 21% 29%; /* On-surface-variant #58423a */
 
-    --accent: 25 100% 88%;             /* Secondary Fixed #ffdcc2 */
+    --accent: 25 100% 88%; /* Secondary Fixed #ffdcc2 */
     --accent-foreground: 28 100% 9%;
 
     --destructive: 0 75% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 17 29% 80%;               /* Outline Variant #e0c0b5 */
+    --border: 17 29% 80%; /* Outline Variant #e0c0b5 */
     --input: 17 29% 80%;
     --ring: 20 100% 32%;
 
     --radius: 0.75rem;
   }
 
-  html, body {
+  html,
+  body {
     width: 100%;
     margin: 0;
     padding: 0;
@@ -43,13 +44,21 @@
   body {
     overscroll-behavior-y: none;
   }
-  *, ::before, ::after {
+  *,
+  ::before,
+  ::after {
     -webkit-tap-highlight-color: transparent;
   }
-  input, textarea, select {
+  /* Prevent iOS auto-zooming when focusing on inputs, textareas, or selects */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
     outline: none;
   }
-  input:focus, textarea:focus, select:focus {
+  input:focus,
+  textarea:focus,
+  select:focus {
     outline: none;
   }
 }
@@ -67,12 +76,11 @@
   }
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 }
 
 ::-webkit-scrollbar {
   display: none;
 }
-
