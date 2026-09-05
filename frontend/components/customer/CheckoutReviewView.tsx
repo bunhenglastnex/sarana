@@ -25,6 +25,8 @@ import {
   Loader2,
   ChefHat,
   Clock,
+  Heart,
+  Coins,
 } from 'lucide-react';
 
 export const CheckoutReviewView: React.FC = () => {
@@ -33,13 +35,17 @@ export const CheckoutReviewView: React.FC = () => {
   // State
   const [fulfillmentMode, setFulfillmentMode] = useState<'delivery' | 'pickup'>('delivery');
   const [paymentMethod, setPaymentMethod] = useState<'khqr' | 'cod' | 'counter'>('khqr');
+  const [tipAmount, setTipAmount] = useState<number>(2.50);
+  const [isCustomTip, setIsCustomTip] = useState(false);
+  const [customTipInput, setCustomTipInput] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
   const subtotal = 34.5;
   const packagingAndTax = 1.2;
   const deliveryFee = fulfillmentMode === 'delivery' ? 2.0 : 0.0;
-  const totalAmount = subtotal + packagingAndTax + deliveryFee;
+  const effectiveTip = fulfillmentMode === 'delivery' ? tipAmount : 0.0;
+  const totalAmount = subtotal + packagingAndTax + deliveryFee + effectiveTip;
 
   const handleSelectPayment = (method: 'khqr' | 'cod' | 'counter') => {
     if (method === 'counter' && fulfillmentMode === 'delivery') {
@@ -50,14 +56,14 @@ export const CheckoutReviewView: React.FC = () => {
 
   const handlePlaceOrder = () => {
     if (paymentMethod === 'khqr') {
-      router.push('/khqr-payment');
+      router.push(`/khqr-payment?tip=${effectiveTip}`);
       return;
     }
 
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
-      router.push(`/order-success?payment=${paymentMethod}&mode=${fulfillmentMode}`);
+      router.push(`/order-success?payment=${paymentMethod}&mode=${fulfillmentMode}&tip=${effectiveTip}`);
     }, 650);
   };
 
@@ -312,6 +318,114 @@ export const CheckoutReviewView: React.FC = () => {
             </div>
           )}
 
+          {/* Section: Courier Tip Selection (Delivery Mode Only) */}
+          {fulfillmentMode === 'delivery' && (
+            <div className="mt-4 flex flex-col gap-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-primary fill-primary/20" />
+                  <h2 className="font-bold text-base text-on-surface">
+                    Courier Tip
+                  </h2>
+                </div>
+                <span className="text-xs text-secondary font-semibold bg-secondary-fixed/50 px-2.5 py-0.5 rounded-full">
+                  100% to Driver
+                </span>
+              </div>
+
+              <div className="p-3.5 bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container/80 flex flex-col gap-3">
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Show appreciation to your delivery courier. Every dollar goes directly to your driver.
+                </p>
+
+                {/* Tip Options Preset Grid */}
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[
+                    { amount: 1.5, label: "$1.50" },
+                    { amount: 2.5, label: "$2.50", popular: true },
+                    { amount: 3.5, label: "$3.50" },
+                    { amount: 5.0, label: "$5.00" },
+                  ].map((option) => {
+                    const isSelected = !isCustomTip && tipAmount === option.amount;
+                    return (
+                      <button
+                        key={option.amount}
+                        type="button"
+                        onClick={() => {
+                          setIsCustomTip(false);
+                          setTipAmount(option.amount);
+                        }}
+                        className={`relative py-2 px-1 rounded-lg text-center font-bold text-xs transition-all duration-150 flex flex-col items-center justify-center ${
+                          isSelected
+                            ? "bg-primary text-on-primary shadow-sm ring-2 ring-primary/40"
+                            : "bg-surface-container-low hover:bg-surface-container text-on-surface"
+                        }`}
+                      >
+                        {option.popular && !isSelected && (
+                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] bg-secondary text-on-secondary px-1 rounded font-extrabold uppercase">
+                            Popular
+                          </span>
+                        )}
+                        <span>{option.label}</span>
+                      </button>
+                    );
+                  })}
+
+                  {/* Custom Option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomTip(true);
+                    }}
+                    className={`py-2 px-1 rounded-lg text-center font-bold text-xs transition-all duration-150 flex items-center justify-center ${
+                      isCustomTip
+                        ? "bg-primary text-on-primary shadow-sm ring-2 ring-primary/40"
+                        : "bg-surface-container-low hover:bg-surface-container text-on-surface"
+                    }`}
+                  >
+                    Custom
+                  </button>
+                </div>
+
+                {/* Custom Tip Input field */}
+                {isCustomTip && (
+                  <div className="flex items-center gap-2 pt-1 animate-in fade-in slide-in-from-top-1">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        step="0.50"
+                        min="0"
+                        placeholder="0.00"
+                        value={customTipInput}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomTipInput(val);
+                          const num = parseFloat(val);
+                          setTipAmount(isNaN(num) || num < 0 ? 0 : num);
+                        }}
+                        className="w-full pl-7 pr-3 py-2 bg-surface-container-low rounded-lg font-bold text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomTip(false);
+                        setTipAmount(0);
+                        setCustomTipInput("");
+                      }}
+                      className="px-3 py-2 text-xs font-semibold text-on-surface-variant hover:text-on-surface bg-surface-container rounded-lg"
+                    >
+                      No Tip
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Section 2: Payment Method */}
           <div className="mt-4 flex flex-col gap-2">
             <div className="flex items-center justify-between">
@@ -507,6 +621,15 @@ export const CheckoutReviewView: React.FC = () => {
                 <span>Packaging & Tax</span>
                 <span>${packagingAndTax.toFixed(2)}</span>
               </div>
+              {fulfillmentMode === 'delivery' && (
+                <div className="flex items-center justify-between text-secondary font-medium">
+                  <span className="flex items-center gap-1">
+                    <Heart className="w-3.5 h-3.5 fill-secondary/20" />
+                    Courier Tip
+                  </span>
+                  <span>${effectiveTip.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between font-bold text-sm text-on-surface pt-1 border-t border-surface-container">
                 <span>Total Amount</span>
                 <span className="text-primary text-base font-extrabold">

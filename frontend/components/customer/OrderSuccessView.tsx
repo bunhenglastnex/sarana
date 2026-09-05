@@ -16,6 +16,9 @@ import {
   Store,
   PhoneCall,
   Clock,
+  Banknote,
+  Heart,
+  Coins,
 } from "lucide-react";
 import { LiveOrderTrackerView } from "./LiveOrderTrackerView";
 import { PickupTrackerView } from "./PickupTrackerView";
@@ -39,6 +42,13 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
     paymentMethod || (searchParams.get("payment") as "khqr" | "cod" | "counter") || "khqr";
   const modeParam =
     fulfillmentMode || (searchParams.get("mode") as "delivery" | "pickup") || "delivery";
+
+  const rawTip = searchParams.get("tip");
+  const tipParam = rawTip !== null ? parseFloat(rawTip) : 2.50;
+  const subtotal = 34.50;
+  const packagingAndTax = 1.20;
+  const deliveryFee = 2.00;
+  const totalAmount = subtotal + packagingAndTax + deliveryFee + tipParam;
 
   // If Pickup, render PickupTrackerView directly!
   if (modeParam === "pickup") {
@@ -190,6 +200,44 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
             </div>
           </div>
 
+          {/* Cash Collection Guidance Card (COD Mode) */}
+          {paymentParam === "cod" && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-4 flex flex-col gap-2.5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Banknote className="w-5 h-5 text-amber-800" />
+                  <span className="font-extrabold text-sm text-amber-950">
+                    Cash Payment Required
+                  </span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-extrabold uppercase tracking-wider">
+                  Pay Driver
+                </span>
+              </div>
+
+              <div className="flex items-baseline justify-between pt-1">
+                <div>
+                  <p className="text-[11px] text-amber-900/80 uppercase font-bold">
+                    Exact Cash for Courier
+                  </p>
+                  <p className="text-2xl font-extrabold text-amber-950 tracking-tight">
+                    ${totalAmount.toFixed(2)}
+                  </p>
+                </div>
+                <div className="text-right text-xs text-amber-900/80 space-y-0.5">
+                  <p>Food & Tax: ${ (subtotal + packagingAndTax).toFixed(2) }</p>
+                  <p>Delivery Fee: ${ deliveryFee.toFixed(2) }</p>
+                  <p className="text-amber-800 font-bold">Courier Tip: ${ tipParam.toFixed(2) }</p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-amber-500/20 text-xs text-amber-950/90 flex items-center gap-2">
+                <Coins className="w-4 h-4 text-amber-800 shrink-0" />
+                <span>Please prepare exact cash to give your delivery driver upon drop-off.</span>
+              </div>
+            </div>
+          )}
+
           {/* Primary Order Details Card */}
           <div className="bg-surface-container-lowest rounded-xl shadow-md p-4 flex flex-col gap-4 mb-4 border border-surface-container/80">
             {/* Order Identifiers & Pill Tags */}
@@ -318,15 +366,15 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
               <div className="flex items-center justify-between pt-3 mt-2 bg-surface-container-low -mx-4 -mb-4 p-4 rounded-b-xl border-t border-surface-container/60">
                 <div>
                   <span className="text-[10px] text-on-surface-variant font-bold block uppercase tracking-wider">
-                    Total Amount Paid
+                    {paymentParam === "cod" ? "Total COD Amount to Pay" : "Total Amount Paid"}
                   </span>
                   <span className="text-[11px] text-on-surface-variant">
-                    Includes taxes & bistro packaging
+                    Includes taxes, delivery fee & ${tipParam.toFixed(2)} courier tip
                   </span>
                 </div>
                 <div className="text-right">
                   <span className="font-extrabold text-base text-primary tracking-tight">
-                    $37.70
+                    ${totalAmount.toFixed(2)}
                   </span>
                 </div>
               </div>
