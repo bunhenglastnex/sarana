@@ -19,8 +19,6 @@ import {
   LogOut,
   Globe,
 } from "lucide-react";
-import { CustomerHeader } from "./CustomerHeader";
-import { BottomNav } from "./BottomNav";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LocationModal } from "./LocationModal";
 
@@ -62,19 +60,8 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
   };
 
   return (
-    <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col items-center selection:bg-primary/20 selection:text-primary pb-28">
-      {/* Top Customer Header */}
-      <CustomerHeader
-        currentAddress={currentAddress}
-        onOpenLocation={() => setIsLocationOpen(true)}
-        onOpenProfile={() => router.push("/customer-profile")}
-        onOpenNotifications={() => alert("2 Active Notifications!")}
-        avatarUrl={avatarUrl}
-      />
-
-      {/* Main Profile Page Container (Mobile frame max-w-md) */}
-      <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 min-h-screen bg-surface">
-        <div className="flex flex-col w-full pb-6 space-y-space-lg">
+    <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 pb-28 bg-surface min-h-screen">
+      <div className="flex flex-col w-full pb-6 space-y-space-lg">
           {/* Customer Info Card */}
           <div className="relative overflow-hidden rounded-xl bg-surface-container-lowest p-space-lg shadow-[0_4px_20px_-2px_rgba(26,23,21,0.06)] border border-surface-container/60">
             {/* Ambient hearth glow subtle gradient */}
@@ -405,21 +392,5 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
           </div>
         </div>
       </main>
-
-      {/* Fixed Bottom Navigation with Profile Tab Active */}
-      <BottomNav
-        activeTab="profile"
-        onTabChange={handleTabChange}
-        cartBadgeCount={2}
-      />
-
-      {/* Location Selector Modal */}
-      <LocationModal
-        isOpen={isLocationOpen}
-        onClose={() => setIsLocationOpen(false)}
-        currentAddress={currentAddress}
-        onSelectAddress={setCurrentAddress}
-      />
-    </div>
   );
 };

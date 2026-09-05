@@ -70,7 +70,10 @@ export const AddProductPopup: React.FC<AddProductPopupProps> = ({
   const totalCost = calculateTotal();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 transition-opacity animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 transition-opacity animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       {/* Modal Container */}
       <div
         className="w-full max-w-md bg-surface rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300 border border-surface-container"

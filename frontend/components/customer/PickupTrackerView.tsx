@@ -23,8 +23,7 @@ import {
   Layers,
   CheckCheck,
 } from 'lucide-react';
-import { CustomerHeader } from './CustomerHeader';
-import { BottomNav } from './BottomNav';
+
 
 interface PickupTrackerViewProps {
   orderRef?: string;
@@ -53,12 +52,7 @@ export const PickupTrackerView: React.FC<PickupTrackerViewProps> = ({
   };
 
   return (
-    <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col items-center selection:bg-primary/20 selection:text-primary pb-28">
-      {/* Top Main Customer Header */}
-      <CustomerHeader />
-
-      {/* Main Scrollable Content */}
-      <main className="flex flex-col relative w-full max-w-md px-space-lg pt-16 bg-surface min-h-screen">
+    <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 pb-28 bg-surface min-h-screen">
         <div className="flex flex-col w-full pb-8 gap-4">
           {/* Top Tracking Bar Navigation */}
           <div className="flex items-center justify-between py-2 pt-3">
@@ -522,18 +516,14 @@ export const PickupTrackerView: React.FC<PickupTrackerViewProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Floating Notice Toast */}
+        {noticeMessage && (
+          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 max-w-xs w-full px-4 py-2.5 bg-inverse-surface text-inverse-on-surface rounded-full shadow-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all z-50 animate-in slide-in-from-bottom-2 duration-200">
+            <Sparkles className="w-4 h-4 text-secondary-fixed" />
+            <span>{noticeMessage}</span>
+          </div>
+        )}
       </main>
-
-      {/* Floating Notice Toast */}
-      {noticeMessage && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 max-w-xs w-full px-4 py-2.5 bg-inverse-surface text-inverse-on-surface rounded-full shadow-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all z-50 animate-in slide-in-from-bottom-2 duration-200">
-          <Sparkles className="w-4 h-4 text-secondary-fixed" />
-          <span>{noticeMessage}</span>
-        </div>
-      )}
-
-      {/* Fixed Mobile Bottom Navigation Bar */}
-      <BottomNav activeTab="orders" />
-    </div>
   );
 };

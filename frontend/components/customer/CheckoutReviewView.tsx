@@ -566,8 +566,14 @@ export const CheckoutReviewView: React.FC = () => {
 
       {/* Confirmation Sheet Modal Mock */}
       {isConfirmationOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-surface-container-lowest w-full max-w-md rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center animate-in slide-in-from-bottom-4 duration-300">
+        <div
+          className="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsConfirmationOpen(false)}
+        >
+          <div
+            className="bg-surface-container-lowest w-full max-w-md rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center animate-in slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
               <ChefHat className="w-8 h-8 text-primary" />
             </div>

@@ -25,7 +25,10 @@ export const LocationModal: React.FC<LocationModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 transition-opacity animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 transition-opacity animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-md bg-surface rounded-t-2xl sm:rounded-2xl p-space-lg flex flex-col gap-4 shadow-2xl animate-in slide-in-from-bottom duration-300 border border-surface-container"
         onClick={(e) => e.stopPropagation()}

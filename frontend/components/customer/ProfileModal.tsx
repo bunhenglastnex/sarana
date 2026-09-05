@@ -59,7 +59,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-xs bg-surface h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 border-l border-surface-container overflow-y-auto"
         onClick={(e) => e.stopPropagation()}

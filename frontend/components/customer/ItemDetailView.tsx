@@ -18,7 +18,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { FoodItem } from './FoodCard';
-import { BottomNav } from './BottomNav';
 
 const MOCK_ITEMS_MAP: Record<string, FoodItem> = {
   'smoked-bacon-truffle-burger': {
@@ -436,16 +435,6 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
           </button>
         </div>
       </aside>
-
-      {/* Bottom Nav Navigation Bar */}
-      <BottomNav
-        activeTab="home"
-        onTabChange={(tab) => {
-          if (tab === 'home') router.push('/');
-          else if (tab === 'profile') router.push('/customer-profile');
-        }}
-        cartBadgeCount={2}
-      />
     </div>
   );
 };

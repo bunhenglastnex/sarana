@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import React from "react";
 import { I18nProvider } from "@/components/I18nProvider";
 
+import { CustomerLayout } from "@/layouts/customer";
+
 export const metadata: Metadata = {
   title: "Restaurant Online Ordering & Delivery System",
   description:
@@ -34,8 +36,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-surface text-on-surface antialiased flex flex-col font-sans">
         <I18nProvider>
-          {/* Global Page Content Container */}
-          <div className="flex-1">{children}</div>
+          <CustomerLayout>{children}</CustomerLayout>
         </I18nProvider>
       </body>
     </html>
