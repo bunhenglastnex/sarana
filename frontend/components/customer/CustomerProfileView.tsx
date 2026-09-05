@@ -55,9 +55,9 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
 
   const handleTabChange = (tab: string) => {
     if (tab === "home") router.push("/");
-    else if (tab === "search") router.push("/#search");
-    else if (tab === "cart") router.push("/#cart");
-    else if (tab === "orders") router.push("/#orders");
+    else if (tab === "favorites") router.push("/favorites");
+    else if (tab === "cart") router.push("/cart");
+    else if (tab === "orders") router.push("/orders");
     else if (tab === "profile") router.push("/customer-profile");
   };
 
@@ -181,7 +181,7 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
             <div className="flex flex-col rounded-xl bg-surface-container-lowest shadow-sm overflow-hidden border border-surface-container/60 divide-y divide-surface-container">
               {/* My Orders */}
               <Link
-                href="/#orders"
+                href="/orders"
                 className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container group"
               >
                 <div className="flex items-center gap-space-sm min-w-0">

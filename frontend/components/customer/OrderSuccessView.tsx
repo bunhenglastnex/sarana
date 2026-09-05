@@ -28,15 +28,17 @@ interface OrderSuccessViewProps {
 
 export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
   orderRef = "#AE-84920",
+  paymentMethod,
+  fulfillmentMode,
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Query param fallbacks
   const paymentParam =
-    (searchParams.get("payment") as "khqr" | "cod" | "counter") || "khqr";
+    paymentMethod || (searchParams.get("payment") as "khqr" | "cod" | "counter") || "khqr";
   const modeParam =
-    (searchParams.get("mode") as "delivery" | "pickup") || "delivery";
+    fulfillmentMode || (searchParams.get("mode") as "delivery" | "pickup") || "delivery";
 
   // If Pickup, render PickupTrackerView directly!
   if (modeParam === "pickup") {
@@ -53,7 +55,8 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
     return <LiveOrderTrackerView orderRef={orderRef} />;
   }
 
-  const isPickup = modeParam === "pickup";
+  // Pickup mode returns early above; any code reaching here is delivery mode
+  const isPickup = false;
 
   const getPaymentBadge = () => {
     switch (paymentParam) {

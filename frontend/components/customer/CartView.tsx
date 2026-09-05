@@ -130,9 +130,9 @@ export const CartView: React.FC = () => {
 
   const handleTabChange = (tab: string) => {
     if (tab === 'home') router.push('/');
-    else if (tab === 'search') router.push('/#search');
+    else if (tab === 'favorites') router.push('/favorites');
     else if (tab === 'cart') router.push('/cart');
-    else if (tab === 'orders') router.push('/#orders');
+    else if (tab === 'orders') router.push('/orders');
     else if (tab === 'profile') router.push('/customer-profile');
   };
 

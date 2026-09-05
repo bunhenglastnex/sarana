@@ -50,6 +50,7 @@ const MOCK_ITEMS_MAP: Record<string, FoodItem> = {
       },
       {
         name: 'Extra Toppings',
+        required: false,
         choices: [
           { label: 'Caramelized Balsamic Onions', priceExtra: 1.0 },
           { label: 'Fried Free-Range Egg', priceExtra: 1.5 },
@@ -165,11 +166,22 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
     return (item.price + extra) * quantity;
   };
 
-  const handleOptionSelect = (groupName: string, choiceLabel: string) => {
-    setSelectedOptions((prev) => ({
-      ...prev,
-      [groupName]: choiceLabel,
-    }));
+  const handleOptionSelect = (
+    groupName: string,
+    choiceLabel: string,
+    isRequired: boolean
+  ) => {
+    setSelectedOptions((prev) => {
+      if (!isRequired && prev[groupName] === choiceLabel) {
+        const next = { ...prev };
+        delete next[groupName];
+        return next;
+      }
+      return {
+        ...prev,
+        [groupName]: choiceLabel,
+      };
+    });
   };
 
   const handleAddToCart = () => {
@@ -287,53 +299,80 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
           {/* Customization Options */}
           {item.options && item.options.length > 0 && (
             <div className="space-y-4">
-              {item.options.map((optGroup) => (
-                <div
-                  key={optGroup.name}
-                  className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm border border-surface-container/60 space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs uppercase tracking-wider text-on-surface">
-                      {optGroup.name}
-                    </span>
-                    <span className="text-[11px] font-semibold text-primary">Required</span>
-                  </div>
+              {item.options.map((optGroup) => {
+                const isRequired =
+                  optGroup.required ??
+                  (!optGroup.name.toLowerCase().includes("extra") &&
+                    !optGroup.name.toLowerCase().includes("topping") &&
+                    !optGroup.name.toLowerCase().includes("optional"));
 
-                  <div className="grid grid-cols-1 gap-2">
-                    {optGroup.choices.map((choice) => {
-                      const isSelected = selectedOptions[optGroup.name] === choice.label;
-                      return (
-                        <button
-                          key={choice.label}
-                          type="button"
-                          onClick={() => handleOptionSelect(optGroup.name, choice.label)}
-                          className={`flex items-center justify-between p-3.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.99] ${
-                            isSelected
-                              ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary'
-                              : 'border-surface-container-high bg-surface-container-lowest text-on-surface hover:border-outline'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                isSelected ? 'border-primary bg-primary text-white' : 'border-outline'
-                              }`}
-                            >
-                              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                return (
+                  <div
+                    key={optGroup.name}
+                    className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm border border-surface-container/60 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs uppercase tracking-wider text-on-surface">
+                        {optGroup.name}
+                      </span>
+                      {isRequired ? (
+                        <span className="text-[11px] font-semibold text-primary">
+                          Required
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-on-surface-variant">
+                          Optional
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2">
+                      {optGroup.choices.map((choice) => {
+                        const isSelected =
+                          selectedOptions[optGroup.name] === choice.label;
+                        return (
+                          <button
+                            key={choice.label}
+                            type="button"
+                            onClick={() =>
+                              handleOptionSelect(
+                                optGroup.name,
+                                choice.label,
+                                isRequired
+                              )
+                            }
+                            className={`flex items-center justify-between p-3.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.99] ${
+                              isSelected
+                                ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
+                                : "border-surface-container-high bg-surface-container-lowest text-on-surface hover:border-outline"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                  isSelected
+                                    ? "border-primary bg-primary text-white"
+                                    : "border-outline"
+                                }`}
+                              >
+                                {isSelected && (
+                                  <Check className="w-3 h-3 stroke-[3]" />
+                                )}
+                              </div>
+                              <span>{choice.label}</span>
                             </div>
-                            <span>{choice.label}</span>
-                          </div>
-                          {choice.priceExtra > 0 && (
-                            <span className="text-on-surface-variant font-medium">
-                              +${choice.priceExtra.toFixed(2)}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
+                            {choice.priceExtra > 0 && (
+                              <span className="text-on-surface-variant font-medium">
+                                +${choice.priceExtra.toFixed(2)}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

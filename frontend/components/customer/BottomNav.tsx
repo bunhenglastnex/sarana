@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Store, Search, ShoppingBag, Receipt, User } from 'lucide-react';
+import { Store, Heart, ShoppingBag, Receipt, User } from 'lucide-react';
 
-export type NavTab = 'home' | 'search' | 'cart' | 'orders' | 'profile';
+export type NavTab = 'home' | 'favorites' | 'search' | 'cart' | 'orders' | 'profile';
 
 interface BottomNavProps {
   activeTab?: NavTab;
@@ -18,7 +18,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
   const tabs = [
     { id: 'home' as NavTab, label: 'Home', icon: Store },
-    { id: 'search' as NavTab, label: 'Search', icon: Search },
+    { id: 'favorites' as NavTab, label: 'Favorites', icon: Heart },
     { id: 'cart' as NavTab, label: 'Cart', icon: ShoppingBag, badge: cartBadgeCount },
     { id: 'orders' as NavTab, label: 'Orders', icon: Receipt },
     { id: 'profile' as NavTab, label: 'Profile', icon: User },

@@ -218,6 +218,10 @@ export default function CustomerPageLayout() {
       router.push('/customer-profile');
     } else if (tab === 'cart') {
       router.push('/cart');
+    } else if (tab === 'orders') {
+      router.push('/orders');
+    } else if (tab === 'favorites') {
+      router.push('/favorites');
     }
   };
 

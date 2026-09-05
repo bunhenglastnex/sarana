@@ -17,6 +17,7 @@ export interface FoodItem {
   };
   options?: {
     name: string;
+    required?: boolean;
     choices: { label: string; priceExtra: number }[];
   }[];
 }
