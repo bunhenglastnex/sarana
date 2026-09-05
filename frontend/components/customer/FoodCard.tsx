@@ -20,6 +20,7 @@ export interface FoodItem {
     required?: boolean;
     choices: { label: string; priceExtra: number }[];
   }[];
+  stockQuantity?: number;
 }
 
 interface FoodCardProps {

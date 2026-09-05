@@ -270,23 +270,29 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
               </span>
             </div>
 
-            {/* Metrics pills */}
-            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-surface-container text-xs text-on-surface-variant">
-              <div className="flex items-center gap-1 font-semibold text-on-surface">
-                <Star className="w-4 h-4 fill-secondary text-secondary" />
-                <span>4.9</span>
-                <span className="text-on-surface-variant font-normal">(248)</span>
-              </div>
-              <div className="w-1 h-1 rounded-full bg-outline-variant" />
+            {/* Metrics & Stock Inventory Pills */}
+            <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-surface-container text-xs text-on-surface-variant">
               <div className="flex items-center gap-1 font-semibold">
                 <Clock className="w-4 h-4 text-primary" />
                 <span>15-20 mins</span>
               </div>
               <div className="w-1 h-1 rounded-full bg-outline-variant" />
-              <div className="flex items-center gap-1 font-semibold text-secondary">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Artisanal</span>
-              </div>
+              
+              {/* Stock Inventory Pill */}
+              {(item.stockQuantity ?? 18) <= 0 ? (
+                <div className="flex items-center gap-1 font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                  <span>❌ Sold Out</span>
+                </div>
+              ) : (item.stockQuantity ?? 18) <= 5 ? (
+                <div className="flex items-center gap-1 font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 animate-pulse">
+                  <span>⚠️ Only {item.stockQuantity ?? 18} left in stock!</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>{(item.stockQuantity ?? 18)} in stock</span>
+                </div>
+              )}
             </div>
 
             {/* Detailed Culinary Description */}
@@ -398,9 +404,10 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
           <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-surface-container-highest flex-shrink-0">
             <button
               type="button"
+              disabled={(item.stockQuantity ?? 18) <= 0}
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
               aria-label="Decrease quantity"
-              className="w-9 h-9 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all"
+              className="w-9 h-9 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all disabled:opacity-40"
             >
               <Minus className="w-4 h-4" />
             </button>
@@ -409,9 +416,10 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
             </span>
             <button
               type="button"
-              onClick={() => setQuantity(quantity + 1)}
+              disabled={(item.stockQuantity ?? 18) <= 0 || quantity >= (item.stockQuantity ?? 18)}
+              onClick={() => setQuantity(Math.min(item.stockQuantity ?? 18, quantity + 1))}
               aria-label="Increase quantity"
-              className="w-9 h-9 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all"
+              className="w-9 h-9 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all disabled:opacity-40"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -420,18 +428,32 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
           {/* Add to Cart Button */}
           <button
             type="button"
+            disabled={(item.stockQuantity ?? 18) <= 0}
             onClick={handleAddToCart}
-            className={`flex-1 py-3 px-4 rounded-full font-extrabold text-sm flex items-center justify-between shadow-md active:scale-95 transition-all ${
-              added
+            className={`flex-1 py-3 px-4 rounded-full font-extrabold text-sm flex items-center justify-between shadow-md active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+              (item.stockQuantity ?? 18) <= 0
+                ? 'bg-surface-container-highest text-on-surface-variant'
+                : added
                 ? 'bg-secondary text-on-secondary'
                 : 'bg-primary text-on-primary hover:bg-primary-container'
             }`}
           >
             <div className="flex items-center gap-2">
-              {added ? <Check className="w-5 h-5" /> : <ShoppingBag className="w-5 h-5" />}
-              <span>{added ? 'Added to Order!' : 'Add to Order'}</span>
+              {(item.stockQuantity ?? 18) <= 0 ? (
+                <span>Out of Stock</span>
+              ) : added ? (
+                <>
+                  <Check className="w-5 h-5" />
+                  <span>Added to Order!</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="w-5 h-5" />
+                  <span>Add to Order</span>
+                </>
+              )}
             </div>
-            <span>${totalPrice.toFixed(2)}</span>
+            {(item.stockQuantity ?? 18) > 0 && <span>${totalPrice.toFixed(2)}</span>}
           </button>
         </div>
       </aside>

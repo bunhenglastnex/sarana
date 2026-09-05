@@ -1,25 +1,42 @@
-import React from 'react';
+"use client";
 
-export default function AdminPageLayout() {
+import React from "react";
+import { HearthStatusStrip } from "@/components/admin/HearthStatusStrip";
+import { KpiMosaic } from "@/components/admin/KpiMosaic";
+import { RhythmChart } from "@/components/admin/RhythmChart";
+import { OrderMixChart } from "@/components/admin/OrderMixChart";
+import { SignatureItemCard } from "@/components/admin/SignatureItemCard";
+import { LiveOrdersTable } from "@/components/admin/LiveOrdersTable";
+import { OperationalAlertsBar } from "@/components/admin/OperationalAlertsBar";
+
+export default function AdminDashboardPage() {
   return (
-    <div className="space-y-6">
-      {/* Admin Header Section */}
-      <section className="border-b border-border pb-4 flex justify-between items-center flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Kitchen Admin Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage incoming customer orders, update kitchen preparation stages, and dispatch to riders.
-          </p>
-        </div>
-      </section>
+    <div className="flex flex-col w-full space-y-space-xl">
+      {/* Top Greeting & Hearth Control Strip */}
+      <HearthStatusStrip />
 
-      {/* Orders Grid / Table Container */}
-      <section className="border border-border rounded-lg p-6 bg-card">
-        <h2 className="text-lg font-semibold border-b border-border pb-3">Active Kitchen Orders</h2>
-        <div className="py-16 text-center text-sm text-muted-foreground">
-          [ Kitchen Admin Orders Queue Layout Container ]
+      {/* KPI Summary Cards: 6-Metric Mosaic */}
+      <KpiMosaic />
+
+      {/* Visual Analytics & Dispatch Rhythm Section (70/30 Asymmetric Layout) */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-space-lg">
+        {/* Rhythm Chart Column (8 Cols) */}
+        <div className="xl:col-span-8">
+          <RhythmChart />
         </div>
-      </section>
+
+        {/* Channel Mix & Top Seller Column (4 Cols) */}
+        <div className="xl:col-span-4 flex flex-col gap-space-md">
+          <OrderMixChart />
+          <SignatureItemCard />
+        </div>
+      </div>
+
+      {/* Operational Orders Table Section */}
+      <LiveOrdersTable />
+
+      {/* Operational Alert & Live Courier Dispatch Bar */}
+      <OperationalAlertsBar />
     </div>
   );
 }
