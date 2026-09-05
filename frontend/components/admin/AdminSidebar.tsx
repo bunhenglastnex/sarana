@@ -18,6 +18,7 @@ import {
   Settings,
   LogOut,
   User,
+  ScrollText,
 } from "lucide-react";
 
 export const AdminSidebar: React.FC = () => {
@@ -176,6 +177,11 @@ export const AdminSidebar: React.FC = () => {
           <Link href="/admin/staff" className={navItemClass("/admin/staff")}>
             <UserCheck className="w-5 h-5 shrink-0" />
             <span className="font-label-lg text-label-lg">Staff</span>
+          </Link>
+
+          <Link href="/admin/logs" className={navItemClass("/admin/logs")}>
+            <ScrollText className="w-5 h-5 shrink-0" />
+            <span className="font-label-lg text-label-lg">System Logs</span>
           </Link>
 
           <Link

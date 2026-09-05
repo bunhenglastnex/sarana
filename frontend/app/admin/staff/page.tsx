@@ -1,34 +1,129 @@
 "use client";
 
-import React from "react";
-import { UserCheck, ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
+import { StaffRecord, StaffStatus } from "@/types/staff";
+import { mockStaffMembers } from "@/components/admin/staff/mockStaff";
+import { StaffHeader } from "@/components/admin/staff/StaffHeader";
+import { StaffFilterBar } from "@/components/admin/staff/StaffFilterBar";
+import { StaffMemberCard } from "@/components/admin/staff/StaffMemberCard";
+import { StaffDetailModal } from "@/components/admin/staff/StaffDetailModal";
 
 export default function StaffPage() {
+  const [staffList, setStaffList] = useState<StaffRecord[]>(mockStaffMembers);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StaffStatus>("all");
+  const [selectedStaff, setSelectedStaff] = useState<StaffRecord | null>(null);
+
+  // Compute Drivers KPI Statistics
+  const totalDriverCount = staffList.length;
+  const onDeliveryCount = staffList.filter(
+    (s) => s.status === "on_delivery",
+  ).length;
+  const availableCount = staffList.filter(
+    (s) => s.status === "available",
+  ).length;
+  const totalCodCollected = staffList.reduce(
+    (sum, s) => sum + (s.codCashCollected || 0),
+    0,
+  );
+  const totalTipsToday = staffList.reduce(
+    (sum, s) => sum + (s.tipsToday || 0),
+    0,
+  );
+
+  // Driver Filtering Logic
+  const filteredStaff = staffList.filter((staff) => {
+    // Status filter
+    if (statusFilter !== "all" && staff.status !== statusFilter) {
+      return false;
+    }
+    // Search query (matches name, phone, code, vehicle)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = staff.name.toLowerCase().includes(q);
+      const matchPhone = staff.phone.includes(q);
+      const matchCode = staff.code.toLowerCase().includes(q);
+      const matchVehicle = staff.vehicleLabel?.toLowerCase().includes(q);
+      return matchName || matchPhone || matchCode || matchVehicle;
+    }
+
+    return true;
+  });
+
+  const handleCallStaff = (name: string, phone: string) => {
+    alert(`Initiating phone call to driver ${name} (${phone})...`);
+  };
+  const handleReconcileCash = (staffId: string) => {
+    setStaffList((prev) =>
+      prev.map((staff) => {
+        if (staff.id === staffId) {
+          return {
+            ...staff,
+            codCashCollected: 0.0,
+            tipsToday: 0.0,
+          };
+        }
+        return staff;
+      }),
+    );
+
+    if (selectedStaff && selectedStaff.id === staffId) {
+      setSelectedStaff((prev) =>
+        prev ? { ...prev, codCashCollected: 0.0, tipsToday: 0.0 } : null,
+      );
+    }
+  };
+
   return (
-    <div className="space-y-space-lg">
-      <div className="border-b border-border/40 pb-space-md">
-        <h1 className="font-headline-xl text-2xl font-bold text-on-surface">
-          Staff & Station Roster
-        </h1>
-        <p className="font-body-sm text-sm text-on-surface-variant mt-0.5">
-          Manage bistro kitchen personnel, shift assignments, and terminal permissions.
-        </p>
+    <div className="flex flex-col w-full min-h-screen pb-space-2xl space-y-space-lg">
+      {/* Driver Fleet KPI Telemetry Header */}
+      <StaffHeader
+        totalDriverCount={totalDriverCount}
+        onDeliveryCount={onDeliveryCount}
+        availableCount={availableCount}
+        totalCodCollected={totalCodCollected}
+        totalTipsToday={totalTipsToday}
+      />
+
+      {/* Filter Bar & Search */}
+      <StaffFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        onRefresh={() => setStaffList([...mockStaffMembers])}
+      />
+
+      {/* Main Delivery Driver Roster Grid (Responsive: 1 col on mobile, 2 on md, 3 on xl, 4 on 2xl) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-space-md">
+        {filteredStaff.map((staff) => (
+          <StaffMemberCard
+            key={staff.id}
+            staff={staff}
+            onSelect={(s) => setSelectedStaff(s)}
+            onCall={handleCallStaff}
+          />
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-space-md">
-        <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm border border-border/40 flex items-center justify-between">
-          <div className="flex items-center gap-space-sm">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary">
-              <UserCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-bold text-sm text-on-surface">Elena Rostova</h4>
-              <p className="text-xs text-on-surface-variant">General Manager</p>
-            </div>
-          </div>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">ON SHIFT</span>
+      {filteredStaff.length === 0 && (
+        <div className="bg-surface-container-lowest p-space-2xl rounded-2xl border border-border/40 text-center space-y-2">
+          <p className="font-headline-sm text-base font-bold text-on-surface">
+            No delivery drivers found matching your filter
+          </p>
+          <p className="font-body-sm text-xs text-on-surface-variant">
+            Try adjusting your search query or courier status selection.
+          </p>
         </div>
-      </div>
+      )}
+
+      {/* Staff Detail Modal */}
+      <StaffDetailModal
+        staff={selectedStaff}
+        isOpen={Boolean(selectedStaff)}
+        onClose={() => setSelectedStaff(null)}
+        onReconcileCash={handleReconcileCash}
+      />
     </div>
   );
 }

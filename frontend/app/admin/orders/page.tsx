@@ -303,9 +303,9 @@ const mockOrders: OrderRecord[] = [
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>(mockOrders);
-  const [selectedOrderId, setSelectedOrderId] = useState<string>("#1024");
-  const [statusFilter, setStatusFilter] = useState<string>("preparing");
-  const [searchQuery, setSearchQuery] = useState<string>("#1024");
+  const [selectedOrderId, setSelectedOrderId] = useState<string>("#1026");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const selectedOrder =
     orders.find((o) => o.id === selectedOrderId) || orders[0];
@@ -357,6 +357,16 @@ export default function OrdersPage() {
   };
 
   const filteredOrders = orders.filter((o) => {
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        o.id.toLowerCase().includes(q) ||
+        o.customerName.toLowerCase().includes(q) ||
+        o.customerPhone.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+    }
+
+    if (statusFilter === "all") return true;
     if (statusFilter === "pending") return o.status === "pending";
     if (statusFilter === "preparing") return o.status === "preparing";
     if (statusFilter === "ready") return o.status === "ready";
@@ -366,14 +376,6 @@ export default function OrdersPage() {
       return o.status === "delivered" || o.status === "picked_up";
     if (statusFilter === "cancelled") return o.status === "cancelled";
 
-    if (searchQuery.trim() !== "") {
-      const q = searchQuery.toLowerCase();
-      return (
-        o.id.toLowerCase().includes(q) ||
-        o.customerName.toLowerCase().includes(q) ||
-        o.customerPhone.toLowerCase().includes(q)
-      );
-    }
     return true;
   });
 
@@ -397,8 +399,8 @@ export default function OrdersPage() {
 
       {/* Main 2-Column Split Workspace */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
-        {/* LEFT COLUMN: Order Directory & Filtering (7 cols on XL) */}
-        <div className="xl:col-span-7">
+        {/* LEFT COLUMN: Order Directory & Filtering (8 cols on XL) */}
+        <div className="xl:col-span-8">
           <OrderDirectory
             orders={filteredOrders}
             allOrders={orders}

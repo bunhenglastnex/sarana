@@ -15,11 +15,16 @@ import {
   ChevronRight,
   Clock,
   Store,
+  XCircle,
+  ShieldCheck,
+  Receipt,
+  X,
 } from "lucide-react";
 
 export const OrdersView: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
+  const [showCustomerRefundProof, setShowCustomerRefundProof] = useState(false);
 
   return (
     <main className="flex flex-col relative w-full max-w-md px-screen-edge-padding pt-4 pb-28 bg-surface min-h-screen">
@@ -361,6 +366,132 @@ export const OrdersView: React.FC = () => {
                 <span>Reorder</span>
               </button>
             </div>
+          </div>
+
+          {/* Past Order 3: Cancelled & Refunded KHQR Order */}
+          <div className="bg-surface-container-lowest rounded-xl p-space-md shadow-[0_4px_16px_-2px_rgba(26,23,21,0.04)] flex flex-col gap-space-xs border border-error/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-headline-sm text-headline-sm font-extrabold text-on-surface tracking-tight truncate">
+                  #AE-81992
+                </span>
+                <span className="text-tertiary text-xs">•</span>
+                <span className="font-body-sm text-body-sm text-on-surface-variant truncate">
+                  Today, 6:45 PM
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-1 bg-error-container/30 text-error px-2.5 py-0.5 rounded-full font-label-sm text-label-sm font-bold">
+                <XCircle className="w-3.5 h-3.5 text-error" /> Cancelled
+              </span>
+            </div>
+
+            {/* Cancelled Banner & Refund Settlement Status */}
+            <div className="bg-error-container/15 p-2.5 rounded-lg border border-error/20 flex flex-col gap-1 my-1">
+              <div className="flex items-center justify-between">
+                <span className="font-label-sm text-xs font-bold text-error flex items-center gap-1">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Refunded $41.50 to your ABA Bank Account
+                </span>
+              </div>
+              <p className="font-body-sm text-[11px] text-on-surface-variant">
+                Kitchen note: <span className="italic text-on-surface">“Hearth-Smoked Ribs sold out tonight.”</span>
+              </p>
+            </div>
+
+            {/* Details */}
+            <div className="flex items-center gap-2.5 py-1">
+              <img
+                className="w-10 h-10 rounded-lg object-cover bg-surface-variant shrink-0 border border-surface-container-high"
+                alt="Smoked Ribs Platter"
+                src="https://images.unsplash.com/photo-1544025162-d76694265947?w=200&auto=format&fit=crop&q=80"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                  2 items • Smoked Angus Ribs, Truffle Fries
+                </p>
+                <span className="font-body-sm text-body-sm text-emerald-700 font-bold block truncate">
+                  ✓ KHQR Payment Settled &amp; Refunded
+                </span>
+              </div>
+            </div>
+
+            {/* Bottom price & View ABA Refund Receipt Button */}
+            <div className="flex items-center justify-between pt-2 border-t border-surface-container/60">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-price-lg text-price-lg text-on-surface font-extrabold line-through text-on-surface-variant">
+                  $41.50
+                </span>
+                <span className="font-label-sm text-xs font-bold text-emerald-700">
+                  $0.00 (Refunded)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCustomerRefundProof(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-full font-label-sm text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all shadow-xs"
+              >
+                <Receipt className="w-3.5 h-3.5" />
+                <span>View Refund Slip</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOMER REFUND PROOF RECEIPT MODAL */}
+      {showCustomerRefundProof && (
+        <div
+          onClick={() => setShowCustomerRefundProof(false)}
+          className="fixed inset-0 bg-on-surface/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-surface-container-lowest rounded-2xl max-w-xs w-full p-4 shadow-2xl space-y-3 border border-border/40"
+          >
+            <div className="flex items-center justify-between border-b border-border/30 pb-2">
+              <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-700">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>ABA Bank Refund Receipt (#AE-81992)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCustomerRefundProof(false)}
+                className="p-1 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="w-full h-56 rounded-xl overflow-hidden bg-surface-container-highest border border-border/20 shadow-inner">
+              <img
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10"
+                alt="ABA Bank Refund Transfer Proof"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div className="bg-surface-container-low p-2.5 rounded-xl text-xs space-y-1 border border-border/20">
+              <div className="flex justify-between font-label-sm text-[11px] text-on-surface-variant">
+                <span>Refund Amount:</span>
+                <span className="font-bold text-emerald-700">$41.50 USD</span>
+              </div>
+              <div className="flex justify-between font-label-sm text-[11px] text-on-surface-variant">
+                <span>Transfer Type:</span>
+                <span className="font-semibold text-on-surface">ABA Mobile Instant</span>
+              </div>
+              <div className="flex justify-between font-label-sm text-[11px] text-on-surface-variant">
+                <span>Status:</span>
+                <span className="font-bold text-emerald-700">✓ Transfer Verified</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowCustomerRefundProof(false)}
+              className="w-full py-2 rounded-xl bg-surface-container-high hover:bg-surface-container text-on-surface font-label-sm text-xs font-bold transition-colors"
+            >
+              Close Receipt
+            </button>
           </div>
         </div>
       )}
