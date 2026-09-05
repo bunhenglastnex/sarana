@@ -15,7 +15,7 @@ interface KdsKanbanColumnProps {
   badgeClass: string;
   containerClass?: string;
   tickets: KdsTicket[];
-  onAction?: (action: string, ticketId: string) => void;
+  onAction?: (action: string, ticketId: string, reason?: string) => void;
 }
 
 export const KdsKanbanColumn: React.FC<KdsKanbanColumnProps> = ({

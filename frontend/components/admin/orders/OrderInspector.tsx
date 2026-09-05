@@ -303,71 +303,73 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
         </div>
 
         {/* Courier Drop-Off & Payment Verification Card */}
-        <div className="bg-surface-container-low p-space-sm rounded-xl flex flex-col gap-2 border border-border/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 font-label-sm text-xs font-bold text-on-surface">
-              <Camera className="w-3.5 h-3.5 text-primary" />
-              <span>Courier Delivery & Payment Verification</span>
+        {order.paymentIsPaid && (
+          <div className="bg-surface-container-low p-space-sm rounded-xl flex flex-col gap-2 border border-border/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 font-label-sm text-xs font-bold text-on-surface">
+                <Camera className="w-3.5 h-3.5 text-primary" />
+                <span>Courier Delivery & Payment Verification</span>
+              </div>
+              {isAdminVerified ? (
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-[10px] font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  Verified & Approved
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-label-sm text-[10px] font-bold flex items-center gap-1 animate-pulse">
+                  <ShieldCheck className="w-3 h-3 text-amber-700" />
+                  Pending Verification
+                </span>
+              )}
             </div>
-            {isAdminVerified ? (
-              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-[10px] font-bold flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                Verified & Approved
-              </span>
-            ) : (
-              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-label-sm text-[10px] font-bold flex items-center gap-1 animate-pulse">
-                <ShieldCheck className="w-3 h-3 text-amber-700" />
-                Pending Verification
-              </span>
-            )}
-          </div>
 
-          <div className="bg-surface-container-lowest p-2 rounded-lg flex items-center justify-between gap-2 border border-border/20">
-            {/* Delivery Drop Image Thumbnail */}
-            <div className="flex items-center gap-2">
-              <div
-                onClick={() => setShowProofModal(true)}
-                className="relative w-12 h-12 rounded-md overflow-hidden bg-surface-container-highest shrink-0 cursor-pointer group shadow-xs border border-border/30"
-              >
-                <img
-                  src={
-                    order.proofImageUrl ||
-                    "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=300&auto=format&fit=crop"
-                  }
-                  alt="Drop-off Proof Photo"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ZoomIn className="w-4 h-4 text-white" />
+            <div className="bg-surface-container-lowest p-2 rounded-lg flex items-center justify-between gap-2 border border-border/20">
+              {/* Delivery Drop Image Thumbnail */}
+              <div className="flex items-center gap-2">
+                <div
+                  onClick={() => setShowProofModal(true)}
+                  className="relative w-12 h-12 rounded-md overflow-hidden bg-surface-container-highest shrink-0 cursor-pointer group shadow-xs border border-border/30"
+                >
+                  <img
+                    src={
+                      order.proofImageUrl ||
+                      "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=300&auto=format&fit=crop"
+                    }
+                    alt="Drop-off Proof Photo"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ZoomIn className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="font-label-md text-xs font-bold text-on-surface">
+                    Drop-Off Photo & Payment Slip
+                  </div>
+                  <div className="font-body-sm text-[11px] text-on-surface-variant flex items-center gap-1">
+                    <span>Driver Verified Cash (${order.totalPrice.toFixed(2)})</span>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <div className="font-label-md text-xs font-bold text-on-surface">
-                  Drop-Off Photo & Payment Slip
-                </div>
-                <div className="font-body-sm text-[11px] text-on-surface-variant flex items-center gap-1">
-                  <span>Driver Verified Cash (${order.totalPrice.toFixed(2)})</span>
-                </div>
-              </div>
+              {/* Admin Action Button */}
+              {!isAdminVerified ? (
+                <button
+                  onClick={handleConfirmAdminVerification}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-label-sm text-[11px] font-bold shadow-xs flex items-center gap-1 transition-colors"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Confirm Payment</span>
+                </button>
+              ) : (
+                <span className="font-label-sm text-[11px] text-emerald-700 font-bold">
+                  ✓ Cash Settled
+                </span>
+              )}
             </div>
-
-            {/* Admin Action Button */}
-            {!isAdminVerified ? (
-              <button
-                onClick={handleConfirmAdminVerification}
-                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-label-sm text-[11px] font-bold shadow-xs flex items-center gap-1 transition-colors"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Confirm Payment</span>
-              </button>
-            ) : (
-              <span className="font-label-sm text-[11px] text-emerald-700 font-bold">
-                ✓ Cash Settled
-              </span>
-            )}
           </div>
-        </div>
+        )}
 
         {/* Itemized Culinary Breakdown Section */}
         <div className="flex flex-col gap-space-sm">

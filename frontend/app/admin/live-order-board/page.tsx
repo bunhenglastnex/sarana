@@ -17,6 +17,8 @@ const initialTickets: KdsTicket[] = [
     locationOrNote: "Table/Flat 4B",
     paymentBadge: "KHQR PAID",
     paymentIsPaid: true,
+    proofImageUrl:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10",
     totalPrice: 23.0,
     items: [
       {
@@ -100,6 +102,8 @@ const initialTickets: KdsTicket[] = [
     customerName: "Tariq J.",
     paymentBadge: "PAID KHQR",
     paymentIsPaid: true,
+    proofImageUrl:
+      "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=500&auto=format&fit=crop",
     totalPrice: 15.0,
     assignStation: "Cold Larder",
     items: [
@@ -123,6 +127,8 @@ const initialTickets: KdsTicket[] = [
     assignStation: "Hearth Station 1",
     paymentBadge: "PAID (KHQR)",
     paymentIsPaid: true,
+    proofImageUrl:
+      "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop",
     totalPrice: 23.5,
     items: [
       {
@@ -173,6 +179,8 @@ const initialTickets: KdsTicket[] = [
     customerName: "Julian Thorne",
     paymentBadge: "PAID (KHQR)",
     paymentIsPaid: true,
+    proofImageUrl:
+      "https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop",
     totalPrice: 27.0,
     items: [
       {
@@ -223,12 +231,18 @@ export default function LiveOrderBoardPage() {
   const [filter, setFilter] = useState<"all" | "delivery" | "pickup">("all");
   const [isPassStationOpen, setIsPassStationOpen] = useState(false);
 
-  const handleAction = (action: string, ticketId: string) => {
+  const handleAction = (action: string, ticketId: string, reason?: string) => {
+    if (action === "reject") {
+      setTickets((prev) => prev.filter((t) => t.id !== ticketId));
+      if (reason) {
+        alert(`Ticket ${ticketId} rejected.\nRejection reason sent to customer: "${reason}"`);
+      }
+      return;
+    }
     setTickets((prev) =>
       prev.map((t) => {
         if (t.id !== ticketId) return t;
         if (action === "accept") return { ...t, status: "accepted" };
-        if (action === "reject") return { ...t, status: "ready" }; // or dismiss
         if (action === "start_prep")
           return {
             ...t,

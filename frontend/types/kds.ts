@@ -23,6 +23,7 @@ export interface KdsTicket {
   locationOrNote?: string;
   paymentBadge: string;
   paymentIsPaid?: boolean;
+  proofImageUrl?: string;
   items: KdsOrderItem[];
   totalPrice: number;
   assignStation?: string;

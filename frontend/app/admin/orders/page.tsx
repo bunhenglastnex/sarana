@@ -410,6 +410,7 @@ export default function OrdersPage() {
         {/* RIGHT COLUMN: Open Order Slide-Over Inspector (#1024 default) (5 cols on XL) */}
         {selectedOrder && (
           <OrderInspector
+            key={selectedOrder.id}
             order={selectedOrder}
             onClose={() => setSelectedOrderId("")}
             onAction={handleAction}
