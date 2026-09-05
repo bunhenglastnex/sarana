@@ -25,7 +25,7 @@ export const OrdersView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [currentAddress, setCurrentAddress] = useState(
-    "244 Oak Street, Apt 4B"
+    "244 Oak Street, Apt 4B",
   );
 
   const handleTabChange = (tab: NavTab) => {
@@ -38,14 +38,6 @@ export const OrdersView: React.FC = () => {
 
   return (
     <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col items-center selection:bg-primary/20 selection:text-primary pb-28">
-      {/* Fixed Top Customer Header */}
-      <CustomerHeader
-        currentAddress={currentAddress}
-        onOpenLocation={() => setIsLocationOpen(true)}
-        onOpenProfile={() => router.push("/customer-profile")}
-        onOpenNotifications={() => alert("You have 2 active order updates!")}
-      />
-
       {/* Main Page Content */}
       <main className="flex flex-col relative w-full max-w-md px-screen-edge-padding pt-4 pb-12 bg-surface min-h-screen">
         {/* Title & Sub-header */}
@@ -60,7 +52,9 @@ export const OrdersView: React.FC = () => {
           </div>
           <div className="flex items-center gap-1.5 bg-surface-container-high px-space-xs py-1 rounded-full text-on-surface-variant border border-surface-container-highest/60">
             <UtensilsCrossed className="w-3.5 h-3.5 text-primary" />
-            <span className="font-label-sm text-label-sm font-semibold">5 Total</span>
+            <span className="font-label-sm text-label-sm font-semibold">
+              5 Total
+            </span>
           </div>
         </div>
 
@@ -218,7 +212,9 @@ export const OrdersView: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => router.push("/order-success?mode=delivery&payment=khqr")}
+                  onClick={() =>
+                    router.push("/order-success?mode=delivery&payment=khqr")
+                  }
                   className="bg-primary hover:bg-primary-container text-on-primary px-space-md py-2.5 rounded-full font-label-lg text-label-lg font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all group"
                 >
                   <span>Track Order Live</span>
@@ -234,7 +230,9 @@ export const OrdersView: React.FC = () => {
           <div className="flex flex-col gap-space-sm mt-space-xl">
             <div className="flex items-center justify-between">
               <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface">
-                {activeTab === "active" ? "Recent Past Orders" : "All Past Orders"}
+                {activeTab === "active"
+                  ? "Recent Past Orders"
+                  : "All Past Orders"}
               </h2>
               {activeTab === "active" && (
                 <button

@@ -43,6 +43,15 @@
   body {
     overscroll-behavior-y: none;
   }
+  *, ::before, ::after {
+    -webkit-tap-highlight-color: transparent;
+  }
+  input, textarea, select {
+    outline: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+  }
 }
 
 @layer utilities {
