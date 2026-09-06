@@ -41,9 +41,25 @@ function createUsersTable(PDO $pdo): void {
     } catch (PDOException $e) {}
 
     try {
-        $pdo->exec("ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+        $pdo->exec("ALTER TABLE users ADD COLUMN customer_tag ENUM('VIP', 'Regular', 'High Spend', 'New') DEFAULT 'New'");
     } catch (PDOException $e) {}
 
-    echo "  ✅ Table 'users' ready (with Telegram, Avatar & Status support).\n";
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN primary_address TEXT NULL");
+    } catch (PDOException $e) {}
+
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN delivery_notes TEXT NULL");
+    } catch (PDOException $e) {}
+
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN preferred_channel ENUM('delivery', 'pickup') DEFAULT 'delivery'");
+    } catch (PDOException $e) {}
+
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN payment_preference VARCHAR(50) DEFAULT 'KHQR'");
+    } catch (PDOException $e) {}
+
+    echo "  ✅ Table 'users' ready (with Telegram, Avatar, Status & Customer Profile support).\n";
 }
 

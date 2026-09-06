@@ -13,6 +13,7 @@ export interface CustomerOrder {
 
 export interface CustomerRecord {
   id: string;
+  numericId?: number;
   name: string;
   phone: string;
   email: string;

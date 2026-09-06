@@ -35,17 +35,44 @@ function seedDatabase(PDO $pdo): void {
         (6, 3, 'Iced Lemon Green Tea', 1.50, 'តែបៃតងក្រូចឆ្មាផ្អែមត្រជាក់', 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500', 1, 'public'),
         (7, 4, 'Secret Chef Special Cake (Draft)', 5.00, 'នំខេកពិសេសលួចធ្វើថ្មី', 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500', 1, 'draft')");
 
+    // Seed Customers
+    $custPassword = password_hash('customer123', PASSWORD_BCRYPT);
+    $pdo->exec("INSERT IGNORE INTO users 
+        (id, name, phone, email, role, password, customer_tag, primary_address, delivery_notes, preferred_channel, payment_preference) VALUES
+        (101, 'David Chen', '+1 (555) 234-9912', 'david.chen@example.com', 'customer', '{$custPassword}', 'VIP', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 'Ring buzzer 14F on arrival. Prefers extra roasted aioli.', 'delivery', 'KHQR'),
+        (102, 'Clara Oswald', '+1 (555) 604-3382', 'clara.oswald@example.com', 'customer', '{$custPassword}', 'Regular', '182 W Superior St, Chicago, IL 60654', 'Dressing on side for salads. Prefers express pickup.', 'pickup', 'KHQR / Cash'),
+        (103, 'Marcus Vance', '+1 (555) 891-2240', 'marcus.vance@example.com', 'customer', '{$custPassword}', 'High Spend', '128 W Huron St, Suite 500, Chicago, IL 60654', 'Leave at front desk with security guard.', 'delivery', 'KHQR'),
+        (104, 'Sophia Lin', '+1 (555) 492-1084', 'sophia.lin@example.com', 'customer', '{$custPassword}', 'New', '742 Evergreen Terr, Apt 3B, Chicago, IL 60654', 'Allergic to peanuts.', 'pickup', 'KHQR'),
+        (105, 'Alex Rivera', '+1 (555) 382-9012', 'alex.rivera@example.com', 'customer', '{$custPassword}', 'Regular', '401 N Wabash Ave, Apt 18A, Chicago, IL 60611', 'Extra spicy sauce on all burgers.', 'delivery', 'KHQR'),
+        (106, 'Julian Thorne', '+1 (555) 773-4019', 'julian.thorne@example.com', 'customer', '{$custPassword}', 'VIP', '333 N Dearborn St, Chicago, IL 60654', 'Prefers well-done steak / ribeye slices.', 'pickup', 'KHQR')");
+
     // Seed Orders
     $pdo->exec("INSERT IGNORE INTO orders 
-        (id, order_number, customer_name, customer_phone, fulfillment_type, delivery_address, delivery_fee, food_amount, total_amount, payment_method, payment_status, status, delivery_staff_id, notes) 
+        (id, order_number, user_id, customer_name, customer_phone, fulfillment_type, delivery_address, delivery_fee, food_amount, total_amount, payment_method, payment_status, payment_proof_url, status, delivery_staff_id, notes, created_at) 
         VALUES
-        (1, 'ORD-1001', 'Dara Roth', '012999888', 'delivery', 'House #12, St 210, Toul Kork, Phnom Penh', 2.00, 9.00, 11.00, 'cash_on_delivery', 'pending', 'ready_for_delivery', 2, 'Please ring bell upon arrival'),
-        (2, 'ORD-1002', 'Kanha Seng', '088777666', 'pickup', NULL, 0.00, 4.50, 4.50, 'cash_at_counter', 'pending', 'preparing', NULL, 'Will pickup at 12:30 PM')");
+        (1082, '#1082', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 2.00, 39.50, 41.50, 'khqr', 'paid', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10', 'completed', 2, 'Ring buzzer 14F on arrival. Prefers extra roasted aioli.', NOW()),
+        (1026, '#1026', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 2.00, 27.50, 29.50, 'khqr', 'paid', 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=500', 'completed', 2, NULL, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+        (0998, '#0998', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 2.00, 36.00, 38.00, 'cod', 'paid', NULL, 'completed', 2, NULL, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+        (1081, '#1081', 102, 'Clara Oswald', '+1 (555) 604-3382', 'pickup', NULL, 0.00, 28.00, 28.00, 'counter_cash', 'paid', NULL, 'completed', NULL, 'Will pickup at 12:30 PM', NOW()),
+        (1084, '#1084', 103, 'Marcus Vance', '+1 (555) 891-2240', 'delivery', '128 W Huron St, Suite 500, Chicago, IL 60654', 2.00, 21.00, 23.00, 'khqr', 'paid', 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500', 'completed', 2, 'Leave at front desk', NOW()),
+        (1079, '#1079', 104, 'Sophia Lin', '+1 (555) 492-1084', 'delivery', '742 Evergreen Terr, Apt 3B, Chicago, IL 60654', 2.00, 29.00, 31.00, 'khqr', 'pending', NULL, 'preparing', NULL, 'Allergic to peanuts', NOW()),
+        (1080, '#1080', 105, 'Alex Rivera', '+1 (555) 382-9012', 'delivery', '401 N Wabash Ave, Apt 18A, Chicago, IL 60611', 2.00, 21.50, 23.50, 'khqr', 'paid', 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500', 'on_the_way', 2, 'Extra spicy', NOW()),
+        (1078, '#1078', 106, 'Julian Thorne', '+1 (555) 773-4019', 'pickup', NULL, 0.00, 27.00, 27.00, 'khqr', 'paid', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10', 'completed', NULL, 'Well done', NOW())");
 
     // Seed Order Items
     $pdo->exec("INSERT IGNORE INTO order_items (id, order_id, food_id, food_name, price, quantity, subtotal) VALUES
-        (1, 1, 1, 'Classic Double Cheeseburger', 4.50, 2, 9.00),
-        (2, 2, 1, 'Classic Double Cheeseburger', 4.50, 1, 4.50)");
+        (10, 1082, 1, 'Smoked Angus Burger', 14.50, 2, 29.00),
+        (11, 1082, 4, 'Truffle Fries', 12.50, 1, 12.50),
+        (12, 1026, 2, 'Smoked Ribs Platter', 24.50, 1, 24.50),
+        (13, 1026, 5, 'Kola', 3.00, 1, 3.00),
+        (14, 0998, 1, 'Ember Smash Sliders', 12.00, 3, 36.00),
+        (15, 1081, 2, 'Woodfire Crispy Chicken Platter', 14.00, 2, 28.00),
+        (16, 1084, 1, 'Hearth Angus Burger', 14.50, 1, 14.50),
+        (17, 1084, 4, 'Truffle Fries', 8.50, 1, 8.50),
+        (18, 1079, 1, 'Hearth Bacon Burger', 18.00, 1, 18.00),
+        (19, 1079, 4, 'Sweet Potato Chips', 11.00, 1, 11.00),
+        (20, 1080, 1, 'Amber Signature Smoked Burger', 23.50, 1, 23.50),
+        (21, 1078, 2, 'Charred Ribeye Slices', 27.00, 1, 27.00)");
 
     // Seed Settings (General, Audio, Security, Telegram, Delivery)
     $pdo->exec("INSERT IGNORE INTO settings (setting_key, setting_value, setting_group) VALUES

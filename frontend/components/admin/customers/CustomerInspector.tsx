@@ -73,7 +73,7 @@ export const CustomerInspector: React.FC<CustomerInspectorProps> = ({
   };
 
   return (
-    <div className="xl:col-span-5 flex flex-col bg-surface-container-lowest rounded-2xl shadow-xl border border-border/40 overflow-hidden min-h-[600px] relative">
+    <div className="flex flex-col bg-surface-container-lowest rounded-2xl shadow-xl border border-border/40 overflow-hidden max-h-[calc(100vh-6rem)] relative">
       {/* Inspector Header */}
       <div className="p-space-md bg-surface-container-low border-b border-border/30 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
@@ -162,7 +162,7 @@ export const CustomerInspector: React.FC<CustomerInspectorProps> = ({
       </div>
 
       {/* Scrollable Customer Details Body */}
-      <div className="p-space-md flex flex-col gap-space-md overflow-y-auto max-h-[calc(100vh-280px)] custom-scrollbar">
+      <div className="p-space-md flex flex-col gap-space-md overflow-y-auto flex-1 custom-scrollbar">
         {/* Financial Metrics Card */}
         <div className="grid grid-cols-2 gap-space-sm bg-surface-container-low p-space-sm rounded-xl border border-border/20">
           <div className="bg-surface-container-lowest p-2.5 rounded-lg border border-border/20">
