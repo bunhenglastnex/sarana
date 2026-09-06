@@ -16,10 +16,25 @@ import {
   Clock,
 } from "lucide-react";
 import { OrderRecord } from "@/types/orders";
+import { PaginationMeta } from "@/hooks/useInfiniteScroll";
+import { InfiniteScrollSentinel } from "@/components/ui/InfiniteScrollSentinel";
 
 interface OrderDirectoryProps {
   orders: OrderRecord[];
-  allOrders: OrderRecord[];
+  allOrders?: OrderRecord[];
+  counts?: {
+    all: number;
+    pending: number;
+    preparing: number;
+    ready: number;
+    delivery: number;
+    pickup: number;
+    completed: number;
+    cancelled: number;
+  };
+  pagination?: PaginationMeta | null;
+  loading?: boolean;
+  sentinelRef?: React.RefObject<HTMLDivElement>;
   selectedOrderId: string;
   onSelectOrder: (orderId: string) => void;
   statusFilter: string;
@@ -32,6 +47,10 @@ interface OrderDirectoryProps {
 export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
   orders,
   allOrders,
+  counts,
+  pagination,
+  loading = false,
+  sentinelRef,
   selectedOrderId,
   onSelectOrder,
   statusFilter,
@@ -40,15 +59,20 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
   onSearchQueryChange,
   onRefresh,
 }) => {
-  const counts = {
-    all: allOrders.length,
-    pending: allOrders.filter((o) => o.status === "pending").length,
-    preparing: allOrders.filter((o) => o.status === "preparing").length,
-    ready: allOrders.filter((o) => o.status === "ready").length,
-    delivery: allOrders.filter((o) => o.channel === "delivery").length,
-    pickup: allOrders.filter((o) => o.channel === "pickup").length,
-    completed: allOrders.filter((o) => o.status === "delivered" || o.status === "picked_up").length,
-    cancelled: allOrders.filter((o) => o.status === "cancelled").length,
+  const activeCounts = counts || {
+    all: (allOrders || orders).length,
+    pending: (allOrders || orders).filter((o) => o.status === "pending").length,
+    preparing: (allOrders || orders).filter((o) => o.status === "preparing")
+      .length,
+    ready: (allOrders || orders).filter((o) => o.status === "ready").length,
+    delivery: (allOrders || orders).filter((o) => o.channel === "delivery")
+      .length,
+    pickup: (allOrders || orders).filter((o) => o.channel === "pickup").length,
+    completed: (allOrders || orders).filter(
+      (o) => o.status === "delivered" || o.status === "picked_up",
+    ).length,
+    cancelled: (allOrders || orders).filter((o) => o.status === "cancelled")
+      .length,
   };
 
   const getStatusBadge = (order: OrderRecord) => {
@@ -123,7 +147,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
               : "text-on-surface-variant hover:bg-surface-container-high font-medium"
           }`}
         >
-          All ({counts.all})
+          All ({activeCounts.all})
         </button>
 
         <button
@@ -136,9 +160,9 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
         >
           <span>Pending</span>
           <span className="w-2 h-2 rounded-full bg-secondary" />
-          {counts.pending > 0 && (
+          {activeCounts.pending > 0 && (
             <span className="bg-error text-on-error px-1.5 py-0.2 rounded-full text-[10px] font-bold">
-              {counts.pending}
+              {activeCounts.pending}
             </span>
           )}
         </button>
@@ -153,9 +177,9 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
         >
           <span>Preparing</span>
           <span className="w-2 h-2 rounded-full bg-secondary-container" />
-          {counts.preparing > 0 && (
+          {activeCounts.preparing > 0 && (
             <span className="bg-primary-container text-on-primary-container px-1.5 py-0.2 rounded-full text-[10px] font-bold">
-              {counts.preparing}
+              {activeCounts.preparing}
             </span>
           )}
         </button>
@@ -168,7 +192,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
               : "text-on-surface-variant hover:bg-surface-container-high font-medium"
           }`}
         >
-          Ready ({counts.ready})
+          Ready ({activeCounts.ready})
         </button>
 
         <button
@@ -179,7 +203,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
               : "text-on-surface-variant hover:bg-surface-container-high font-medium"
           }`}
         >
-          Delivery ({counts.delivery})
+          Delivery ({activeCounts.delivery})
         </button>
 
         <button
@@ -190,7 +214,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
               : "text-on-surface-variant hover:bg-surface-container-high font-medium"
           }`}
         >
-          Pickup ({counts.pickup})
+          Pickup ({activeCounts.pickup})
         </button>
 
         <button
@@ -201,7 +225,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
               : "text-on-surface-variant hover:bg-surface-container-high font-medium"
           }`}
         >
-          Completed ({counts.completed})
+          Completed ({activeCounts.completed})
         </button>
 
         <button
@@ -212,7 +236,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
               : "text-error hover:bg-error-container/30 font-medium"
           }`}
         >
-          Cancelled ({counts.cancelled})
+          Cancelled ({activeCounts.cancelled})
         </button>
       </div>
 
@@ -233,18 +257,6 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
         </div>
 
         <div className="flex items-center gap-space-xs">
-          {/* Date Filter Dropdown */}
-          <div className="flex items-center gap-1.5 px-space-sm py-1.5 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-xs cursor-pointer hover:bg-surface-container transition-colors border border-border/20">
-            <Calendar className="w-4 h-4 text-on-surface-variant" />
-            <span>Today, Oct 24</span>
-          </div>
-
-          {/* Payment Status Dropdown */}
-          <div className="flex items-center gap-1.5 px-space-sm py-1.5 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-xs cursor-pointer hover:bg-surface-container transition-colors border border-border/20">
-            <Filter className="w-4 h-4 text-on-surface-variant" />
-            <span>All Payments</span>
-          </div>
-
           {/* Refresh Button */}
           <button
             onClick={onRefresh}
@@ -256,17 +268,19 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
         </div>
       </div>
 
-      {/* Orders Data Table Card */}
+      {/* Orders Data Table Card (Scrollable Y with Sticky Header) */}
       <div className="bg-surface-container-lowest rounded-xl shadow-xs border border-border/40 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[calc(100vh-260px)] overflow-y-auto custom-scrollbar relative">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-surface-container-low text-on-surface-variant font-label-sm text-[11px] uppercase tracking-wider border-b border-border/30">
+            <thead className="sticky top-0 z-10 bg-surface-container-low border-b border-border/30 shadow-xs">
+              <tr className="text-on-surface-variant font-label-sm text-[11px] uppercase tracking-wider">
                 <th className="py-3 px-space-md">Order ID</th>
                 <th className="py-3 px-space-md">Customer &amp; Channel</th>
                 <th className="py-3 px-space-md">Items / Dishes</th>
                 <th className="py-3 px-space-md">Status</th>
-                <th className="py-3 px-space-md text-right">Total &amp; Payment</th>
+                <th className="py-3 px-space-md text-right">
+                  Total &amp; Payment
+                </th>
                 <th className="py-3 px-space-sm text-center">Action</th>
               </tr>
             </thead>
@@ -326,7 +340,9 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-space-md">{getStatusBadge(order)}</td>
+                    <td className="py-3.5 px-space-md">
+                      {getStatusBadge(order)}
+                    </td>
 
                     <td className="py-3.5 px-space-md text-right">
                       <div className="font-price-lg text-sm font-bold text-on-surface">
@@ -357,60 +373,18 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
               })}
             </tbody>
           </table>
-        </div>
 
-        {/* Table Footer / Pagination Controls */}
-        <div className="p-space-sm bg-surface-container-low flex items-center justify-between border-t border-border/30">
-          <div className="font-body-sm text-xs text-on-surface-variant">
-            Showing{" "}
-            <span className="font-bold text-on-surface">
-              1 - {orders.length}
-            </span>{" "}
-            of 42 tickets
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              disabled
-              className="p-1 rounded bg-surface-container text-on-surface-variant hover:text-on-surface disabled:opacity-40 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-2 font-label-sm text-xs font-bold text-on-surface">
-              Page 1 of 9
-            </span>
-            <button className="p-1 rounded bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Standby Delivery Courier Micro-Dashboard Panel */}
-      <div className="bg-surface-container-low p-space-md rounded-xl shadow-xs border border-border/30 flex flex-col sm:flex-row items-center justify-between gap-space-md">
-        <div className="flex items-center gap-space-md">
-          <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 shadow-xs ring-2 ring-surface-container-lowest">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop"
-              alt="Standby Courier"
-              className="w-full h-full object-cover"
+          {/* Infinite Scroll Sentinel inside scrollable container */}
+          {sentinelRef && (
+            <InfiniteScrollSentinel
+              sentinelRef={sentinelRef}
+              loading={loading}
+              pagination={pagination || null}
+              itemsCount={orders.length}
+              unitLabel="orders"
             />
-          </div>
-          <div>
-            <div className="font-label-md text-xs text-on-surface-variant uppercase tracking-wider font-semibold">
-              Next Courier on Standby
-            </div>
-            <div className="font-headline-sm text-sm text-on-surface font-bold">
-              Liam Vance • ID 4791
-            </div>
-            <div className="font-body-sm text-xs text-on-surface-variant flex items-center gap-1.5 mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-secondary-container animate-pulse" />
-              <span>Available at Station 01 (Electric Moped)</span>
-            </div>
-          </div>
+          )}
         </div>
-        <button className="px-space-md py-2 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-label-md text-xs font-bold transition-all shadow-xs shrink-0 border border-border/30">
-          Reassign Standby
-        </button>
       </div>
     </div>
   );

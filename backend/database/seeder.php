@@ -39,40 +39,40 @@ function seedDatabase(PDO $pdo): void {
     $custPassword = password_hash('customer123', PASSWORD_BCRYPT);
     $pdo->exec("INSERT IGNORE INTO users 
         (id, name, phone, email, role, password, customer_tag, primary_address, delivery_notes, preferred_channel, payment_preference) VALUES
-        (101, 'David Chen', '+1 (555) 234-9912', 'david.chen@example.com', 'customer', '{$custPassword}', 'VIP', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 'Ring buzzer 14F on arrival. Prefers extra roasted aioli.', 'delivery', 'KHQR'),
-        (102, 'Clara Oswald', '+1 (555) 604-3382', 'clara.oswald@example.com', 'customer', '{$custPassword}', 'Regular', '182 W Superior St, Chicago, IL 60654', 'Dressing on side for salads. Prefers express pickup.', 'pickup', 'KHQR / Cash'),
-        (103, 'Marcus Vance', '+1 (555) 891-2240', 'marcus.vance@example.com', 'customer', '{$custPassword}', 'High Spend', '128 W Huron St, Suite 500, Chicago, IL 60654', 'Leave at front desk with security guard.', 'delivery', 'KHQR'),
-        (104, 'Sophia Lin', '+1 (555) 492-1084', 'sophia.lin@example.com', 'customer', '{$custPassword}', 'New', '742 Evergreen Terr, Apt 3B, Chicago, IL 60654', 'Allergic to peanuts.', 'pickup', 'KHQR'),
-        (105, 'Alex Rivera', '+1 (555) 382-9012', 'alex.rivera@example.com', 'customer', '{$custPassword}', 'Regular', '401 N Wabash Ave, Apt 18A, Chicago, IL 60611', 'Extra spicy sauce on all burgers.', 'delivery', 'KHQR'),
-        (106, 'Julian Thorne', '+1 (555) 773-4019', 'julian.thorne@example.com', 'customer', '{$custPassword}', 'VIP', '333 N Dearborn St, Chicago, IL 60654', 'Prefers well-done steak / ribeye slices.', 'pickup', 'KHQR')");
+        (101, 'David Chen', '+1 (555) 234-9912', 'david.chen@example.com', 'customer', '{$custPassword}', 'First Order', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 'Ring buzzer 14F on arrival. Prefers extra roasted aioli.', 'delivery', 'KHQR'),
+        (102, 'Clara Oswald', '+1 (555) 604-3382', 'clara.oswald@example.com', 'customer', '{$custPassword}', 'Regular Guest', '182 W Superior St, Chicago, IL 60654', 'Dressing on side for salads. Prefers express pickup.', 'pickup', 'Counter Cash'),
+        (103, 'John Smith', '+1 (555) 382-9012', 'john.smith@example.com', 'customer', '{$custPassword}', '14th Order (VIP)', '742 Evergreen Terr, Apt 3B, River North, Chicago, IL 60654', 'Leave at front door, ring bell twice.', 'delivery', 'COD'),
+        (104, 'Sophia Lin', '+1 (555) 492-1084', 'sophia.lin@example.com', 'customer', '{$custPassword}', 'Regular Guest', '101 E Ontario St, Chicago, IL 60611', 'Allergic to peanuts.', 'pickup', 'Apple Pay'),
+        (105, 'Marcus Vance', '+1 (555) 891-2240', 'marcus.vance@example.com', 'customer', '{$custPassword}', 'High Spend', '128 W Huron St, Suite 500, Chicago, IL 60654', 'Leave with security guard.', 'delivery', 'Card'),
+        (106, 'Amina Patel', '+1 (555) 773-4019', 'amina.patel@example.com', 'customer', '{$custPassword}', 'VIP', '401 N Wabash Ave, Apt 18A, Chicago, IL 60611', 'Extra sauce.', 'delivery', 'Card'),
+        (107, 'Elena Vance', '+1 (555) 301-4490', 'elena.vance@example.com', 'customer', '{$custPassword}', 'Guest', '333 N Dearborn St, Chicago, IL 60654', 'Customer requested cancellation.', 'delivery', 'KHQR')");
 
     // Seed Orders
     $pdo->exec("INSERT IGNORE INTO orders 
         (id, order_number, user_id, customer_name, customer_phone, fulfillment_type, delivery_address, delivery_fee, food_amount, total_amount, amount_khr, payment_method, payment_status, payment_proof_url, payment_txn_ref, status, delivery_staff_id, notes, created_at) 
         VALUES
-        (1082, '#1082', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 2.00, 39.50, 41.50, 166000, 'khqr', 'verified', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10', 'KHQR-889102', 'completed', 2, 'Ring buzzer 14F on arrival. Prefers extra roasted aioli.', NOW()),
-        (1084, '#1084', 103, 'Marcus Vance', '+1 (555) 891-2240', 'delivery', '128 W Huron St, Suite 500, Chicago, IL 60654', 2.00, 21.00, 23.00, 92000, 'khqr', 'pending_review', 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop', 'KHQR-889105', 'completed', 2, 'Leave at front desk', NOW()),
-        (1081, '#1081', 102, 'Clara Oswald', '+1 (555) 604-3382', 'pickup', NULL, 0.00, 28.00, 28.00, 112000, 'counter_cash', 'verified', NULL, 'POS-440192', 'completed', NULL, 'Will pickup at 12:30 PM', NOW()),
-        (1080, '#1080', 105, 'Alex Rivera', '+1 (555) 382-9012', 'delivery', '401 N Wabash Ave, Apt 18A, Chicago, IL 60611', 2.00, 21.50, 23.50, 94000, 'khqr', 'pending_review', 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop', 'KHQR-889108', 'on_the_way', 2, 'Extra spicy', NOW()),
-        (1079, '#1079', 104, 'Sophia Lin', '+1 (555) 492-1084', 'delivery', '742 Evergreen Terr, Apt 3B, Chicago, IL 60654', 2.00, 29.00, 31.00, 124000, 'cod', 'verified', NULL, 'COD-DRIVER-4', 'completed', 2, 'Allergic to peanuts', NOW()),
-        (1078, '#1078', 106, 'Julian Thorne', '+1 (555) 773-4019', 'pickup', NULL, 0.00, 27.00, 27.00, 108000, 'khqr', 'verified', 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=500&auto=format&fit=crop', 'KHQR-889090', 'completed', NULL, 'Well done', NOW()),
-        (1026, '#1026', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 2.00, 27.50, 29.50, 118000, 'khqr', 'verified', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10', 'KHQR-888900', 'completed', 2, NULL, DATE_SUB(NOW(), INTERVAL 1 DAY)),
-        (0998, '#0998', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 2.00, 36.00, 38.00, 152000, 'cod', 'verified', NULL, 'COD-DRIVER-2', 'completed', 2, NULL, DATE_SUB(NOW(), INTERVAL 3 DAY))");
+        (1026, '#1026', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 0.00, 29.50, 29.50, 118000, 'khqr', 'verified', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10', 'KHQR-889102', 'pending', NULL, 'Ring buzzer 14F on arrival', NOW()),
+        (1025, '#1025', 102, 'Clara Oswald', '+1 (555) 604-3382', 'pickup', NULL, 0.00, 15.00, 15.00, 60000, 'counter_cash', 'pending', NULL, NULL, 'pending', NULL, 'Dressing on Side', NOW()),
+        (1024, '#1024', 103, 'John Smith', '+1 (555) 382-9012', 'delivery', '742 Evergreen Terr, Apt 3B, River North, Chicago, IL 60654', 0.00, 34.50, 34.50, 138000, 'cod', 'pending', NULL, 'COD-PENDING-1', 'preparing', 2, 'Leave at front door, ring bell twice.', DATE_SUB(NOW(), INTERVAL 12 MINUTE)),
+        (1023, '#1023', 104, 'Sophia Lin', '+1 (555) 492-1084', 'pickup', NULL, 0.00, 28.00, 28.00, 112000, 'khqr', 'verified', 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop', 'APPLE-PAY-4401', 'ready_for_pickup', NULL, 'House BBQ Sauce', DATE_SUB(NOW(), INTERVAL 19 MINUTE)),
+        (1022, '#1022', 105, 'Marcus Vance', '+1 (555) 891-2240', 'delivery', '128 W Huron St, Suite 500, Chicago, IL 60654', 3.00, 38.20, 41.20, 164800, 'khqr', 'verified', 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop', 'CARD-889105', 'on_the_way', 2, 'Leave at front desk', DATE_SUB(NOW(), INTERVAL 32 MINUTE)),
+        (1021, '#1021', 106, 'Amina Patel', '+1 (555) 773-4019', 'delivery', '401 N Wabash Ave, Apt 18A, Chicago, IL 60611', 0.00, 24.00, 24.00, 96000, 'khqr', 'verified', NULL, 'CARD-889106', 'delivered', 2, 'Delivered to front desk', DATE_SUB(NOW(), INTERVAL 45 MINUTE)),
+        (1019, '#1019', 107, 'Elena Vance', '+1 (555) 301-4490', 'delivery', '333 N Dearborn St, Chicago, IL 60654', 0.00, 38.50, 38.50, 154000, 'khqr', 'refunded', NULL, 'KHQR-REFUND-19', 'cancelled', NULL, 'Customer requested cancellation due to address change & item sold out.', DATE_SUB(NOW(), INTERVAL 72 MINUTE))");
 
     // Seed Order Items
     $pdo->exec("INSERT IGNORE INTO order_items (id, order_id, food_id, food_name, price, quantity, subtotal) VALUES
-        (10, 1082, 1, 'Smoked Angus Burger', 14.50, 2, 29.00),
-        (11, 1082, 4, 'Truffle Fries', 12.50, 1, 12.50),
-        (12, 1026, 2, 'Smoked Ribs Platter', 24.50, 1, 24.50),
-        (13, 1026, 5, 'Kola', 3.00, 1, 3.00),
-        (14, 0998, 1, 'Ember Smash Sliders', 12.00, 3, 36.00),
-        (15, 1081, 2, 'Woodfire Crispy Chicken Platter', 14.00, 2, 28.00),
-        (16, 1084, 1, 'Hearth Angus Burger', 14.50, 1, 14.50),
-        (17, 1084, 4, 'Truffle Fries', 8.50, 1, 8.50),
-        (18, 1079, 1, 'Hearth Bacon Burger', 18.00, 1, 18.00),
-        (19, 1079, 4, 'Sweet Potato Chips', 11.00, 1, 11.00),
-        (20, 1080, 1, 'Amber Signature Smoked Burger', 23.50, 1, 23.50),
-        (21, 1078, 2, 'Charred Ribeye Slices', 27.00, 1, 27.00)");
+        (101, 1026, 1, 'Smoked Angus Burger', 11.50, 2, 23.00),
+        (102, 1026, 4, 'Truffle Parmesan Fries', 6.50, 1, 6.50),
+        (103, 1025, 2, 'Woodfire Burrata Salad', 15.00, 1, 15.00),
+        (104, 1024, 1, 'Smoked Bacon Truffle Burger', 11.25, 2, 22.50),
+        (105, 1024, 4, 'Artisan Rosemary Fries', 6.00, 1, 6.00),
+        (106, 1024, 5, 'Cold Craft Kola (Glass Bottles)', 3.00, 2, 6.00),
+        (107, 1023, 2, 'Woodfire Smoked Ribs Platter', 28.00, 1, 28.00),
+        (108, 1022, 1, 'Ember Smash Sliders', 11.00, 3, 33.00),
+        (109, 1022, 4, 'Sweet Potato Chips', 5.20, 1, 5.20),
+        (110, 1021, 3, 'Charred Ember Wings', 12.00, 2, 24.00),
+        (111, 1019, 2, 'Hearth-Smoked Angus Ribs', 32.00, 1, 32.00),
+        (112, 1019, 4, 'Truffle Parmesan Fries', 6.50, 1, 6.50)");
 
     // Seed Settings (General, Audio, Security, Telegram, Delivery)
     $pdo->exec("INSERT IGNORE INTO settings (setting_key, setting_value, setting_group) VALUES

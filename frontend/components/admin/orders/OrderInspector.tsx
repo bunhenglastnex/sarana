@@ -129,122 +129,83 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
           </span>
         </div>
 
-        {/* 6 Steps Compact Graphic */}
-        <div className="relative flex items-center justify-between py-1">
-          {/* Background Track Line */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface-container-highest rounded-full z-0" />
-          {/* Active Filled Line */}
-          <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full z-0 transition-all duration-300"
-            style={{
-              width: `${((order.lifecycleStep - 1) / 5) * 100}%`,
-            }}
-          />
+        {/* Compact Graphic (Dynamic 5-step for Pickup vs 6-step for Delivery) */}
+        {(() => {
+          const isPickup = order.channel === "pickup";
+          const steps = isPickup
+            ? [
+                { step: 1, label: "Placed" },
+                { step: 2, label: "Accepted" },
+                { step: 3, label: "Preparing" },
+                { step: 4, label: "Ready" },
+                { step: 5, label: "Picked Up" },
+              ]
+            : [
+                { step: 1, label: "Placed" },
+                { step: 2, label: "Accepted" },
+                { step: 3, label: "Preparing" },
+                { step: 4, label: "Ready" },
+                { step: 5, label: "Delivery" },
+                { step: 6, label: "Done" },
+              ];
 
-          {/* Step 1: Placed */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-[10px] font-bold shadow-xs">
-              <Check className="w-3 h-3" />
-            </div>
-            <span className="font-label-sm text-[9px] text-on-surface mt-0.5 font-semibold">
-              Placed
-            </span>
-          </div>
+          const totalSteps = steps.length;
+          const currentStep = order.lifecycleStep;
+          const progressPercent = Math.min(
+            100,
+            Math.max(0, ((currentStep - 1) / (totalSteps - 1)) * 100)
+          );
 
-          {/* Step 2: Accepted */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center font-label-sm text-[10px] font-bold shadow-xs ${
-                order.lifecycleStep >= 2
-                  ? "bg-primary text-on-primary"
-                  : "bg-surface-container-high text-on-surface-variant"
-              }`}
-            >
-              {order.lifecycleStep >= 2 ? <Check className="w-3 h-3" /> : "2"}
-            </div>
-            <span className="font-label-sm text-[9px] text-on-surface mt-0.5 font-semibold">
-              Accepted
-            </span>
-          </div>
+          return (
+            <div className="relative flex items-center justify-between py-1">
+              {/* Background Track Line */}
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface-container-highest rounded-full z-0" />
+              {/* Active Filled Line */}
+              <div
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full z-0 transition-all duration-300"
+                style={{
+                  width: `${progressPercent}%`,
+                }}
+              />
 
-          {/* Step 3: Preparing */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center font-label-sm text-[10px] font-bold ${
-                order.lifecycleStep === 3
-                  ? "bg-primary-container text-on-primary-container ring-2 ring-primary-fixed shadow-xs"
-                  : order.lifecycleStep > 3
-                  ? "bg-primary text-on-primary shadow-xs"
-                  : "bg-surface-container-high text-on-surface-variant"
-              }`}
-            >
-              {order.lifecycleStep === 3 ? (
-                <RotateCw className="w-3.5 h-3.5 animate-spin" />
-              ) : order.lifecycleStep > 3 ? (
-                <Check className="w-3 h-3" />
-              ) : (
-                "3"
-              )}
-            </div>
-            <span
-              className={`font-label-sm text-[9px] mt-0.5 ${
-                order.lifecycleStep === 3
-                  ? "text-primary font-bold"
-                  : "text-on-surface-variant font-medium"
-              }`}
-            >
-              Preparing
-            </span>
-          </div>
+              {steps.map((st) => {
+                const isCurrent = currentStep === st.step;
+                const isReached = currentStep >= st.step;
 
-          {/* Step 4: Ready */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center font-label-sm text-[10px] font-bold ${
-                order.lifecycleStep >= 4
-                  ? "bg-primary text-on-primary"
-                  : "bg-surface-container-high text-on-surface-variant"
-              }`}
-            >
-              {order.lifecycleStep >= 4 ? <Check className="w-3 h-3" /> : "4"}
+                return (
+                  <div key={st.step} className="relative z-10 flex flex-col items-center">
+                    <div
+                      className={`rounded-full flex items-center justify-center font-label-sm text-[10px] font-bold shadow-xs transition-all ${
+                        isCurrent && st.step === 3
+                          ? "w-6 h-6 bg-primary-container text-on-primary-container ring-2 ring-primary-fixed"
+                          : "w-5 h-5"
+                      } ${
+                        isReached
+                          ? "bg-primary text-on-primary"
+                          : "bg-surface-container-high text-on-surface-variant"
+                      }`}
+                    >
+                      {isCurrent && st.step === 3 ? (
+                        <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : isReached ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        st.step
+                      )}
+                    </div>
+                    <span
+                      className={`font-label-sm text-[9px] mt-0.5 ${
+                        isCurrent ? "text-primary font-bold" : "text-on-surface-variant font-medium"
+                      }`}
+                    >
+                      {st.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-            <span className="font-label-sm text-[9px] text-on-surface-variant mt-0.5">
-              Ready
-            </span>
-          </div>
-
-          {/* Step 5: Delivery */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center font-label-sm text-[10px] font-bold ${
-                order.lifecycleStep >= 5
-                  ? "bg-primary text-on-primary"
-                  : "bg-surface-container-high text-on-surface-variant"
-              }`}
-            >
-              {order.lifecycleStep >= 5 ? <Check className="w-3 h-3" /> : "5"}
-            </div>
-            <span className="font-label-sm text-[9px] text-on-surface-variant mt-0.5">
-              Delivery
-            </span>
-          </div>
-
-          {/* Step 6: Done */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center font-label-sm text-[10px] font-bold ${
-                order.lifecycleStep >= 6
-                  ? "bg-primary text-on-primary"
-                  : "bg-surface-container-high text-on-surface-variant"
-              }`}
-            >
-              {order.lifecycleStep >= 6 ? <Check className="w-3 h-3" /> : "6"}
-            </div>
-            <span className="font-label-sm text-[9px] text-on-surface-variant mt-0.5">
-              Done
-            </span>
-          </div>
-        </div>
+          );
+        })()}
       </div>
 
       {/* Scrollable Inspector Body */}
@@ -567,21 +528,84 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
       {/* Slide-Over Action Control Footer (Sticky Bottom of Panel) */}
       <div className="p-space-md bg-surface-container-low border-t border-border/30 flex flex-col gap-space-xs shadow-lg mt-auto">
         {/* Main Primary Progression Action Button */}
-        <button
-          onClick={handleMarkReady}
-          className={`w-full h-11 rounded-xl font-label-lg text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md ${
-            isMarkedReady
-              ? "bg-secondary text-on-secondary"
-              : "bg-primary text-on-primary hover:bg-primary-container"
-          }`}
-        >
-          <CheckCircle className="w-4 h-4" />
-          <span>
-            {isMarkedReady
-              ? "Ticket Updated to READY"
-              : "Mark as Ready for Delivery"}
-          </span>
-        </button>
+        {(() => {
+          const isPickup = order.channel === "pickup";
+          const status = order.status;
+
+          if (status === "pending") {
+            return (
+              <button
+                onClick={() => onAction && onAction("accept", order.id)}
+                className="w-full h-11 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Accept Order (Start Prep)</span>
+              </button>
+            );
+          }
+
+          if (status === "preparing") {
+            return (
+              <button
+                onClick={() => onAction && onAction("mark_ready", order.id)}
+                className="w-full h-11 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md animate-pulse"
+              >
+                <Bike className="w-4 h-4" />
+                <span>{isPickup ? "Ready for Customer Pickup" : "Delivery Can Pickup"}</span>
+              </button>
+            );
+          }
+
+          if (status === "ready") {
+            if (isPickup) {
+              return (
+                <button
+                  onClick={() => onAction && onAction("complete", order.id)}
+                  className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-label-lg text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Mark Picked Up &amp; Complete</span>
+                </button>
+              );
+            } else {
+              return (
+                <button
+                  onClick={() => onAction && onAction("start_delivery", order.id)}
+                  className="w-full h-11 rounded-xl bg-secondary hover:bg-secondary-container text-on-secondary font-label-lg text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md"
+                >
+                  <Bike className="w-4 h-4" />
+                  <span>Delivering</span>
+                </button>
+              );
+            }
+          }
+
+          if (status === "in_transit") {
+            return (
+              <button
+                onClick={() => onAction && onAction("complete", order.id)}
+                className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-label-lg text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-md"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Mark Complete (Done)</span>
+              </button>
+            );
+          }
+
+          if (status === "delivered" || status === "picked_up" || (status as string) === "completed") {
+            return (
+              <button
+                disabled
+                className="w-full h-11 rounded-xl bg-surface-container-high text-on-surface-variant font-label-lg text-xs font-bold flex items-center justify-center gap-2 border border-border/30 cursor-not-allowed opacity-80"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>✓ Order Complete (Done)</span>
+              </button>
+            );
+          }
+
+          return null;
+        })()}
 
         {/* Secondary Operational Controls */}
         <div className="grid grid-cols-3 gap-space-xs">

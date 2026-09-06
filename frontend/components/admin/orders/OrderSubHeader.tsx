@@ -20,7 +20,7 @@ export const OrderSubHeader: React.FC<OrderSubHeaderProps> = ({
     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mb-space-lg">
       {/* Title & Breadcrumbs */}
       <div>
-        <div className="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-xs uppercase tracking-wider mb-1">
+        <div className="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-xs uppercase tracking-wider mb-1 pt-4">
           <span>Operations Hub</span>
           <ChevronRight className="w-3.5 h-3.5 text-on-surface-variant/60" />
           <span className="text-primary font-bold">Orders Management</span>

@@ -248,8 +248,18 @@ elseif ($method === 'POST' || $method === 'PUT' || $method === 'PATCH') {
             $updateSql = "UPDATE orders SET payment_status = 'flagged' WHERE id = ?";
             $logAction = 'payment_flagged';
             $logMsg = "Flagged payment as invalid for order ID #{$cleanId}";
+        } elseif ($action === 'process_refund' || $action === 'refund' || $status === 'refunded') {
+            $newPaymentStatus = 'refunded';
+            $proofUrl = $input['refund_proof_url'] ?? $input['proofUrl'] ?? $input['proof_image_url'] ?? null;
+            if ($proofUrl) {
+                $updateSql = "UPDATE orders SET payment_status = 'refunded', status = 'cancelled', payment_proof_url = " . $pdo->quote($proofUrl) . " WHERE id = ?";
+            } else {
+                $updateSql = "UPDATE orders SET payment_status = 'refunded', status = 'cancelled' WHERE id = ?";
+            }
+            $logAction = 'payment_refunded';
+            $logMsg = "Processed refund for order ID #{$cleanId}";
         } else {
-            jsonResponse(0, 'Invalid action specified. Supported: verify, flag.', null, 400);
+            jsonResponse(0, 'Invalid action specified. Supported: verify, flag, process_refund.', null, 400);
             return;
         }
 
