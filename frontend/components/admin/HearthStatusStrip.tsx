@@ -3,11 +3,28 @@
 import React, { useState } from "react";
 import { Calendar, Power } from "lucide-react";
 
-export const HearthStatusStrip: React.FC = () => {
-  const [selectedRange, setSelectedRange] = useState<
+interface HearthStatusStripProps {
+  selectedRange?: "today" | "week" | "month" | "custom";
+  onRangeChange?: (range: "today" | "week" | "month" | "custom") => void;
+  onRefresh?: () => void;
+}
+
+export const HearthStatusStrip: React.FC<HearthStatusStripProps> = ({
+  selectedRange: externalRange,
+  onRangeChange,
+  onRefresh,
+}) => {
+  const [internalRange, setInternalRange] = useState<
     "today" | "week" | "month" | "custom"
   >("today");
   const [isKitchenActive, setIsKitchenActive] = useState<boolean>(true);
+
+  const selectedRange = externalRange || internalRange;
+
+  const handleSelectRange = (range: "today" | "week" | "month" | "custom") => {
+    setInternalRange(range);
+    if (onRangeChange) onRangeChange(range);
+  };
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-md">
@@ -36,7 +53,7 @@ export const HearthStatusStrip: React.FC = () => {
         {/* Filter Buttons */}
         <div className="inline-flex p-1 bg-surface-container rounded-lg shadow-sm border border-border/40">
           <button
-            onClick={() => setSelectedRange("today")}
+            onClick={() => handleSelectRange("today")}
             className={`px-space-sm py-1 rounded-md font-label-sm text-xs transition-all font-semibold ${
               selectedRange === "today"
                 ? "text-on-primary bg-primary shadow-xs font-bold"
@@ -46,7 +63,7 @@ export const HearthStatusStrip: React.FC = () => {
             Today
           </button>
           <button
-            onClick={() => setSelectedRange("week")}
+            onClick={() => handleSelectRange("week")}
             className={`px-space-sm py-1 rounded-md font-label-sm text-xs transition-all font-semibold ${
               selectedRange === "week"
                 ? "text-on-primary bg-primary shadow-xs font-bold"
@@ -56,7 +73,7 @@ export const HearthStatusStrip: React.FC = () => {
             This Week
           </button>
           <button
-            onClick={() => setSelectedRange("month")}
+            onClick={() => handleSelectRange("month")}
             className={`px-space-sm py-1 rounded-md font-label-sm text-xs transition-all font-semibold ${
               selectedRange === "month"
                 ? "text-on-primary bg-primary shadow-xs font-bold"
@@ -66,7 +83,7 @@ export const HearthStatusStrip: React.FC = () => {
             Month
           </button>
           <button
-            onClick={() => setSelectedRange("custom")}
+            onClick={() => handleSelectRange("custom")}
             className={`px-space-sm py-1 rounded-md font-label-sm text-xs transition-all font-semibold flex items-center gap-1 ${
               selectedRange === "custom"
                 ? "text-on-primary bg-primary shadow-xs font-bold"

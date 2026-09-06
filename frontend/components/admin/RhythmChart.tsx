@@ -48,7 +48,8 @@ export const RhythmChart: React.FC<RhythmChartProps> = ({ data }) => {
   if (hasOrders) {
     const peakItem = [...chartData].sort((a, b) => (b.orders || 0) - (a.orders || 0))[0];
     if (peakItem && peakItem.orders > 0) {
-      peakTime = `${peakItem.time} (${peakItem.orders} orders)`;
+      const timeLabel = peakItem.time || (peakItem.hr !== undefined ? `${peakItem.hr}:00` : "12:00 PM");
+      peakTime = `${timeLabel} (${peakItem.orders} orders)`;
     }
   }
 

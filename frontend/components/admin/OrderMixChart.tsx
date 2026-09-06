@@ -36,15 +36,18 @@ interface OrderMixChartProps {
 }
 
 export const OrderMixChart: React.FC<OrderMixChartProps> = ({ data }) => {
-  const totalOrders = data?.totalOrders ?? 0;
-  const deliveryPct = data?.delivery?.value ?? 0;
   const deliveryCount = data?.delivery?.count ?? 0;
   const deliveryRev = data?.delivery?.revenue ?? 0;
-  const pickupPct = data?.pickup?.value ?? 0;
   const pickupCount = data?.pickup?.count ?? 0;
   const pickupRev = data?.pickup?.revenue ?? 0;
 
+  const computedTotal = deliveryCount + pickupCount;
+  const totalOrders = (data?.totalOrders && data.totalOrders > 0) ? data.totalOrders : computedTotal;
   const hasOrders = totalOrders > 0;
+
+  const deliveryPct = hasOrders ? Math.round((deliveryCount / totalOrders) * 100) : 0;
+  const pickupPct = hasOrders ? (100 - deliveryPct) : 0;
+
 
   const currentPieData = hasOrders
     ? [

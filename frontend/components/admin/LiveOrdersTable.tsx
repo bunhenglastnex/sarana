@@ -126,9 +126,25 @@ const initialOrders: LiveOrder[] = [
   },
 ];
 
-export const LiveOrdersTable: React.FC = () => {
-  const [orders, setOrders] = useState<LiveOrder[]>(initialOrders);
+interface LiveOrdersTableProps {
+  initialOrders?: LiveOrder[];
+  onAction?: (action: string, orderId: string, payload?: any) => void;
+  onRefresh?: () => void;
+}
+
+export const LiveOrdersTable: React.FC<LiveOrdersTableProps> = ({
+  initialOrders: externalOrders,
+  onAction,
+  onRefresh,
+}) => {
+  const [orders, setOrders] = useState<LiveOrder[]>(externalOrders && externalOrders.length > 0 ? externalOrders : initialOrders);
   const [filter, setFilter] = useState<"all" | "pending" | "preparing" | "delivery">("all");
+
+  React.useEffect(() => {
+    if (externalOrders && externalOrders.length > 0) {
+      setOrders(externalOrders);
+    }
+  }, [externalOrders]);
   
   // Modals state
   const [selectedOrderForProof, setSelectedOrderForProof] = useState<LiveOrder | null>(null);
@@ -150,6 +166,7 @@ export const LiveOrdersTable: React.FC = () => {
       prev.map((o) => (o.id === orderId ? { ...o, status: "preparing" } : o))
     );
     setSelectedOrderForProof(null);
+    if (onAction) onAction("accept", orderId);
   };
 
   const handleRejectSubmit = () => {
@@ -162,6 +179,7 @@ export const LiveOrdersTable: React.FC = () => {
           : o
       )
     );
+    if (onAction) onAction("cancel", orderId, { cancel_reason: rejectReason.trim() });
     setSelectedOrderForReject(null);
     setRejectReason("");
   };
@@ -439,13 +457,14 @@ export const LiveOrdersTable: React.FC = () => {
                       {isPreparing && (
                         <div className="inline-flex items-center gap-1">
                           <button
-                            onClick={() =>
+                            onClick={() => {
                               setOrders((prev) =>
                                 prev.map((o) =>
                                   o.id === order.id ? { ...o, status: "ready" } : o
                                 )
-                              )
-                            }
+                              );
+                              if (onAction) onAction("mark_ready", order.id);
+                            }}
                             className="px-space-sm py-1 bg-surface-container text-on-surface rounded-md font-label-sm text-xs font-semibold hover:bg-surface-container-high transition-colors"
                           >
                             Mark Ready
@@ -456,10 +475,17 @@ export const LiveOrdersTable: React.FC = () => {
                       {isDelivery && (
                         <div className="inline-flex items-center gap-1">
                           <button
-                            onClick={() => alert(`Tracking delivery courier for ${order.id}`)}
-                            className="px-space-sm py-1 bg-surface-container text-on-surface rounded-md font-label-sm text-xs font-semibold hover:bg-surface-container-high transition-colors flex items-center gap-1"
+                            onClick={() => {
+                              setOrders((prev) =>
+                                prev.map((o) =>
+                                  o.id === order.id ? { ...o, status: "completed" } : o
+                                )
+                              );
+                              if (onAction) onAction("complete", order.id);
+                            }}
+                            className="px-space-sm py-1 bg-primary text-on-primary rounded-md font-label-sm text-xs font-bold hover:bg-primary-container shadow-xs transition-all flex items-center gap-1"
                           >
-                            <MapPin className="w-3 h-3 text-primary" /> Track
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Complete
                           </button>
                         </div>
                       )}
@@ -467,16 +493,17 @@ export const LiveOrdersTable: React.FC = () => {
                       {isReady && (
                         <div className="inline-flex items-center gap-1">
                           <button
-                            onClick={() =>
+                            onClick={() => {
                               setOrders((prev) =>
                                 prev.map((o) =>
                                   o.id === order.id ? { ...o, status: "completed" } : o
                                 )
-                              )
-                            }
-                            className="px-space-sm py-1 bg-surface-container text-on-surface rounded-md font-label-sm text-xs font-semibold hover:bg-surface-container-high transition-colors"
+                              );
+                              if (onAction) onAction("complete", order.id);
+                            }}
+                            className="px-space-sm py-1 bg-primary text-on-primary rounded-md font-label-sm text-xs font-bold hover:bg-primary-container shadow-xs transition-all flex items-center gap-1"
                           >
-                            Complete
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Complete
                           </button>
                         </div>
                       )}

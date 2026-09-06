@@ -11,7 +11,29 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-export const KpiMosaic: React.FC = () => {
+interface KpiMosaicProps {
+  kpis?: {
+    todayOrders: number;
+    todayOrdersGrowth: number;
+    totalRevenue: number;
+    settledCount: number;
+    pendingCount: number;
+    activeDeliveries: number;
+    completedCount: number;
+    codPendingTotal: number;
+  };
+}
+
+export const KpiMosaic: React.FC<KpiMosaicProps> = ({ kpis }) => {
+  const todayOrders = kpis?.todayOrders ?? 24;
+  const growth = kpis?.todayOrdersGrowth ?? 14;
+  const revenue = kpis?.totalRevenue ?? 425.5;
+  const settledCount = kpis?.settledCount ?? 22;
+  const pendingCount = kpis?.pendingCount ?? 5;
+  const activeDeliveries = kpis?.activeDeliveries ?? 3;
+  const completedCount = kpis?.completedCount ?? 18;
+  const codPendingTotal = kpis?.codPendingTotal ?? 45.0;
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-space-md">
       {/* 1: Today's Orders */}
@@ -26,11 +48,11 @@ export const KpiMosaic: React.FC = () => {
         </div>
         <div>
           <div className="font-display-lg text-3xl font-bold text-on-surface leading-none">
-            24
+            {todayOrders}
           </div>
           <div className="flex items-center gap-1 mt-2 text-primary font-label-sm text-xs font-semibold">
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>+14% vs yesterday</span>
+            <span>+{growth}% vs yesterday</span>
           </div>
         </div>
       </div>
@@ -47,10 +69,10 @@ export const KpiMosaic: React.FC = () => {
         </div>
         <div>
           <div className="font-display-lg text-3xl font-bold text-on-surface leading-none">
-            $425.50
+            ${revenue.toFixed(2)}
           </div>
           <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-label-sm text-xs">
-            <span>Paid Gross • 22 settled</span>
+            <span>Paid Gross • {settledCount} settled</span>
           </div>
         </div>
       </div>
@@ -69,7 +91,7 @@ export const KpiMosaic: React.FC = () => {
         <div>
           <div className="flex items-baseline gap-2">
             <span className="font-display-lg text-3xl font-bold text-primary leading-none">
-              5
+              {pendingCount}
             </span>
             <span className="font-label-sm text-xs text-primary font-semibold">
               Immediate
@@ -94,7 +116,7 @@ export const KpiMosaic: React.FC = () => {
         </div>
         <div>
           <div className="font-display-lg text-3xl font-bold text-on-surface leading-none">
-            3
+            {activeDeliveries}
           </div>
           <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-label-sm text-xs font-medium">
             <span className="w-2 h-2 rounded-full bg-secondary-container"></span>
@@ -115,10 +137,10 @@ export const KpiMosaic: React.FC = () => {
         </div>
         <div>
           <div className="font-display-lg text-3xl font-bold text-on-surface leading-none">
-            18
+            {completedCount}
           </div>
           <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-label-sm text-xs">
-            <span>100% fulfill rate today</span>
+            <span>Fulfill rate today</span>
           </div>
         </div>
       </div>
@@ -135,7 +157,7 @@ export const KpiMosaic: React.FC = () => {
         </div>
         <div>
           <div className="font-display-lg text-3xl font-bold text-error leading-none">
-            $45.00
+            ${codPendingTotal.toFixed(2)}
           </div>
           <div className="flex items-center gap-1 mt-2 text-on-surface-variant font-label-sm text-xs">
             <span>Pending cash settlement</span>

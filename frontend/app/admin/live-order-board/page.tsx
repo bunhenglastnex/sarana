@@ -1,298 +1,91 @@
 "use client";
 
-import React, { useState } from "react";
-import { KdsTicket } from "@/types/kds";
+import React, { useState, useEffect } from "react";
+import { KdsTicket, KdsOrderItem } from "@/types/kds";
 import { KdsSubHeader } from "@/components/admin/kds/KdsSubHeader";
 import { KdsKanbanColumn } from "@/components/admin/kds/KdsKanbanColumn";
-
-const initialTickets: KdsTicket[] = [
-  // COLUMN 1: PENDING
-  {
-    id: "#1084",
-    channel: "delivery",
-    status: "pending",
-    timerLabel: "2m 15s",
-    isUrgent: true,
-    customerName: "Marcus Vance",
-    locationOrNote: "Table/Flat 4B",
-    paymentBadge: "KHQR PAID",
-    paymentIsPaid: true,
-    proofImageUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10",
-    totalPrice: 23.0,
-    items: [
-      {
-        name: "Hearth-Smoked Angus Burger",
-        price: 16.5,
-        quantity: 1,
-        modifiers: [
-          { text: "Medium-Rare" },
-          { text: "EXTRA ROASTED AIOLI", isAlert: true },
-          { text: "Brioche Bun" },
-        ],
-      },
-      {
-        name: "Truffle Parmesan Fries",
-        price: 6.5,
-        quantity: 1,
-        modifiers: [{ text: "Extra Rosemary Salt" }],
-      },
-    ],
-  },
-  {
-    id: "#1085",
-    channel: "pickup",
-    status: "pending",
-    timerLabel: "Just now",
-    customerName: "Nadia S.",
-    paymentBadge: "COD $19.50",
-    paymentIsPaid: false,
-    totalPrice: 19.5,
-    items: [
-      {
-        name: "Woodfired Crispy Chicken Strips",
-        price: 14.5,
-        quantity: 1,
-        modifiers: [
-          { text: "SPICY CHIPOTLE DIP", isPrimary: true },
-          { text: "Honey Mustard side" },
-        ],
-      },
-      {
-        name: "Charred Citrus Lemonade",
-        price: 5.0,
-        quantity: 1,
-      },
-    ],
-  },
-
-  // COLUMN 2: ACCEPTED
-  {
-    id: "#1082",
-    channel: "delivery",
-    status: "accepted",
-    timerLabel: "Accepted 4m ago",
-    customerName: "David Chen",
-    paymentBadge: "PAID (CARD)",
-    paymentIsPaid: true,
-    totalPrice: 41.5,
-    assignStation: "Hearth 1",
-    items: [
-      {
-        name: "Ember Double Smash Cheeseburger",
-        price: 16.0,
-        quantity: 2,
-        modifiers: [
-          { text: "NO PICKLES (ALLERGY)", isAlert: true },
-          { text: "Well Done" },
-        ],
-      },
-      {
-        name: "Smoked Pork Belly Bites",
-        price: 9.5,
-        quantity: 1,
-      },
-    ],
-  },
-  {
-    id: "#1083",
-    channel: "pickup",
-    status: "accepted",
-    timerLabel: "Accepted 2m ago",
-    customerName: "Tariq J.",
-    paymentBadge: "PAID KHQR",
-    paymentIsPaid: true,
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=500&auto=format&fit=crop",
-    totalPrice: 15.0,
-    assignStation: "Cold Larder",
-    items: [
-      {
-        name: "Woodfire Burrata Salad",
-        price: 15.0,
-        quantity: 1,
-        modifiers: [{ text: "Dressing on side" }],
-      },
-    ],
-  },
-
-  // COLUMN 3: PREPARING
-  {
-    id: "#1080",
-    channel: "delivery",
-    status: "preparing",
-    timerLabel: "14m / 18m",
-    prepProgress: 78,
-    customerName: "Alex Rivera",
-    assignStation: "Hearth Station 1",
-    paymentBadge: "PAID (KHQR)",
-    paymentIsPaid: true,
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop",
-    totalPrice: 23.5,
-    items: [
-      {
-        name: "Amber Signature Smoked Burger",
-        price: 18.5,
-        quantity: 1,
-        modifiers: [
-          { text: "GLUTEN-FREE BUN", isAlert: true },
-          { text: "Medium" },
-        ],
-      },
-      {
-        name: "Hand-Cut Salted Chips",
-        price: 5.0,
-        quantity: 1,
-      },
-    ],
-  },
-  {
-    id: "#1081",
-    channel: "pickup",
-    status: "preparing",
-    timerLabel: "06m / 15m",
-    prepProgress: 40,
-    customerName: "Clara Oswald",
-    assignStation: "Fryer & Sides",
-    paymentBadge: "PAID (COUNTER)",
-    paymentIsPaid: true,
-    totalPrice: 28.0,
-    items: [
-      {
-        name: "Woodfire Crispy Chicken Platter",
-        price: 14.0,
-        quantity: 2,
-        modifiers: [{ text: "Side of Tartar & Slaw" }],
-      },
-    ],
-  },
-
-  // COLUMN 4: READY
-  {
-    id: "#1078",
-    channel: "pickup",
-    status: "ready",
-    readySubtype: "pickup",
-    shelfOrBag: "Pickup Shelf A2",
-    readyTimeAgo: "Ready 3m ago",
-    customerName: "Julian Thorne",
-    paymentBadge: "PAID (KHQR)",
-    paymentIsPaid: true,
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop",
-    totalPrice: 27.0,
-    items: [
-      {
-        name: "Charred Ribeye Slices",
-        price: 20.0,
-        quantity: 1,
-      },
-      {
-        name: "Roasted Squash Purée",
-        price: 7.0,
-        quantity: 1,
-      },
-    ],
-  },
-  {
-    id: "#1079",
-    channel: "delivery",
-    status: "ready",
-    readySubtype: "delivery",
-    shelfOrBag: "Delivery Bag #04",
-    readyTimeAgo: "Ready 5m ago",
-    customerName: "Sophia Lin",
-    paymentBadge: "Awaiting Rider",
-    paymentIsPaid: false,
-    totalPrice: 31.0,
-    items: [
-      {
-        name: "Hearth Bacon Burger",
-        price: 18.0,
-        quantity: 1,
-      },
-      {
-        name: "Sweet Potato Chips",
-        price: 6.0,
-        quantity: 1,
-      },
-      {
-        name: "Aioli",
-        price: 7.0,
-        quantity: 1,
-      },
-    ],
-  },
-];
+import { useApi, Api } from "@/lib/api";
+import { Loader2 } from "lucide-react";
 
 export default function LiveOrderBoardPage() {
-  const [tickets, setTickets] = useState<KdsTicket[]>([
-    ...initialTickets,
-    // Pre-loaded rejected ticket demo
-    {
-      id: "#1077",
-      channel: "delivery",
-      status: "rejected",
-      timerLabel: "Cancelled 15m ago",
-      customerName: "Elena Vance",
-      paymentBadge: "REFUNDED KHQR",
-      paymentIsPaid: false,
-      rejectReason: "Out of stock: Hearth-Smoked Angus Beef Ribs unavailable tonight.",
-      totalPrice: 48.0,
-      items: [
-        {
-          name: "Hearth-Smoked Angus Ribs",
-          price: 32.0,
-          quantity: 1,
-        },
-        {
-          name: "Truffle Fries",
-          price: 6.5,
-          quantity: 1,
-        },
-        {
-          name: "Craft IPA Beer",
-          price: 9.5,
-          quantity: 1,
-        },
-      ],
-    },
-  ]);
   const [filter, setFilter] = useState<"all" | "delivery" | "pickup" | "rejected">("all");
 
-  const handleAction = (action: string, ticketId: string, reason?: string) => {
-    if (action === "reject") {
-      setTickets((prev) =>
-        prev.map((t) =>
-          t.id === ticketId
-            ? { ...t, status: "rejected", rejectReason: reason || "Kitchen rejected order" }
-            : t
-        )
-      );
-      return;
+  const { data, loading, refetch } = useApi<any>("/orders.php", {
+    limit: 50,
+  });
+
+  const rawOrders: any[] = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+
+  const mapOrderToTicket = (o: any): KdsTicket => {
+    const rawSt = String(o.status || "pending").toLowerCase();
+    let kdsStatus: KdsTicket["status"] = "pending";
+    if (rawSt === "pending") kdsStatus = "pending";
+    else if (rawSt === "accepted") kdsStatus = "accepted";
+    else if (rawSt === "preparing") kdsStatus = "preparing";
+    else if (rawSt === "ready_for_pickup" || rawSt === "ready_for_delivery" || rawSt === "ready") kdsStatus = "ready";
+    else if (rawSt === "cancelled" || rawSt === "rejected") kdsStatus = "rejected";
+    else kdsStatus = "preparing";
+
+    const payStatus = String(o.payment_status || "pending").toLowerCase();
+    const isPaid = payStatus === "paid" || payStatus === "verified";
+    const payMethod = String(o.payment_method || "khqr").toUpperCase();
+    const payBadge = isPaid ? `PAID (${payMethod})` : `UNPAID (${payMethod})`;
+
+    const createdTs = new Date(o.created_at || Date.now()).getTime();
+    const diffMins = Math.max(1, Math.floor((Date.now() - createdTs) / 60000));
+    const timerLabel = diffMins < 60 ? `${diffMins}m ago` : `${Math.floor(diffMins / 60)}h ago`;
+
+    const items: KdsOrderItem[] = (o.items || []).map((it: any) => ({
+      name: it.food_name || it.name || "Menu Item",
+      price: Number(it.price || 0),
+      quantity: Number(it.quantity || 1),
+      modifiers: it.notes ? [{ text: it.notes, isAlert: true }] : undefined,
+    }));
+
+    const cleanNumber = o.order_number ? `#${String(o.order_number).replace(/^#/, "")}` : `#${o.id}`;
+
+    return {
+      id: cleanNumber,
+      channel: o.fulfillment_type === "pickup" ? "pickup" : "delivery",
+      status: kdsStatus,
+      timerLabel,
+      isUrgent: diffMins > 15,
+      customerName: o.customer_name || "Customer",
+      locationOrNote: o.notes || undefined,
+      paymentBadge: payBadge,
+      paymentIsPaid: isPaid,
+      proofImageUrl: o.payment_proof_url || undefined,
+      totalPrice: Number(o.total_amount || 0),
+      assignStation: o.fulfillment_type === "delivery" ? "Hearth 1" : "Pass / Counter",
+      prepProgress: kdsStatus === "preparing" ? 65 : undefined,
+      items: items.length > 0 ? items : [{ name: "Chef Special Order", price: Number(o.total_amount || 0), quantity: 1 }],
+      readySubtype: o.fulfillment_type === "pickup" ? "pickup" : "delivery",
+      shelfOrBag: o.fulfillment_type === "pickup" ? "Pickup Shelf A" : "Delivery Bag #01",
+      readyTimeAgo: kdsStatus === "ready" ? `${diffMins}m ago` : undefined,
+      rejectReason: o.notes || undefined,
+    };
+  };
+
+  const tickets: KdsTicket[] = rawOrders.map(mapOrderToTicket);
+
+  const handleAction = async (action: string, ticketId: string, reason?: string) => {
+    let apiAction = action;
+    if (action === "reject") apiAction = "cancel";
+
+    try {
+      const res = await Api.post("/orders.php", {
+        action: apiAction,
+        order_id: ticketId,
+        cancel_reason: reason || "Kitchen rejected order",
+      });
+      if (res.success) {
+        refetch(true);
+      } else {
+        alert("Action failed: " + (res.error || "Operation failed"));
+      }
+    } catch (err: any) {
+      alert("Failed: " + err.message);
     }
-    setTickets((prev) =>
-      prev.map((t) => {
-        if (t.id !== ticketId) return t;
-        if (action === "accept") return { ...t, status: "accepted" };
-        if (action === "start_prep")
-          return {
-            ...t,
-            status: "preparing",
-            prepProgress: 15,
-            timerLabel: "02m / 15m",
-          };
-        if (action === "mark_ready")
-          return {
-            ...t,
-            status: "ready",
-            readySubtype: t.channel,
-            readyTimeAgo: "Just ready",
-          };
-        return t;
-      })
-    );
   };
 
   const filteredTickets = tickets.filter((t) => {
@@ -326,63 +119,70 @@ export default function LiveOrderBoardPage() {
         onFilterChange={setFilter}
       />
 
-      {/* 3-Column or 4-Column Expediter Workflow Kanban Grid */}
-      {filter === "rejected" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-space-md items-start">
-          <KdsKanbanColumn
-            title="REJECTED / CANCELLED ORDERS"
-            stepNumber={0}
-            status="rejected"
-            count={rejectedTickets.length}
-            sublabel="Audit Log"
-            dotColorClass="bg-error font-bold"
-            badgeClass="bg-error-container text-on-error-container"
-            containerClass="bg-error-container/10 border-error/20"
-            tickets={rejectedTickets}
-            onAction={handleAction}
-          />
+      {loading && tickets.length === 0 ? (
+        <div className="bg-surface-container-lowest rounded-2xl shadow-xs border border-border/40 p-12 flex flex-col items-center justify-center gap-3 text-on-surface-variant min-h-[400px]">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <span className="font-label-md text-sm font-bold">Connecting to Live Kitchen KDS API...</span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-space-md items-start">
-          {/* Column 1: Pending */}
-          <KdsKanbanColumn
-            title="PENDING"
-            stepNumber={1}
-            status="pending"
-            count={pendingTickets.length}
-            sublabel="Action Req."
-            dotColorClass="bg-error animate-pulse"
-            badgeClass="bg-error-container text-on-error-container"
-            tickets={pendingTickets}
-            onAction={handleAction}
-          />
+        /* 3-Column or 4-Column Expediter Workflow Kanban Grid */
+        filter === "rejected" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-space-md items-start">
+            <KdsKanbanColumn
+              title="REJECTED / CANCELLED ORDERS"
+              stepNumber={0}
+              status="rejected"
+              count={rejectedTickets.length}
+              sublabel="Audit Log"
+              dotColorClass="bg-error font-bold"
+              badgeClass="bg-error-container text-on-error-container"
+              containerClass="bg-error-container/10 border-error/20"
+              tickets={rejectedTickets}
+              onAction={handleAction}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-space-md items-start">
+            {/* Column 1: Pending */}
+            <KdsKanbanColumn
+              title="PENDING"
+              stepNumber={1}
+              status="pending"
+              count={pendingTickets.length}
+              sublabel="Action Req."
+              dotColorClass="bg-error animate-pulse"
+              badgeClass="bg-error-container text-on-error-container"
+              tickets={pendingTickets}
+              onAction={handleAction}
+            />
 
-          {/* Column 2: Accepted */}
-          <KdsKanbanColumn
-            title="ACCEPTED"
-            stepNumber={2}
-            status="accepted"
-            count={acceptedTickets.length}
-            sublabel="Queue"
-            dotColorClass="bg-secondary-container"
-            badgeClass="bg-surface-container-high text-on-surface"
-            tickets={acceptedTickets}
-            onAction={handleAction}
-          />
+            {/* Column 2: Accepted */}
+            <KdsKanbanColumn
+              title="ACCEPTED"
+              stepNumber={2}
+              status="accepted"
+              count={acceptedTickets.length}
+              sublabel="Queue"
+              dotColorClass="bg-secondary-container"
+              badgeClass="bg-surface-container-high text-on-surface"
+              tickets={acceptedTickets}
+              onAction={handleAction}
+            />
 
-          {/* Column 3: Preparing */}
-          <KdsKanbanColumn
-            title="PREPARING"
-            stepNumber={3}
-            status="preparing"
-            count={preparingTickets.length}
-            sublabel="Hearth Active"
-            dotColorClass="bg-primary animate-pulse"
-            badgeClass="bg-primary-fixed text-on-primary-fixed"
-            tickets={preparingTickets}
-            onAction={handleAction}
-          />
-        </div>
+            {/* Column 3: Preparing */}
+            <KdsKanbanColumn
+              title="PREPARING"
+              stepNumber={3}
+              status="preparing"
+              count={preparingTickets.length}
+              sublabel="Hearth Active"
+              dotColorClass="bg-primary animate-pulse"
+              badgeClass="bg-primary-fixed text-on-primary-fixed"
+              tickets={preparingTickets}
+              onAction={handleAction}
+            />
+          </div>
+        )
       )}
     </div>
   );
