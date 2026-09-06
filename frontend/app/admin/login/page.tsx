@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -16,6 +16,7 @@ import {
   Truck,
   CheckCircle2,
   Sparkles,
+  KeyRound,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,17 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Restore remembered email on component mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedEmail = localStorage.getItem("sarana_remembered_admin_email");
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberSession(true);
+      }
+    }
+  }, []);
+
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -47,6 +59,13 @@ export default function AdminLoginPage() {
       });
 
       if (res.success && res.data) {
+        // Persist or clear remembered email preference
+        if (rememberSession) {
+          localStorage.setItem("sarana_remembered_admin_email", email);
+        } else {
+          localStorage.removeItem("sarana_remembered_admin_email");
+        }
+
         setSession({
           token: res.data.token,
           userId: res.data.userId,
@@ -241,8 +260,8 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            {/* Remember Session Toggle */}
-            <div className="flex items-center justify-between text-xs">
+            {/* Remember Session Toggle & Quick Auto-fill */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -251,9 +270,21 @@ export default function AdminLoginPage() {
                   className="w-4 h-4 rounded text-primary focus:ring-primary border-border"
                 />
                 <span className="font-semibold text-on-surface-variant">
-                  Remember Session (4h Timeout)
+                  Remember Session (Auto-fill on return)
                 </span>
               </label>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("admin@bistro.com");
+                  setPassword("admin123");
+                }}
+                className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 self-start sm:self-auto"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Fill Demo Admin</span>
+              </button>
             </div>
 
             {/* Submit Button */}
