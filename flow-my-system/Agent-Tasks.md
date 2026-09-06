@@ -16,9 +16,10 @@
 
 ## 🎨 1. Frontend-Only Agent (Next.js 14 + React + Zustand)
 
-**កាលណាប្រគល់ងារឱ្យ Agent ทำតែ Frontend ៖** Agent នឹងធ្វើការតែលើ Folder `frontend/` ប៉ុណ្ណោះ ដោយផ្អែកលើ API Contracts ដែល Backend មានស្រាប់ ឬ Mock Data។
+**កាលណាប្រគល់ងារឱ្យ Agent ធ្វើតែ Frontend ៖** Agent នឹងធ្វើការតែលើ Folder `frontend/` ប៉ុណ្ណោះ ដោយទាញទិន្នន័យផ្ទាល់ពី Backend API (តាម `@/lib/api`) ដាច់ខាតមិនប្រើ Mock Data ឡើយ។
 
 ### 📋 ភារកិច្ចចម្បង (Select / Check Tasks):
+- [ ] **No Mock Data API Fetching:** ភ្ជាប់ React Components និង Zustand Stores ជាមួយ `@/lib/api` (`Api.get`, `Api.post`, `useApi`) ដើម្បីទាញទិន្នន័យពិតពី PHP REST API (ដាច់ខាតមិនប្រើ Mock Data ឬ Hardcoded Arrays)។
 - [ ] **Real-Time Client Setup:** ដំឡើង និងរៀបចំ Client Library សម្រាប់ Real-Time (ឧទាហរណ៍៖ `pusher-js`, Native `EventSource` សម្រាប់ SSE, ឬ SWR Hook សម្រាប់ Smart Polling) ក្នុង `frontend/lib/realtime.ts`។
 - [ ] **Live UI Updates & Component State:** ភ្ជាប់ Listener ទៅកាន់ **Zustand Store** (`frontend/store/`) ដើម្បី Update ស្ថានភាព Order ដោយស្វ័យប្រវត្តិ ពេលមាន Real-Time Event ចូលមក។
 - [ ] **Order Tracker Bar Component:** បង្កើត ឬ Update **Progress Bar** ( Customer Tracking Page) ឱ្យរអិល Animation តាម Status (`pending` ➔ `accepted` ➔ `preparing` ➔ `ready` ➔ `completed`)។
@@ -43,13 +44,15 @@
 - [ ] **Integrate Trigger: Status Change:** នៅពេលហាងផ្លាស់ប្តូរ Status (`PATCH /api/order-status.php`) ➔ បាញ់ Event `order-updated` ទៅ Customer Channel។
 - [ ] **Integrate Trigger: Driver Dispatch:** នៅពេលម្ហូបរួចរាល់ (`POST /api/delivery.php`) ➔ បាញ់ Event `delivery-dispatch` ទៅ Delivery Staff Channel។
 - [ ] **API Contracts & Real-Time Payload Schema:** កំណត់ JSON Response Format ឱ្យច្បាស់លាស់ (Status code, Order ID, Timestamp, Delivery Status) និងដោះស្រាយ CORS Headers។
+- [ ] **Database & Entity Relationship Management:** វិភាគ Relationship (1:1, 1:N, N:M), បង្កើត table file ក្នុង `backend/database/tables/`, ភ្ជាប់ក្នុង `setup.php` តាមលំដាប់ FK dependency, និង seed test data ក្នុង `seeder.php` (តាម `.agents/skills/backend-db-management/SKILL.md`)។
 
 ### 📁 Files សម្រាប់ Backend Agent:
 - [ ] `backend/lib/` (Pusher/Broadcaster Helper, Notification Logics)
 - [ ] `backend/api/orders.php` (Create Order & Trigger New Order Event)
 - [ ] `backend/api/order-status.php` (Update Status & Trigger Status Change Event)
 - [ ] `backend/api/delivery.php` (Driver Actions & Trigger Dispatch Event)
-- [ ] `backend/database/` (Database schema / tables update for tracking)
+- [ ] `backend/database/tables/` (Individual database table definitions)
+- [ ] `backend/database/setup.php` & `seeder.php` (Migration runner & test seeders)
 
 ---
 

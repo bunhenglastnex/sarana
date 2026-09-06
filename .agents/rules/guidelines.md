@@ -18,7 +18,7 @@ When acting as a **Frontend Agent**:
   - Build UI components, pages, layout animations, and Zustand global state management.
   - Implement client-side Real-Time listeners (`frontend/lib/realtime.ts` or Pusher/SSE/SWR wrappers).
   - Add visual and audio notifications (e.g., sound chime for new orders, toast alerts, animated order progress bar).
-- **Strict Rule:** DO NOT modify any files inside `backend/`. Use mock data or predefined API contracts if backend endpoints are pending.
+- **Strict Rule:** DO NOT modify any files inside `backend/`. DO NOT use mock data or hardcoded dummy arrays in components or stores; strictly fetch live data from backend APIs using `@/lib/api` (following `.agents/skills/frontend-api-integration/SKILL.md`).
 
 ---
 
@@ -31,7 +31,7 @@ When acting as a **Backend Agent**:
   - Implement REST API endpoints in `backend/api/` (`orders.php`, `order-status.php`, `delivery.php`).
   - Implement Event Broadcaster helper (`backend/lib/Broadcaster.php` for Pusher/SSE triggers).
   - Trigger real-time events on order creation, status changes, and driver assignments.
-  - Manage database setup, schemas, and queries in `backend/database/`.
+  - Manage database setup, entity relationship analysis, and tables in `backend/database/` (following `.agents/skills/backend-db-management/SKILL.md`).
 - **Strict Rule:** DO NOT modify any files inside `frontend/`. Ensure proper JSON response structure and CORS headers.
 
 ---
