@@ -20,42 +20,75 @@ export default function StaffPage() {
   const fetchDrivers = async () => {
     setIsLoading(true);
     try {
-      const res = await Api.get("/users.php", { role: "delivery" });
-      if (res.success && Array.isArray(res.data)) {
-        const mappedStaff: StaffRecord[] = res.data.map((user: any) => ({
-          id: String(user.id),
-          code: `DRV-${user.id}`,
-          name: user.name,
-          phone: user.phone,
-          email: user.email || undefined,
-          avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80`,
-          role: "delivery",
-          roleLabel: "Delivery Driver",
-          status: (user.status === "active" || user.status === "available"
-            ? "available"
-            : user.status === "on_delivery"
+      const [resUsers, resRadar] = await Promise.all([
+        Api.get("/users.php", { role: "delivery" }, { forceRefresh: true }),
+        Api.get("/delivery.php", { action: "fleet_radar" }, { forceRefresh: true }),
+      ]);
+
+      if (resUsers.success && Array.isArray(resUsers.data)) {
+        const radarCouriers =
+          resRadar.success && resRadar.data?.couriers ? resRadar.data.couriers : [];
+        const radarMap = new Map(
+          radarCouriers.map((c: any) => [
+            String(c.id).replace("AE-DRV-", "").replace("DRV-", ""),
+            c,
+          ]),
+        );
+
+        const mappedStaff: StaffRecord[] = resUsers.data.map((user: any) => {
+          const userIdStr = String(user.id);
+          const radarInfo: any = radarMap.get(userIdStr);
+
+          const rawStatus =
+            user.courier_status ||
+            user.status ||
+            (radarInfo ? radarInfo.statusText : "offline");
+          const isOffline = rawStatus === "offline";
+          const isOnDelivery =
+            rawStatus === "on_delivery" ||
+            (radarInfo && radarInfo.orderId && radarInfo.orderId !== "#NONE");
+
+          const finalStatus: StaffStatus = isOffline
+            ? "offline"
+            : isOnDelivery
             ? "on_delivery"
-            : "offline") as StaffStatus,
-          statusLabel:
-            user.status === "active" || user.status === "available"
-              ? "ONLINE (AVAILABLE)"
-              : user.status === "on_delivery"
-              ? "ON DELIVERY"
-              : "OFFLINE (PAUSED)",
-          vehicleType: "motorbike",
-          vehicleLabel: "Honda Click (Motorbike)",
-          deliveriesToday: 0,
-          codCashCollected: 0,
-          tipsToday: 0,
-          rating: 5.0,
-          joinedDate: user.created_at
-            ? new Date(user.created_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })
-            : "Recently",
-        }));
+            : "available";
+
+          return {
+            id: userIdStr,
+            code: `DRV-${user.id}`,
+            name: user.name,
+            phone: user.phone,
+            email: user.email || undefined,
+            avatarUrl:
+              user.avatar_url ||
+              radarInfo?.avatarUrl ||
+              `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80`,
+            role: "delivery",
+            roleLabel: "Delivery Driver",
+            status: finalStatus,
+            statusLabel:
+              finalStatus === "available"
+                ? "ONLINE (AVAILABLE)"
+                : finalStatus === "on_delivery"
+                ? "ON DELIVERY"
+                : "OFFLINE (PAUSED)",
+            vehicleType: user.vehicle_type || radarInfo?.vehicleType || "motorbike",
+            vehicleLabel:
+              user.vehicle_label || radarInfo?.vehicleLabel || "Honda Click (Motorbike)",
+            deliveriesToday: radarInfo?.deliveriesToday || 0,
+            codCashCollected: radarInfo?.amount || 0,
+            tipsToday: 0,
+            rating: 4.95,
+            joinedDate: user.created_at
+              ? new Date(user.created_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : "Recently",
+          };
+        });
         setStaffList(mappedStaff);
       }
     } catch (err) {
@@ -156,18 +189,29 @@ export default function StaffPage() {
       />
 
       {/* Main Delivery Driver Roster Grid (Responsive: 1 col on mobile, 2 on md, 3 on xl, 4 on 2xl) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-space-md">
-        {filteredStaff.map((staff) => (
-          <StaffMemberCard
-            key={staff.id}
-            staff={staff}
-            onSelect={(s) => setSelectedStaff(s)}
-            onCall={handleCallStaff}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-space-md">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-48 bg-surface-container-lowest animate-pulse rounded-2xl border border-border/30"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-space-md">
+          {filteredStaff.map((staff) => (
+            <StaffMemberCard
+              key={staff.id}
+              staff={staff}
+              onSelect={(s) => setSelectedStaff(s)}
+              onCall={handleCallStaff}
+            />
+          ))}
+        </div>
+      )}
 
-      {filteredStaff.length === 0 && (
+      {!isLoading && filteredStaff.length === 0 && (
         <div className="bg-surface-container-lowest p-space-2xl rounded-2xl border border-border/40 text-center space-y-2">
           <p className="font-headline-sm text-base font-bold text-on-surface">
             No delivery drivers found matching your filter
