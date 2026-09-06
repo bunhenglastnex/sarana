@@ -3,11 +3,15 @@
 import React, { useState, useRef } from "react";
 import { Camera, ShieldCheck, X, CheckCircle2 } from "lucide-react";
 
-export const ConfirmProofCard: React.FC = () => {
+interface ConfirmProofCardProps {
+  onPhotoSelect?: (base64: string | null) => void;
+}
+
+export const ConfirmProofCard: React.FC<ConfirmProofCardProps> = ({
+  onPhotoSelect,
+}) => {
   const [hasPhoto, setHasPhoto] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string>(
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuA2syyK-OBF00F-5o9tn6FxdXlCYJdhDVgdar8gs6tXihod9Zh2b4RGuZ3iPI5h-iZ8BEyCLUsgsS9oo7Gl3HDq8qz6C51utvXw_bCSFDa_5AtzI4N6nstfr4D-sPVOKBGV7UxAFhMX2tE0L6w4YiCc7DZ3Dwo86tN09up_n0zsCB2yR0p4g7csdtSrincNfAwxRTXmRkAyu52GOhUf23Io342wbUL7P00Z9o8s3Iqda0Bs8IojLuECkHUiMqjKehivuHSIpVhhzCPFCik8O-j_pGM8DUyNAqVBRS6ivpfFqBGALIOkMwaMfuOoPzhG7YOd-NgbWNBSrXUyaQBDah21G1Lg"
-  );
+  const [photoUrl, setPhotoUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleButtonClick = () => {
@@ -17,9 +21,16 @@ export const ConfirmProofCard: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const generatedUrl = URL.createObjectURL(file);
-      setPhotoUrl(generatedUrl);
-      setHasPhoto(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setPhotoUrl(base64);
+        setHasPhoto(true);
+        if (onPhotoSelect) {
+          onPhotoSelect(base64);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -100,7 +111,11 @@ export const ConfirmProofCard: React.FC = () => {
               <button
                 type="button"
                 aria-label="Remove photo"
-                onClick={() => setHasPhoto(false)}
+                onClick={() => {
+                  setHasPhoto(false);
+                  setPhotoUrl("");
+                  if (onPhotoSelect) onPhotoSelect(null);
+                }}
                 className="w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
               >
                 <X className="w-4 h-4" />

@@ -40,8 +40,8 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
   }
 }
 
-// Default Kitchen HQ Location (Phnom Penh Hub)
-const DEFAULT_HQ_COORDS: [number, number] = [11.5564, 104.9282];
+// Default Kitchen HQ Location (Fallback if DB settings not loaded yet)
+const DEFAULT_HQ_COORDS: [number, number] = [13.35227, 103.955116];
 
 // Custom HTML Icons using L.divIcon
 const createHqIcon = (storeName: string, storeSubtitle: string) =>
@@ -209,9 +209,9 @@ export const DeliveryRealMap: React.FC<DeliveryRealMapProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapTileStyle, setMapTileStyle] = useState<"standard" | "dark">("dark");
 
-  const storeName = store?.name || "Bistro Kitchen HQ";
-  const storeSubtitle = store?.subtitle || "Central Dispatch Hub · Phnom Penh";
-  const storeAddress = store?.address || "520 N Michigan Ave, Suite 14F, Phnom Penh";
+  const storeName = store?.name || "Store HQ";
+  const storeSubtitle = store?.subtitle || "Central Dispatch Hub";
+  const storeAddress = store?.address || "520 N Michigan Ave, Suite 14F";
 
   const hqCoords: [number, number] = [
     store?.lat || DEFAULT_HQ_COORDS[0],

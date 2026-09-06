@@ -15,7 +15,7 @@ interface CustomerHeaderProps {
 }
 
 export const CustomerHeader: React.FC<CustomerHeaderProps> = ({
-  currentAddress = 'Phnom Penh, Cambodia',
+  currentAddress = 'Delivery Location',
   onOpenLocation,
   onOpenNotifications,
   onOpenProfile,

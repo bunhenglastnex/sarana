@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDeliveryStore } from "@/lib/store/useDeliveryStore";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 interface DeliveryHeaderProps {
   title?: string;
@@ -12,6 +13,11 @@ interface DeliveryHeaderProps {
 export const DeliveryHeader: React.FC<DeliveryHeaderProps> = ({ title }) => {
   const pathname = usePathname();
   const { isOnline } = useDeliveryStore();
+  const { avatarUrl } = useAuthStore();
+
+  const userAvatar =
+    avatarUrl ||
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
 
   const getPageTitle = () => {
     if (title) return title;
@@ -61,7 +67,7 @@ export const DeliveryHeader: React.FC<DeliveryHeaderProps> = ({ title }) => {
             <img
               alt="Profile"
               className="w-8 h-8 rounded-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFgSCPH_D_P89baxhACYIj6Q2wbutJp62w19yulHEwoZj5uLw76X4auNlAQwC8QilaCC7ZLj8lg9-ds-zz6T47rTJ4pvLNsLVPjiItTdbl9mP6acLkdxcLMMIaLmJVi5XnnJ-J7Tk_h5KKbA1v3WW4xKpKXVsqigU8wcQTFIr37DBLz_ayvnYjOXC3Z9qpsw4ABYD21JrhKAmJ_4qduv1qd2qJIzLO0Bg-EoEkquOYxLGiPTrgQqDx"
+              src={userAvatar}
             />
           </Link>
         </div>

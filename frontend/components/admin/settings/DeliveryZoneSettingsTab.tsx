@@ -52,8 +52,8 @@ export const DeliveryZoneSettingsTab: React.FC<
   DeliveryZoneSettingsTabProps
 > = ({ formData, onChange }) => {
   const [isLocating, setIsLocating] = useState(false);
-  const currentLat = parseFloat(formData.storeLatitude) || 11.5564;
-  const currentLng = parseFloat(formData.storeLongitude) || 104.9282;
+  const currentLat = parseFloat(formData.storeLatitude) || 13.35227;
+  const currentLng = parseFloat(formData.storeLongitude) || 103.955116;
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {

@@ -6,7 +6,7 @@ import { DeliveryConfirmContainer } from "@/components/delivery/DeliveryConfirmC
 
 export default function DeliveryConfirmPage() {
   const params = useParams();
-  const orderId = typeof params?.id === "string" ? params.id : "1024";
+  const orderId = typeof params?.id === "string" ? params.id : "1";
 
   return <DeliveryConfirmContainer orderId={orderId} />;
 }

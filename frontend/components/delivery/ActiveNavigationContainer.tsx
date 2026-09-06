@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDeliveryStore } from "@/lib/store/useDeliveryStore";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { DeliveryOrder, useDeliveryStore } from "@/lib/store/useDeliveryStore";
 import { ActiveNavigationHUD } from "./navigation/ActiveNavigationHUD";
 import { NavigationMapCanvas } from "./navigation/NavigationMapCanvas";
 import { NavigationCustomerCard } from "./navigation/NavigationCustomerCard";
@@ -19,16 +20,27 @@ interface ActiveNavigationContainerProps {
 }
 
 export const ActiveNavigationContainer: React.FC<ActiveNavigationContainerProps> = ({
-  orderId = "1024",
+  orderId = "1",
 }) => {
   const router = useRouter();
-  const { getOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
+  const { avatarUrl } = useAuthStore();
+  const userAvatar = avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+  const { getOrderById, fetchOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
+
+  const [liveOrder, setLiveOrder] = useState<DeliveryOrder | undefined>(() => getOrderById(orderId));
+  const [loadingOrder, setLoadingOrder] = useState<boolean>(!liveOrder);
 
   React.useEffect(() => {
     fetchLiveOrders();
-  }, [fetchLiveOrders]);
+    if (orderId) {
+      fetchOrderById(orderId).then((ord) => {
+        if (ord) setLiveOrder(ord);
+        setLoadingOrder(false);
+      });
+    }
+  }, [orderId, fetchLiveOrders, fetchOrderById]);
 
-  const order = getOrderById(orderId) || getOrderById("1024")!;
+  const order = liveOrder || getOrderById(orderId);
 
   const [showSmsToast, setShowSmsToast] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -42,8 +54,34 @@ export const ActiveNavigationContainer: React.FC<ActiveNavigationContainerProps>
   };
 
   const handleConfirmDelivered = () => {
-    router.push(`/delivery/${order.id}/confirm`);
+    if (order) {
+      router.push(`/delivery/${order.id}/confirm`);
+    }
   };
+
+  if (loadingOrder && !order) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-surface text-on-surface">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+        <span className="font-label-md text-sm font-bold">Loading Navigation Data for Order #{orderId}...</span>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-surface text-on-surface p-6 text-center">
+        <h2 className="font-headline-sm font-bold text-headline-sm text-on-surface mb-2">Order Not Found</h2>
+        <p className="font-body-md text-body-md text-on-surface-variant mb-6">Could not locate delivery order #{orderId}.</p>
+        <button
+          onClick={() => router.push("/delivery")}
+          className="px-6 py-2.5 bg-primary text-on-primary rounded-full font-label-md text-label-md font-bold shadow-md"
+        >
+          Return to Kitchen Dispatch
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col relative w-full bg-surface min-h-screen text-on-surface">
@@ -73,7 +111,7 @@ export const ActiveNavigationContainer: React.FC<ActiveNavigationContainerProps>
               <img
                 alt="Courier Profile"
                 className="w-8 h-8 rounded-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFgSCPH_D_P89baxhACYIj6Q2wbutJp62w19yulHEwoZj5uLw76X4auNlAQwC8QilaCC7ZLj8lg9-ds-zz6T47rTJ4pvLNsLVPjiItTdbl9mP6acLkdxcLMMIaLmJVi5XnnJ-J7Tk_h5KKbA1v3WW4xKpKXVsqigU8wcQTFIr37DBLz_ayvnYjOXC3Z9qpsw4ABYD21JrhKAmJ_4qduv1qd2qJIzLO0Bg-EoEkquOYxLGiPTrgQqDx"
+                src={userAvatar}
               />
             </div>
           </div>
@@ -85,8 +123,8 @@ export const ActiveNavigationContainer: React.FC<ActiveNavigationContainerProps>
         {/* Turn-by-Turn Real-time Floating Guidance HUD */}
         <ActiveNavigationHUD />
 
-        {/* Interactive Map Canvas Container */}
-        <NavigationMapCanvas />
+        {/* Interactive Leaflet Map Canvas Container */}
+        <NavigationMapCanvas order={order} />
 
         {/* Delivery Order Operational Card */}
         <NavigationCustomerCard

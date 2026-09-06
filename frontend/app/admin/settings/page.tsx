@@ -42,7 +42,7 @@ function SettingsPageContent() {
     // General
     storeName: "Amber & Ember Bistro",
     storePhone: "+855 23 888 999",
-    storeAddress: "520 N Michigan Ave, Suite 14F, Phnom Penh",
+    storeAddress: "520 N Michigan Ave, Suite 14F",
     openingTime: "10:00",
     closingTime: "22:00",
     taxRate: 9.25,
@@ -70,8 +70,8 @@ function SettingsPageContent() {
     telegramNotifyCancelled: true,
 
     // Delivery Zone & Radius Geofencing
-    storeLatitude: "11.5564",
-    storeLongitude: "104.9282",
+    storeLatitude: "13.35227",
+    storeLongitude: "103.955116",
     maxDeliveryRadiusKm: 7.5,
     enableZoneBlocker: true,
     outOfZoneMessage:

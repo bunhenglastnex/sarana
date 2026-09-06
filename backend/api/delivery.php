@@ -34,26 +34,22 @@ if ($method === 'GET') {
             $settingsStmt->execute();
             $rawSettings = $settingsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
-            $storeLat = isset($rawSettings['store_latitude'])
+            $storeLat = isset($rawSettings['store_latitude']) && $rawSettings['store_latitude'] !== ''
                 ? (float)$rawSettings['store_latitude']
-                : (isset($rawSettings['store_lat'])
+                : (isset($rawSettings['store_lat']) && $rawSettings['store_lat'] !== ''
                     ? (float)$rawSettings['store_lat']
-                    : (isset($rawSettings['storeLatitude'])
-                        ? (float)$rawSettings['storeLatitude']
-                        : 11.556400));
+                    : 13.352270);
 
-            $storeLng = isset($rawSettings['store_longitude'])
+            $storeLng = isset($rawSettings['store_longitude']) && $rawSettings['store_longitude'] !== ''
                 ? (float)$rawSettings['store_longitude']
-                : (isset($rawSettings['store_lng'])
+                : (isset($rawSettings['store_lng']) && $rawSettings['store_lng'] !== ''
                     ? (float)$rawSettings['store_lng']
-                    : (isset($rawSettings['storeLongitude'])
-                        ? (float)$rawSettings['storeLongitude']
-                        : 104.928200));
+                    : 103.955116);
 
             $storeConfig = [
-                'name'     => $rawSettings['store_name'] ?? $rawSettings['storeName'] ?? 'Bistro Kitchen HQ',
-                'subtitle' => $rawSettings['store_subtitle'] ?? 'Central Dispatch Hub',
-                'address'  => $rawSettings['store_address'] ?? $rawSettings['storeAddress'] ?? 'Main Store Address',
+                'name'     => $rawSettings['store_name'] ?? $rawSettings['storeName'] ?? 'Store HQ',
+                'subtitle' => str_replace(' · Phnom Penh', '', $rawSettings['store_subtitle'] ?? 'Central Dispatch Hub'),
+                'address'  => str_replace(', Phnom Penh', '', $rawSettings['store_address'] ?? $rawSettings['storeAddress'] ?? 'Main Store Address'),
                 'lat'      => $storeLat,
                 'lng'      => $storeLng,
             ];
@@ -191,8 +187,80 @@ if ($method === 'GET') {
     }
 
     try {
-        // Delivery staff ID (default rider ID 2 if not passed)
-        $staffId = isset($_GET['staff_id']) ? (int)$_GET['staff_id'] : 2;
+        // Check if single order details requested by order_id
+        if (!empty($_GET['order_id'])) {
+            $reqOrderId = $_GET['order_id'];
+            $orderStmt = $pdo->prepare("
+                SELECT o.*, u.name as delivery_staff_name
+                FROM orders o
+                LEFT JOIN users u ON o.delivery_staff_id = u.id
+                WHERE o.id = ? OR o.order_number = ? OR o.order_number = ?
+                LIMIT 1
+            ");
+            $cleanNum = str_replace('#', '', $reqOrderId);
+            $orderStmt->execute([$reqOrderId, "#{$cleanNum}", $cleanNum]);
+            $singleOrder = $orderStmt->fetch();
+
+            if (!$singleOrder) {
+                jsonResponse(0, "Order #{$reqOrderId} not found", null, 404);
+                return;
+            }
+
+            $singleOrder['id'] = (int)$singleOrder['id'];
+            $itemStmt = $pdo->prepare("
+                SELECT oi.*, f.image_url 
+                FROM order_items oi 
+                LEFT JOIN foods f ON oi.food_id = f.id 
+                WHERE oi.order_id = ?
+            ");
+            $itemStmt->execute([$singleOrder['id']]);
+            $singleOrder['items'] = $itemStmt->fetchAll();
+
+            // Fetch Store Config from Settings Table in Database
+            $settingsStmt = $pdo->prepare("SELECT setting_key, setting_value FROM settings");
+            $settingsStmt->execute();
+            $rawSettings = $settingsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+            $singleOrder['store'] = [
+                'name'     => $rawSettings['store_name'] ?? $rawSettings['storeName'] ?? 'Store HQ',
+                'subtitle' => str_replace(' · Phnom Penh', '', $rawSettings['store_subtitle'] ?? 'Central Dispatch Hub'),
+                'address'  => str_replace(', Phnom Penh', '', $rawSettings['store_address'] ?? $rawSettings['storeAddress'] ?? 'Main Store Address'),
+                'lat'      => isset($rawSettings['store_latitude']) && $rawSettings['store_latitude'] !== ''
+                    ? (float)$rawSettings['store_latitude']
+                    : (isset($rawSettings['store_lat']) && $rawSettings['store_lat'] !== ''
+                        ? (float)$rawSettings['store_lat']
+                        : 13.352270),
+                'lng'      => isset($rawSettings['store_longitude']) && $rawSettings['store_longitude'] !== ''
+                    ? (float)$rawSettings['store_longitude']
+                    : (isset($rawSettings['store_lng']) && $rawSettings['store_lng'] !== ''
+                        ? (float)$rawSettings['store_lng']
+                        : 103.955116),
+            ];
+
+            // Fetch driver real-time GPS telemetry from courier_telemetry table in Database
+            $assignedStaffId = !empty($singleOrder['delivery_staff_id']) ? (int)$singleOrder['delivery_staff_id'] : 2;
+            $telemStmt = $pdo->prepare("SELECT lat, lng, speed_kmh, temp_celsius, status FROM courier_telemetry WHERE user_id = ?");
+            $telemStmt->execute([$assignedStaffId]);
+            $telem = $telemStmt->fetch();
+            if ($telem) {
+                $singleOrder['driver_lat'] = $telem['lat'] ? (float)$telem['lat'] : null;
+                $singleOrder['driver_lng'] = $telem['lng'] ? (float)$telem['lng'] : null;
+                $singleOrder['driver_speed'] = $telem['speed_kmh'] ? (int)$telem['speed_kmh'] : 24;
+            }
+
+            jsonResponse(1, 'Delivery order fetched successfully', $singleOrder);
+            return;
+        }
+
+        // Delivery staff ID (resolve dynamically if not passed)
+        $reqStaffId = $_GET['staff_id'] ?? null;
+        if (!empty($reqStaffId)) {
+            $staffId = (int)$reqStaffId;
+        } else {
+            $defaultRiderStmt = $pdo->query("SELECT id FROM users WHERE role = 'delivery' AND status = 'active' ORDER BY id DESC LIMIT 1");
+            $defaultRiderRow = $defaultRiderStmt->fetch();
+            $staffId = $defaultRiderRow ? (int)$defaultRiderRow['id'] : 2;
+        }
 
         // Fetch Orders:
         // 1. Ready for delivery (unassigned or assigned to this staff)
@@ -260,7 +328,14 @@ if ($method === 'GET') {
     }
 
     $action = $input['action'];
-    $staffId = isset($input['staff_id']) ? (int)$input['staff_id'] : 2;
+    $reqStaffId = $input['staff_id'] ?? null;
+    if (!empty($reqStaffId)) {
+        $staffId = (int)$reqStaffId;
+    } else {
+        $defaultRiderStmt = $pdo->query("SELECT id FROM users WHERE role = 'delivery' AND status = 'active' ORDER BY id DESC LIMIT 1");
+        $defaultRiderRow = $defaultRiderStmt->fetch();
+        $staffId = $defaultRiderRow ? (int)$defaultRiderRow['id'] : 2;
+    }
 
     try {
         if ($action === 'update_duty_status' || $action === 'toggle_shift') {
@@ -289,6 +364,29 @@ if ($method === 'GET') {
                 'is_online' => $isOnline
             ]);
             return;
+        }
+
+        if ($action === 'update_location') {
+            $lat = isset($input['lat']) ? (float)$input['lat'] : null;
+            $lng = isset($input['lng']) ? (float)$input['lng'] : null;
+            $speed = isset($input['speed']) ? (int)$input['speed'] : 0;
+
+            if ($lat !== null && $lng !== null) {
+                $stmt = $pdo->prepare("
+                    INSERT INTO courier_telemetry (user_id, lat, lng, speed_kmh, status)
+                    VALUES (?, ?, ?, ?, 'on_delivery')
+                    ON DUPLICATE KEY UPDATE lat = VALUES(lat), lng = VALUES(lng), speed_kmh = VALUES(speed_kmh)
+                ");
+                $stmt->execute([$staffId, $lat, $lng, $speed]);
+
+                jsonResponse(1, 'Courier real-time GPS location updated in database', [
+                    'staff_id' => $staffId,
+                    'lat'      => $lat,
+                    'lng'      => $lng,
+                    'speed'    => $speed
+                ]);
+                return;
+            }
         }
 
         if (empty($input['order_id'])) {
@@ -361,15 +459,43 @@ if ($method === 'GET') {
             ]);
         } elseif ($action === 'confirm_delivered') {
             // Rider delivers food & collects Cash on Delivery -> status completed, payment_status paid
+            $proofUrl = $input['proof_image'] ?? $input['proof_url'] ?? $input['payment_proof_url'] ?? null;
+            $savedProofPath = null;
+
+            if ($proofUrl) {
+                if (str_starts_with($proofUrl, 'data:image/')) {
+                    // Save base64 image file to uploads directory
+                    $uploadDir = __DIR__ . '/../uploads/proofs/';
+                    if (!file_exists($uploadDir)) {
+                        @mkdir($uploadDir, 0777, true);
+                    }
+                    $imageData = explode(',', $proofUrl);
+                    if (count($imageData) > 1) {
+                        $decoded = base64_decode($imageData[1]);
+                        $fileName = 'proof_order_' . $orderId . '_' . time() . '.jpg';
+                        $fullFilePath = $uploadDir . $fileName;
+                        if (file_put_contents($fullFilePath, $decoded)) {
+                            $savedProofPath = '/uploads/proofs/' . $fileName;
+                        } else {
+                            $savedProofPath = $proofUrl;
+                        }
+                    } else {
+                        $savedProofPath = $proofUrl;
+                    }
+                } else {
+                    $savedProofPath = $proofUrl;
+                }
+            }
+
             $stmt = $pdo->prepare("
                 UPDATE orders
-                SET status = 'completed', payment_status = 'paid', delivery_staff_id = ?
+                SET status = 'completed', payment_status = 'paid', delivery_staff_id = ?, payment_proof_url = COALESCE(?, payment_proof_url)
                 WHERE id = ? AND fulfillment_type = 'delivery'
             ");
-            $stmt->execute([$staffId, $orderId]);
+            $stmt->execute([$staffId, $savedProofPath, $orderId]);
 
             // 📲 TELEGRAM ALERT
-            $statusMsg = formatOrderStatusUpdateMessage($order, 'completed', "Delivered by {$riderName}. Cash Collected!");
+            $statusMsg = formatOrderStatusUpdateMessage($order, 'completed', "Delivered by {$riderName}. Cash Collected!" . ($savedProofPath ? " (Proof Photo Attached)" : ""));
             notifyTelegramGroup($statusMsg);
             if (!empty($order['telegram_chat_id'])) {
                 notifyCustomerTelegram($order['telegram_chat_id'], $statusMsg);
@@ -380,16 +506,17 @@ if ($method === 'GET') {
                 $pdo,
                 'DELIVERY_COMPLETED',
                 'DELIVERY',
-                "Order '{$order['order_number']}' successfully delivered by rider '{$riderName}'. Cash on Delivery collected.",
+                "Order '{$order['order_number']}' successfully delivered by rider '{$riderName}'. Cash on Delivery collected." . ($savedProofPath ? " Proof photo saved." : ""),
                 'info',
                 $staffId,
                 $riderName
             );
 
             jsonResponse(1, 'Order completed and Cash on Delivery collected!', [
-                'order_id'       => $orderId,
-                'status'         => 'completed',
-                'payment_status' => 'paid'
+                'order_id'          => $orderId,
+                'status'            => 'completed',
+                'payment_status'    => 'paid',
+                'payment_proof_url' => $savedProofPath
             ]);
         } else {
             jsonResponse(0, 'Invalid delivery action. Allowed: pickup_from_kitchen, confirm_delivered', null, 400);

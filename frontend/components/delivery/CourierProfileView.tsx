@@ -14,13 +14,15 @@ export const CourierProfileView: React.FC = () => {
   const { name, userId, phone } = useAuthStore();
   const { data } = useApi<any>("/delivery.php");
 
-  const displayName = name || "Delivery Rider";
+  const displayName = name || "";
   const driverCode = `#AE-DRV-${4790 + (userId || 2)}`;
-  const cashInHand = Number(data?.data?.cash_in_hand || data?.cash_in_hand || 0);
+  const cashInHand = Number(
+    data?.data?.cash_in_hand || data?.cash_in_hand || 0,
+  );
 
   const completedOrdersCount = Array.isArray(data?.data?.orders || data?.orders)
     ? (data?.data?.orders || data?.orders).filter(
-        (o: any) => o.status === "completed" || o.status === "delivered"
+        (o: any) => o.status === "completed" || o.status === "delivered",
       ).length
     : 0;
 
@@ -30,7 +32,7 @@ export const CourierProfileView: React.FC = () => {
       <HeroProfileCard
         name={displayName}
         driverCode={driverCode}
-        courierTitle={`Bistro Courier · Phone: ${phone || "+855 12 345 678"}`}
+        courierTitle={` · Phone: ${phone || ""}`}
         rating={4.95}
         totalDeliveries={`${completedOrdersCount} completed today`}
       />

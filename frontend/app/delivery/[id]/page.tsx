@@ -6,7 +6,7 @@ import { DeliveryOrderDetailView } from "@/components/delivery/DeliveryOrderDeta
 
 export default function DeliveryOrderDetailPage() {
   const params = useParams();
-  const orderId = typeof params?.id === "string" ? params.id : "1024";
+  const orderId = typeof params?.id === "string" ? params.id : "1";
 
   return <DeliveryOrderDetailView orderId={orderId} />;
 }

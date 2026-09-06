@@ -21,9 +21,9 @@ function seedDatabase(PDO $pdo): void {
 
     // Seed Courier Telemetry (GPS positions & vehicle labels)
     $pdo->exec("INSERT IGNORE INTO courier_telemetry (id, user_id, vehicle_type, vehicle_label, lat, lng, speed_kmh, temp_celsius, status) VALUES
-        (1, 2, 'motorbike', 'Motorbike #2 (CB150)', 11.55980000, 104.93150000, 28, 65, 'on_delivery'),
-        (2, 3, 'motorbike', 'Motorbike #1', 11.54850000, 104.92100000, 24, 68, 'on_delivery'),
-        (3, 4, 'e_scooter', 'E-Scooter #4', 11.56100000, 104.92500000, 22, 62, 'on_delivery')");
+        (1, 2, 'motorbike', 'Motorbike #2 (CB150)', 13.35480000, 103.95850000, 28, 65, 'on_delivery'),
+        (2, 3, 'motorbike', 'Motorbike #1', 13.34850000, 103.94800000, 24, 68, 'on_delivery'),
+        (3, 4, 'e_scooter', 'E-Scooter #4', 13.35600000, 103.95200000, 22, 62, 'on_delivery')");
 
     // Seed Categories
     $pdo->exec("INSERT IGNORE INTO categories (id, name, icon) VALUES
@@ -46,29 +46,33 @@ function seedDatabase(PDO $pdo): void {
     $custPassword = password_hash('customer123', PASSWORD_BCRYPT);
     $pdo->exec("INSERT IGNORE INTO users 
         (id, name, phone, email, role, password, customer_tag, primary_address, delivery_notes, preferred_channel, payment_preference) VALUES
-        (101, 'David Chen', '+1 (555) 234-9912', 'david.chen@example.com', 'customer', '{$custPassword}', 'First Order', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 'Ring buzzer 14F on arrival. Prefers extra roasted aioli.', 'delivery', 'KHQR'),
-        (102, 'Clara Oswald', '+1 (555) 604-3382', 'clara.oswald@example.com', 'customer', '{$custPassword}', 'Regular Guest', '182 W Superior St, Chicago, IL 60654', 'Dressing on side for salads. Prefers express pickup.', 'pickup', 'Counter Cash'),
-        (103, 'John Smith', '+1 (555) 382-9012', 'john.smith@example.com', 'customer', '{$custPassword}', '14th Order (VIP)', '742 Evergreen Terr, Apt 3B, River North, Chicago, IL 60654', 'Leave at front door, ring bell twice.', 'delivery', 'COD'),
-        (104, 'Sophia Lin', '+1 (555) 492-1084', 'sophia.lin@example.com', 'customer', '{$custPassword}', 'Regular Guest', '101 E Ontario St, Chicago, IL 60611', 'Allergic to peanuts.', 'pickup', 'Apple Pay'),
-        (105, 'Marcus Vance', '+1 (555) 891-2240', 'marcus.vance@example.com', 'customer', '{$custPassword}', 'High Spend', '128 W Huron St, Suite 500, Chicago, IL 60654', 'Leave with security guard.', 'delivery', 'Card'),
-        (106, 'Amina Patel', '+1 (555) 773-4019', 'amina.patel@example.com', 'customer', '{$custPassword}', 'VIP', '401 N Wabash Ave, Apt 18A, Chicago, IL 60611', 'Extra sauce.', 'delivery', 'Card'),
-        (107, 'Elena Vance', '+1 (555) 301-4490', 'elena.vance@example.com', 'customer', '{$custPassword}', 'Guest', '333 N Dearborn St, Chicago, IL 60654', 'Customer requested cancellation.', 'delivery', 'KHQR')");
+        (101, 'David Chen', '+1 (555) 234-9912', 'david.chen@example.com', 'customer', '{$custPassword}', 'First Order', '520 N Michigan Ave, Apt 14F', 'Ring buzzer 14F on arrival. Prefers extra roasted aioli.', 'delivery', 'KHQR'),
+        (102, 'Clara Oswald', '+1 (555) 604-3382', 'clara.oswald@example.com', 'customer', '{$custPassword}', 'Regular Guest', '182 W Superior St', 'Dressing on side for salads. Prefers express pickup.', 'pickup', 'Counter Cash'),
+        (103, 'John Smith', '+1 (555) 382-9012', 'john.smith@example.com', 'customer', '{$custPassword}', '14th Order (VIP)', '742 Evergreen Terr, Apt 3B', 'Leave at front door, ring bell twice.', 'delivery', 'COD'),
+        (104, 'Sophia Lin', '+1 (555) 492-1084', 'sophia.lin@example.com', 'customer', '{$custPassword}', 'Regular Guest', '101 E Ontario St', 'Allergic to peanuts.', 'pickup', 'Apple Pay'),
+        (105, 'Marcus Vance', '+1 (555) 891-2240', 'marcus.vance@example.com', 'customer', '{$custPassword}', 'High Spend', '128 W Huron St, Suite 500', 'Leave with security guard.', 'delivery', 'Card'),
+        (106, 'Amina Patel', '+1 (555) 773-4019', 'amina.patel@example.com', 'customer', '{$custPassword}', 'VIP', '401 N Wabash Ave, Apt 18A', 'Extra sauce.', 'delivery', 'Card'),
+        (107, 'Elena Vance', '+1 (555) 301-4490', 'elena.vance@example.com', 'customer', '{$custPassword}', 'Guest', '333 N Dearborn St', 'Customer requested cancellation.', 'delivery', 'KHQR')");
 
     // Seed Orders
     $pdo->exec("INSERT IGNORE INTO orders 
         (id, order_number, user_id, customer_name, customer_phone, fulfillment_type, delivery_address, delivery_lat, delivery_lng, delivery_fee, food_amount, total_amount, amount_khr, payment_method, payment_status, payment_proof_url, payment_txn_ref, status, delivery_staff_id, notes, created_at) 
         VALUES
-        (1026, '#1026', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F', 11.55900000, 104.93000000, 0.00, 29.50, 29.50, 118000, 'khqr', 'verified', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10', 'KHQR-889102', 'pending', NULL, 'Ring buzzer 14F on arrival', NOW()),
+        (1, '#1024', 103, 'John Smith', '+1 (555) 382-9012', 'delivery', '742 Evergreen Terr, Apt 3B', 13.35950000, 103.96120000, 0.00, 34.50, 34.50, 138000, 'cod', 'pending', NULL, 'COD-PENDING-1', 'ready_for_delivery', 2, 'Door code #4910. Ring bell twice, leave on vestibule shelf if no answer.', DATE_SUB(NOW(), INTERVAL 10 MINUTE)),
+        (1026, '#1026', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F', 13.35700000, 103.95900000, 0.00, 29.50, 29.50, 118000, 'khqr', 'verified', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10', 'KHQR-889102', 'pending', NULL, 'Ring buzzer 14F on arrival', NOW()),
         (1025, '#1025', 102, 'Clara Oswald', '+1 (555) 604-3382', 'pickup', NULL, NULL, NULL, 0.00, 15.00, 15.00, 60000, 'counter_cash', 'pending', NULL, NULL, 'pending', NULL, 'Dressing on Side', NOW()),
-        (1024, '#1024', 103, 'John Smith', '+1 (555) 382-9012', 'delivery', '742 Evergreen Terr, Apt 3B', 11.56450000, 104.93720000, 0.00, 34.50, 34.50, 138000, 'cod', 'pending', NULL, 'COD-PENDING-1', 'on_the_way', 2, 'Leave at front door, ring bell twice.', DATE_SUB(NOW(), INTERVAL 12 MINUTE)),
-        (1027, '#1027', 107, 'Elena Vance', '+1 (555) 301-4490', 'delivery', '12 Riverside Promenade', 11.54120000, 104.91450000, 0.00, 62.00, 62.00, 248000, 'khqr', 'verified', NULL, 'KHQR-889127', 'on_the_way', 3, 'Crossing South Bridge', DATE_SUB(NOW(), INTERVAL 18 MINUTE)),
+        (1024, '#1024', 103, 'John Smith', '+1 (555) 382-9012', 'delivery', '742 Evergreen Terr, Apt 3B', 13.35950000, 103.96120000, 0.00, 34.50, 34.50, 138000, 'cod', 'pending', NULL, 'COD-PENDING-1', 'on_the_way', 2, 'Leave at front door, ring bell twice.', DATE_SUB(NOW(), INTERVAL 12 MINUTE)),
+        (1027, '#1027', 107, 'Elena Vance', '+1 (555) 301-4490', 'delivery', '12 Riverside Promenade', 13.34520000, 103.94650000, 0.00, 62.00, 62.00, 248000, 'khqr', 'verified', NULL, 'KHQR-889127', 'on_the_way', 3, 'Crossing South Bridge', DATE_SUB(NOW(), INTERVAL 18 MINUTE)),
         (1023, '#1023', 104, 'Sophia Lin', '+1 (555) 492-1084', 'pickup', NULL, NULL, NULL, 0.00, 28.00, 28.00, 112000, 'khqr', 'verified', 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop', 'APPLE-PAY-4401', 'ready_for_pickup', NULL, 'House BBQ Sauce', DATE_SUB(NOW(), INTERVAL 19 MINUTE)),
-        (1022, '#1022', 105, 'Marcus Vance', '+1 (555) 891-2240', 'delivery', '128 W Huron St, Suite 500', 11.55800000, 104.92000000, 3.00, 38.20, 41.20, 164800, 'khqr', 'verified', 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop', 'CARD-889105', 'on_the_way', 2, 'Leave at front desk', DATE_SUB(NOW(), INTERVAL 32 MINUTE)),
-        (1021, '#1021', 106, 'Sophia Meng', '+1 (555) 773-4019', 'delivery', '88 Belmont St, Suite 12', 11.56320000, 104.92420000, 0.00, 69.00, 69.00, 276000, 'cod', 'pending', NULL, 'COD-889106', 'on_the_way', 4, 'At building entrance', DATE_SUB(NOW(), INTERVAL 8 MINUTE)),
-        (1019, '#1019', 107, 'Elena Vance', '+1 (555) 301-4490', 'delivery', '333 N Dearborn St', 11.55000000, 104.92000000, 0.00, 38.50, 38.50, 154000, 'khqr', 'refunded', NULL, 'KHQR-REFUND-19', 'cancelled', NULL, 'Customer requested cancellation', DATE_SUB(NOW(), INTERVAL 72 MINUTE))");
+        (1022, '#1022', 105, 'Marcus Vance', '+1 (555) 891-2240', 'delivery', '128 W Huron St, Suite 500', 13.35500000, 103.95200000, 3.00, 38.20, 41.20, 164800, 'khqr', 'verified', 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop', 'CARD-889105', 'on_the_way', 2, 'Leave at front desk', DATE_SUB(NOW(), INTERVAL 32 MINUTE)),
+        (1021, '#1021', 106, 'Sophia Meng', '+1 (555) 773-4019', 'delivery', '88 Belmont St, Suite 12', 13.35820000, 103.95620000, 0.00, 69.00, 69.00, 276000, 'cod', 'pending', NULL, 'COD-889106', 'on_the_way', 4, 'At building entrance', DATE_SUB(NOW(), INTERVAL 8 MINUTE)),
+        (1019, '#1019', 107, 'Elena Vance', '+1 (555) 301-4490', 'delivery', '333 N Dearborn St', 13.35000000, 103.95000000, 0.00, 38.50, 38.50, 154000, 'khqr', 'refunded', NULL, 'KHQR-REFUND-19', 'cancelled', NULL, 'Customer requested cancellation', DATE_SUB(NOW(), INTERVAL 72 MINUTE))");
 
     // Seed Order Items
     $pdo->exec("INSERT IGNORE INTO order_items (id, order_id, food_id, food_name, price, quantity, subtotal) VALUES
+        (1, 1, 1, 'Smoked Bacon Truffle Burger', 11.25, 2, 22.50),
+        (2, 1, 4, 'Artisan Rosemary Fries', 6.00, 1, 6.00),
+        (3, 1, 5, 'Cold Craft Kola (Glass Bottles)', 3.00, 2, 6.00),
         (101, 1026, 1, 'Smoked Angus Burger', 11.50, 2, 23.00),
         (102, 1026, 4, 'Truffle Parmesan Fries', 6.50, 1, 6.50),
         (103, 1025, 2, 'Woodfire Burrata Salad', 15.00, 1, 15.00),
@@ -85,13 +89,11 @@ function seedDatabase(PDO $pdo): void {
     // Seed Settings (General, Audio, Security, Telegram, Delivery)
     $pdo->exec("INSERT IGNORE INTO settings (setting_key, setting_value, setting_group) VALUES
         ('store_name', 'Bistro Kitchen HQ', 'general'),
-        ('store_subtitle', 'Central Dispatch Hub · Phnom Penh', 'general'),
+        ('store_subtitle', 'Central Dispatch Hub', 'general'),
         ('store_phone', '+855 23 888 999', 'general'),
-        ('store_address', '520 N Michigan Ave, Suite 14F, Phnom Penh', 'general'),
-        ('store_lat', '11.556400', 'general'),
-        ('store_lng', '104.928200', 'general'),
-        ('store_latitude', '11.556400', 'delivery'),
-        ('store_longitude', '104.928200', 'delivery'),
+        ('store_address', '520 N Michigan Ave, Suite 14F', 'general'),
+        ('store_latitude', '13.352270', 'delivery'),
+        ('store_longitude', '103.955116', 'delivery'),
         ('opening_time', '10:00', 'general'),
         ('closing_time', '22:00', 'general'),
         ('tax_rate', '9.25', 'general'),

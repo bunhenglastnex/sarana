@@ -6,7 +6,7 @@ import { ActiveNavigationContainer } from "@/components/delivery/ActiveNavigatio
 
 export default function ActiveNavigationPage() {
   const params = useParams();
-  const orderId = typeof params?.id === "string" ? params.id : "1024";
+  const orderId = typeof params?.id === "string" ? params.id : "1";
 
   return <ActiveNavigationContainer orderId={orderId} />;
 }

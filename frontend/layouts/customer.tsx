@@ -20,7 +20,7 @@ export const CustomerLayout: React.FC<{ children: React.ReactNode }> = ({
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [currentAddress, setCurrentAddress] = useState(
-    "Phnom Penh, Cambodia",
+    "Select Delivery Location",
   );
 
   const currentPath = pathname || "";

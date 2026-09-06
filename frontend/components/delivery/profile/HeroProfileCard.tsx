@@ -14,12 +14,12 @@ interface HeroProfileCardProps {
 }
 
 export const HeroProfileCard: React.FC<HeroProfileCardProps> = ({
-  name = "Liem Vance",
-  driverCode = "#AE-DRV-4791",
-  courierTitle = "Senior Bistro Courier • Motorbike #2",
-  rating = 4.95,
-  totalDeliveries = "320+ deliveries",
-  avatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuAFgSCPH_D_P89baxhACYIj6Q2wbutJp62w19yulHEwoZj5uLw76X4auNlAQwC8QilaCC7ZLj8lg9-ds-zz6T47rTJ4pvLNsLVPjiItTdbl9mP6acLkdxcLMMIaLmJVi5XnnJ-J7Tk_h5KKbA1v3WW4xKpKXVsqigU8wcQTFIr37DBLz_ayvnYjOXC3Z9qpsw4ABYD21JrhKAmJ_4qduv1qd2qJIzLO0Bg-EoEkquOYxLGiPTrgQqDx",
+  name = "",
+  driverCode = "",
+  courierTitle = "",
+  rating = 0,
+  totalDeliveries = "",
+  avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
 }) => {
   const { isOnline, toggleShift } = useDeliveryStore();
 

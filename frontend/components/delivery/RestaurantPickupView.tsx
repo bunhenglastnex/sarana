@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDeliveryStore } from "@/lib/store/useDeliveryStore";
+import { DeliveryOrder, DeliveryItemDetail, useDeliveryStore } from "@/lib/store/useDeliveryStore";
 import { Api } from "@/lib/api";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { PickupHeroCard } from "./pickup/PickupHeroCard";
@@ -22,59 +22,67 @@ interface RestaurantPickupViewProps {
 }
 
 export const RestaurantPickupView: React.FC<RestaurantPickupViewProps> = ({
-  orderId = "1024",
+  orderId = "1",
 }) => {
   const router = useRouter();
-  const { getOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
+  const { avatarUrl } = useAuthStore();
+  const userAvatar = avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+  const { getOrderById, fetchOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
+
+  const [liveOrder, setLiveOrder] = useState<DeliveryOrder | undefined>(() => getOrderById(orderId));
+  const [loadingOrder, setLoadingOrder] = useState<boolean>(!liveOrder);
 
   React.useEffect(() => {
     fetchLiveOrders();
-  }, [fetchLiveOrders]);
+    if (orderId) {
+      fetchOrderById(orderId).then((ord) => {
+        if (ord) setLiveOrder(ord);
+        setLoadingOrder(false);
+      });
+    }
+  }, [orderId, fetchLiveOrders, fetchOrderById]);
 
-  const order = getOrderById(orderId) || getOrderById("1024")!;
+  const order = liveOrder || getOrderById(orderId);
 
   const [statusState, setStatusState] = useState<
     "READY_FOR_DELIVERY" | "OUT_FOR_DELIVERY"
-  >(order.deliveryStage === "picked_up" ? "OUT_FOR_DELIVERY" : "READY_FOR_DELIVERY");
+  >(order?.deliveryStage === "picked_up" ? "OUT_FOR_DELIVERY" : "READY_FOR_DELIVERY");
 
-  const [isConfirmed, setIsConfirmed] = useState(order.deliveryStage === "picked_up");
+  const [isConfirmed, setIsConfirmed] = useState(order?.deliveryStage === "picked_up");
 
-  // Checklist items
-  const checklistItems: ChecklistItem[] = [
+  React.useEffect(() => {
+    if (order) {
+      setIsConfirmed(order.deliveryStage === "picked_up");
+      setStatusState(order.deliveryStage === "picked_up" ? "OUT_FOR_DELIVERY" : "READY_FOR_DELIVERY");
+    }
+  }, [order?.deliveryStage]);
+
+  // Dynamic Checklist items from live order
+  const checklistItems: ChecklistItem[] = (
+    order?.itemsList && order.itemsList.length > 0
+      ? order.itemsList.map((item: DeliveryItemDetail, idx: number) => ({
+          id: `chk-${item.id || idx}`,
+          title: `${item.quantity}x ${item.name}`,
+          category: "Main",
+          note: item.optionsNote || "Kitchen Verified Dish",
+        }))
+      : (order?.itemsSummary || "1x Customer Ticket").split(",").map((s: string, idx: number) => ({
+          id: `chk-${idx}`,
+          title: s.trim(),
+          category: "Main",
+          note: "Kitchen Verified Dish",
+        }))
+  ).concat([
     {
-      id: "chk-1",
-      title: "2x Smoked Bacon Truffle Burger",
-      category: "Main",
-      note: "Brioche Bun • Extra Aged Cheddar",
-    },
-    {
-      id: "chk-2",
-      title: "1x Artisan Fries",
-      category: "Side",
-      note: "Rosemary Garlic Aioli Included",
-    },
-    {
-      id: "chk-3",
-      title: "2x Cold Craft Kola & Napkin Pack",
-      category: "Beverage",
-      note: "Chilled Cup Sleeve with Eco Straws",
-    },
-    {
-      id: "chk-4",
-      title: `Receipt ${order.orderNumber} • Thermal Seal`,
+      id: "chk-sec",
+      title: `Receipt ${order?.orderNumber || ""} • Thermal Seal`,
       category: "Security",
       note: "Tamper-evident heat sticker confirmed intact",
     },
-  ];
+  ]);
 
   // Checked state map
-  const [checkedState, setCheckedState] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {};
-    if (order.deliveryStage === "picked_up") {
-      checklistItems.forEach((item) => (init[item.id] = true));
-    }
-    return init;
-  });
+  const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
 
   const handleToggle = (id: string) => {
     setCheckedState((prev) => ({
@@ -93,6 +101,30 @@ export const RestaurantPickupView: React.FC<RestaurantPickupViewProps> = ({
   const allChecked = checklistItems.every((item) => checkedState[item.id]);
   const checkedCount = checklistItems.filter((item) => checkedState[item.id]).length;
   const remainingCount = checklistItems.length - checkedCount;
+
+  if (loadingOrder && !order) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-surface text-on-surface">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+        <span className="font-label-md text-sm font-bold">Loading Pickup Details for Order #{orderId}...</span>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-surface text-on-surface p-6 text-center">
+        <h2 className="font-headline-sm font-bold text-headline-sm text-on-surface mb-2">Order Not Found</h2>
+        <p className="font-body-md text-body-md text-on-surface-variant mb-6">Could not locate delivery order #{orderId}.</p>
+        <button
+          onClick={() => router.push("/delivery")}
+          className="px-6 py-2.5 bg-primary text-on-primary rounded-full font-label-md text-label-md font-bold shadow-md"
+        >
+          Return to Kitchen Dispatch
+        </button>
+      </div>
+    );
+  }
 
   const handleConfirmPickup = async () => {
     if (isConfirmed) {
@@ -154,7 +186,7 @@ export const RestaurantPickupView: React.FC<RestaurantPickupViewProps> = ({
               <img
                 alt="Courier Profile"
                 className="w-8 h-8 rounded-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFgSCPH_D_P89baxhACYIj6Q2wbutJp62w19yulHEwoZj5uLw76X4auNlAQwC8QilaCC7ZLj8lg9-ds-zz6T47rTJ4pvLNsLVPjiItTdbl9mP6acLkdxcLMMIaLmJVi5XnnJ-J7Tk_h5KKbA1v3WW4xKpKXVsqigU8wcQTFIr37DBLz_ayvnYjOXC3Z9qpsw4ABYD21JrhKAmJ_4qduv1qd2qJIzLO0Bg-EoEkquOYxLGiPTrgQqDx"
+                src={userAvatar}
               />
             </div>
           </div>

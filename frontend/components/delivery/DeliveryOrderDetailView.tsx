@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { NavigationMapCanvas } from "@/components/delivery/navigation/NavigationMapCanvas";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import { DeliveryOrder, useDeliveryStore } from "@/lib/store/useDeliveryStore";
 import {
   ArrowLeft,
@@ -25,20 +27,37 @@ interface DeliveryOrderDetailViewProps {
 }
 
 export const DeliveryOrderDetailView: React.FC<DeliveryOrderDetailViewProps> = ({
-  orderId = "1024",
+  orderId = "1",
 }) => {
   const router = useRouter();
-  const { getOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
+  const { avatarUrl } = useAuthStore();
+  const { getOrderById, fetchOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
   
+  const userAvatar = avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80";
+  const [liveOrder, setLiveOrder] = useState<DeliveryOrder | undefined>(() => getOrderById(orderId));
+  const [loadingOrder, setLoadingOrder] = useState<boolean>(!liveOrder);
+
   React.useEffect(() => {
     fetchLiveOrders();
-  }, [fetchLiveOrders]);
+    if (orderId) {
+      fetchOrderById(orderId).then((ord) => {
+        if (ord) setLiveOrder(ord);
+        setLoadingOrder(false);
+      });
+    }
+  }, [orderId, fetchLiveOrders, fetchOrderById]);
 
-  const order: DeliveryOrder = getOrderById(orderId) || getOrderById("1024")!;
+  const order = liveOrder || getOrderById(orderId);
 
   const [currentStage, setCurrentStage] = useState<
     "accepted" | "picked_up" | "arrived" | "completed"
-  >(order.deliveryStage || "accepted");
+  >(order?.deliveryStage || "accepted");
+
+  React.useEffect(() => {
+    if (order?.deliveryStage) {
+      setCurrentStage(order.deliveryStage);
+    }
+  }, [order?.deliveryStage]);
 
   // Get customer initials for avatar
   const getInitials = (name: string) => {
@@ -46,6 +65,30 @@ export const DeliveryOrderDetailView: React.FC<DeliveryOrderDetailViewProps> = (
     if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     return name.slice(0, 2).toUpperCase();
   };
+
+  if (loadingOrder && !order) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-surface text-on-surface">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3"></div>
+        <span className="font-label-md text-sm font-bold">Loading Order #{orderId}...</span>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-surface text-on-surface p-6 text-center">
+        <h2 className="font-headline-sm font-bold text-headline-sm text-on-surface mb-2">Order Not Found</h2>
+        <p className="font-body-md text-body-md text-on-surface-variant mb-6">Could not locate delivery order #{orderId}.</p>
+        <button
+          onClick={() => router.push("/delivery")}
+          className="px-6 py-2.5 bg-primary text-on-primary rounded-full font-label-md text-label-md font-bold shadow-md"
+        >
+          Return to Kitchen Dispatch
+        </button>
+      </div>
+    );
+  }
 
   const handleStageAdvance = () => {
     if (currentStage === "accepted" || currentStage === "picked_up") {
@@ -73,7 +116,7 @@ export const DeliveryOrderDetailView: React.FC<DeliveryOrderDetailViewProps> = (
   const itemsToDisplay =
     order.itemsList && order.itemsList.length > 0
       ? order.itemsList
-      : order.itemsSummary.split(",").map((s, idx) => ({
+      : (order.itemsSummary || "").split(",").map((s, idx) => ({
           id: `fallback-${idx}`,
           name: s.trim(),
           quantity: 1,
@@ -110,7 +153,7 @@ export const DeliveryOrderDetailView: React.FC<DeliveryOrderDetailViewProps> = (
               <img
                 alt="Courier Profile"
                 className="w-8 h-8 rounded-full object-cover"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFgSCPH_D_P89baxhACYIj6Q2wbutJp62w19yulHEwoZj5uLw76X4auNlAQwC8QilaCC7ZLj8lg9-ds-zz6T47rTJ4pvLNsLVPjiItTdbl9mP6acLkdxcLMMIaLmJVi5XnnJ-J7Tk_h5KKbA1v3WW4xKpKXVsqigU8wcQTFIr37DBLz_ayvnYjOXC3Z9qpsw4ABYD21JrhKAmJ_4qduv1qd2qJIzLO0Bg-EoEkquOYxLGiPTrgQqDx"
+                src={userAvatar}
               />
             </div>
           </div>
@@ -276,30 +319,12 @@ export const DeliveryOrderDetailView: React.FC<DeliveryOrderDetailViewProps> = (
         {/* Delivery Address & Map Card */}
         <div className="px-screen-edge-padding mb-space-sm">
           <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm flex flex-col">
-            {/* Route Map Snippet */}
-            <div className="relative w-full h-36 bg-surface-container-high overflow-hidden">
-              <img
-                src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=600&q=80"
-                alt="Map Route"
-                className="w-full h-full object-cover opacity-70"
+            {/* Live Interactive Navigation Map (Store HQ -> Driver GPS -> Customer Drop-off) */}
+            <div className="w-full">
+              <NavigationMapCanvas
+                order={order}
+                routeName={`${order.storeName || "Store HQ"} → ${order.customerName || "Customer"}`}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-10 pointer-events-none"></div>
-
-              {/* Route Overlay Chip */}
-              <div className="absolute top-2.5 left-2.5 z-20 bg-surface-container-lowest/90 backdrop-blur-md px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-primary"></span>
-                <span className="font-label-sm text-label-sm text-on-surface font-bold">
-                  Bistro (Oak St) → Customer
-                </span>
-              </div>
-
-              {/* Distance / Time Pill */}
-              <div className="absolute bottom-2.5 right-2.5 z-20 bg-surface-container-lowest/95 backdrop-blur-md px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1.5 text-on-surface">
-                <Navigation className="w-4 h-4 text-primary" />
-                <span className="font-label-sm text-label-sm font-bold">
-                  {order.distance} • {order.eta}
-                </span>
-              </div>
             </div>
 
             {/* Address & Drop-Off Instruction Block */}

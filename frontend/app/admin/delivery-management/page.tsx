@@ -6,124 +6,49 @@ import { DeliveryRadarHeader } from "@/components/admin/delivery/DeliveryRadarHe
 import { DeliveryInteractiveMap } from "@/components/admin/delivery/DeliveryInteractiveMap";
 import { DeliveryFleetRoster } from "@/components/admin/delivery/DeliveryFleetRoster";
 import { Api } from "@/lib/api";
+import { Loader2 } from "lucide-react";
 
 const defaultStore: StoreConfig = {
-  name: "Bistro Kitchen HQ",
-  subtitle: "Central Dispatch Hub · Phnom Penh",
-  address: "520 N Michigan Ave, Suite 14F, Phnom Penh",
-  lat: 11.5564,
-  lng: 104.9282,
+  name: "Store HQ",
+  subtitle: "Central Dispatch Hub",
+  address: "520 N Michigan Ave, Suite 14F",
+  lat: 13.35227,
+  lng: 103.955116,
 };
 
-const mockCouriers: CourierRecord[] = [
-  {
-    id: "AE-DRV-4791",
-    code: "AE-DRV-4791",
-    name: "Liem Vance",
-    avatarUrl:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop",
-    vehicleType: "motorbike",
-    vehicleLabel: "Motorbike #2",
-    orderId: "#1024",
-    customerName: "John Smith",
-    destinationAddress: "742 Evergreen Terrace, Apt 3B",
-    speedKmH: 28,
-    tempCelsius: 65,
-    remainingKm: 0.8,
-    remainingMinutes: 5,
-    etaLabel: "19:31",
-    statusText: "Approaching drop-off",
-    paymentMethod: "cod",
-    paymentBadgeLabel: "COD CASH",
-    amount: 34.5,
-    isFocused: true,
-    coordinates: { x: 520, y: 210 },
-    lat: 11.5598,
-    lng: 104.9315,
-    destLat: 11.5645,
-    destLng: 104.9372,
-    destName: "John Smith (Apt 3B)",
-  },
-  {
-    id: "AE-DRV-4798",
-    code: "AE-DRV-4798",
-    name: "David Chen",
-    avatarUrl:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop",
-    vehicleType: "motorbike",
-    vehicleLabel: "Motorbike #1",
-    orderId: "#1027",
-    customerName: "Elena Vance",
-    destinationAddress: "12 Riverside Promenade (3.2 mi)",
-    speedKmH: 24,
-    tempCelsius: 68,
-    remainingKm: 2.1,
-    remainingMinutes: 14,
-    etaLabel: "19:40",
-    statusText: "Crossing South Bridge",
-    paymentMethod: "khqr",
-    paymentBadgeLabel: "KHQR PAID",
-    amount: 62.0,
-    coordinates: { x: 580, y: 410 },
-    lat: 11.5485,
-    lng: 104.921,
-    destLat: 11.5412,
-    destLng: 104.9145,
-    destName: "Elena Vance (Riverside)",
-  },
-  {
-    id: "AE-DRV-4802",
-    code: "AE-DRV-4802",
-    name: "Sokha Seng",
-    avatarUrl:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop",
-    vehicleType: "e_scooter",
-    vehicleLabel: "E-Scooter #4",
-    orderId: "#1021",
-    customerName: "Sophia Meng",
-    destinationAddress: "88 Belmont St, Suite 12 (0.9 mi)",
-    speedKmH: 22,
-    tempCelsius: 62,
-    remainingKm: 0.4,
-    remainingMinutes: 2,
-    etaLabel: "19:28",
-    statusText: "At building entrance",
-    paymentMethod: "cod",
-    paymentBadgeLabel: "COD CASH",
-    amount: 69.0,
-    coordinates: { x: 740, y: 180 },
-    lat: 11.561,
-    lng: 104.925,
-    destLat: 11.5632,
-    destLng: 104.9242,
-    destName: "Sophia Meng (Belmont St)",
-  },
-];
-
 export default function DeliveryManagementPage() {
-  const [couriers, setCouriers] = useState<CourierRecord[]>(mockCouriers);
+  const [couriers, setCouriers] = useState<CourierRecord[]>([]);
   const [store, setStore] = useState<StoreConfig>(defaultStore);
   const [stats, setStats] = useState({
-    activeCourierCount: 3,
-    avgFulfillmentMinutes: 18.4,
-    totalCodOnRoad: 103.50,
+    activeCourierCount: 0,
+    avgFulfillmentMinutes: 0,
+    totalCodOnRoad: 0,
   });
-  const [selectedCourierId, setSelectedCourierId] =
-    useState<string>("AE-DRV-4791");
+  const [selectedCourierId, setSelectedCourierId] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchLiveTelemetry = async () => {
     try {
-      const res = await Api.get<any>("/api/delivery.php", {
-        action: "fleet_radar",
-      }, { forceRefresh: true });
+      const res = await Api.get<any>(
+        "/delivery.php",
+        { action: "fleet_radar" },
+        { forceRefresh: true }
+      );
 
       if (res.success && res.data) {
+        let fetchedCouriers: CourierRecord[] = [];
         if (res.data.couriers && Array.isArray(res.data.couriers)) {
-          setCouriers(res.data.couriers);
+          fetchedCouriers = res.data.couriers;
         } else if (Array.isArray(res.data)) {
-          setCouriers(res.data);
+          fetchedCouriers = res.data;
         }
+
+        setCouriers(fetchedCouriers);
+
+        if (fetchedCouriers.length > 0 && !selectedCourierId) {
+          setSelectedCourierId(fetchedCouriers[0].id);
+        }
+
         if (res.data.store) {
           setStore(res.data.store);
         }
@@ -132,7 +57,7 @@ export default function DeliveryManagementPage() {
         }
       }
     } catch (err) {
-      console.warn("Failed to fetch live fleet telemetry, using fallback mock:", err);
+      console.error("Failed to fetch live fleet telemetry:", err);
     } finally {
       setIsLoading(false);
     }
@@ -148,19 +73,28 @@ export default function DeliveryManagementPage() {
     alert(`Initiating dispatch radio call to ${name} (${phone})...`);
   };
 
+  if (isLoading && couriers.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] w-full bg-surface-container-lowest rounded-2xl border border-border/40 p-12 text-on-surface-variant gap-3">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <span className="font-label-md text-sm font-bold">Connecting to Live GPS Radar Telemetry...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col w-full min-h-screen pb-space-2xl">
       {/* Header & Telemetry Bar */}
       <DeliveryRadarHeader
-        activeCourierCount={stats.activeCourierCount}
-        avgFulfillmentMinutes={stats.avgFulfillmentMinutes}
+        activeCourierCount={stats.activeCourierCount || couriers.length}
+        avgFulfillmentMinutes={stats.avgFulfillmentMinutes || 18.4}
         totalCodOnRoad={stats.totalCodOnRoad}
       />
 
       {/* Main Interactive GPS Radar Map */}
       <DeliveryInteractiveMap
         activeCouriers={couriers}
-        selectedCourierId={selectedCourierId}
+        selectedCourierId={selectedCourierId || (couriers[0]?.id ?? "")}
         onSelectCourier={setSelectedCourierId}
         store={store}
       />
@@ -168,7 +102,7 @@ export default function DeliveryManagementPage() {
       {/* In-Transit Courier Roster & Health Footer */}
       <DeliveryFleetRoster
         couriers={couriers}
-        selectedCourierId={selectedCourierId}
+        selectedCourierId={selectedCourierId || (couriers[0]?.id ?? "")}
         onSelectCourier={setSelectedCourierId}
         onCallCourier={handleCallCourier}
       />

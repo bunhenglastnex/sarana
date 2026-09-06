@@ -124,17 +124,31 @@ export const ActiveDeliveryCard: React.FC<ActiveDeliveryCardProps> = ({
       </div>
 
       {/* Financial / Collect Badge */}
-      <div className="flex items-center justify-between p-space-xs bg-error-container/30 rounded-lg">
-        <div className="flex items-center gap-1.5">
-          <Banknote className="w-5 h-5 text-error" />
-          <span className="font-label-md text-label-md text-on-error-container font-bold">
-            Cash on Delivery
-          </span>
+      {codAmount && codAmount > 0 ? (
+        <div className="flex items-center justify-between p-space-xs bg-error-container/30 rounded-lg">
+          <div className="flex items-center gap-1.5">
+            <Banknote className="w-5 h-5 text-error" />
+            <span className="font-label-md text-label-md text-on-error-container font-bold">
+              Cash on Delivery
+            </span>
+          </div>
+          <div className="font-headline-sm text-headline-sm text-on-error-container font-black">
+            Collect ${codAmount.toFixed(2)}
+          </div>
         </div>
-        <div className="font-headline-sm text-headline-sm text-on-error-container font-black">
-          Collect ${codAmount.toFixed(2)}
+      ) : (
+        <div className="flex items-center justify-between p-space-xs bg-emerald-100 rounded-lg">
+          <div className="flex items-center gap-1.5">
+            <Banknote className="w-5 h-5 text-emerald-800" />
+            <span className="font-label-md text-label-md text-emerald-800 font-bold">
+              KHQR • Paid in Full
+            </span>
+          </div>
+          <div className="font-headline-sm text-headline-sm text-emerald-800 font-black">
+            Prepaid
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Primary Action CTA */}
       <Link

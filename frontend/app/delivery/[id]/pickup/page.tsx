@@ -6,7 +6,7 @@ import { RestaurantPickupView } from "@/components/delivery/RestaurantPickupView
 
 export default function RestaurantPickupPage() {
   const params = useParams();
-  const orderId = typeof params?.id === "string" ? params.id : "1024";
+  const orderId = typeof params?.id === "string" ? params.id : "1";
 
   return <RestaurantPickupView orderId={orderId} />;
 }

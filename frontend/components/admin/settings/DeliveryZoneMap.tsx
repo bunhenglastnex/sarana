@@ -83,8 +83,8 @@ export const DeliveryZoneMap: React.FC<DeliveryZoneMapProps> = ({
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const validLat = isNaN(latitude) || latitude === 0 ? 11.5564 : latitude;
-  const validLng = isNaN(longitude) || longitude === 0 ? 104.9282 : longitude;
+  const validLat = isNaN(latitude) || latitude === 0 ? 13.35227 : latitude;
+  const validLng = isNaN(longitude) || longitude === 0 ? 103.955116 : longitude;
   const radiusMeters = (radiusKm || 7.5) * 1000;
 
   // ESC key listener to exit fullscreen mode
