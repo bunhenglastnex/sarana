@@ -7,15 +7,20 @@ import { BottomNav, NavTab } from "@/components/customer/BottomNav";
 import { LocationModal } from "@/components/customer/LocationModal";
 import { ProfileModal } from "@/components/customer/ProfileModal";
 
+import { useAuthStore } from "@/lib/store/useAuthStore";
+
 export const CustomerLayout: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const pathname = usePathname();
   const router = useRouter();
+  const { token, userId } = useAuthStore();
+  const isLoggedIn = Boolean(token || userId);
+
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [currentAddress, setCurrentAddress] = useState(
-    "244 Oak Street, Apt 4B",
+    "Phnom Penh, Cambodia",
   );
 
   const currentPath = pathname || "";
@@ -48,11 +53,28 @@ export const CustomerLayout: React.FC<{ children: React.ReactNode }> = ({
   const activeTab = getActiveTab();
 
   const handleTabChange = (tab: NavTab) => {
-    if (tab === "home") router.push("/");
-    else if (tab === "favorites") router.push("/favorites");
-    else if (tab === "cart") router.push("/cart");
-    else if (tab === "orders") router.push("/orders");
-    else if (tab === "profile") router.push("/customer-profile");
+    if (tab === "home") {
+      router.push("/");
+    } else if (tab === "favorites") {
+      if (!isLoggedIn) router.push("/login");
+      else router.push("/favorites");
+    } else if (tab === "cart") {
+      router.push("/cart");
+    } else if (tab === "orders") {
+      if (!isLoggedIn) router.push("/login");
+      else router.push("/orders");
+    } else if (tab === "profile") {
+      if (!isLoggedIn) router.push("/login");
+      else router.push("/customer-profile");
+    }
+  };
+
+  const handleOpenProfile = () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+    } else {
+      setIsProfileOpen(true);
+    }
   };
 
   const showBottomNav = !currentPath.startsWith("/items-detail");
@@ -69,7 +91,7 @@ export const CustomerLayout: React.FC<{ children: React.ReactNode }> = ({
         <CustomerHeader
           currentAddress={currentAddress}
           onOpenLocation={() => setIsLocationOpen(true)}
-          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenProfile={handleOpenProfile}
           onOpenNotifications={() => alert("You have 2 active order updates!")}
         />
       )}

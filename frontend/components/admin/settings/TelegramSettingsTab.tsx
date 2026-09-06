@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Api } from "@/lib/api";
 
 interface TelegramSettingsTabProps {
   formData: any;
@@ -42,7 +43,7 @@ export const TelegramSettingsTab: React.FC<TelegramSettingsTabProps> = ({
     message: string;
   } | null>(null);
 
-  const handleTestConnection = () => {
+  const handleTestConnection = async () => {
     if (!formData.telegramBotToken) {
       setTestResult({
         success: false,
@@ -63,14 +64,38 @@ export const TelegramSettingsTab: React.FC<TelegramSettingsTabProps> = ({
     setIsTesting(true);
     setTestResult(null);
 
-    // Simulate sending real-time Telegram Bot API dispatch
-    setTimeout(() => {
-      setIsTesting(false);
-      setTestResult({
-        success: true,
-        message: `⚡ Test message dispatched successfully to Telegram Group (${formData.telegramGroupId})!`,
+    try {
+      const res = await Api.post<any>("/settings.php?action=test-telegram", {
+        telegramBotToken: formData.telegramBotToken,
+        telegramGroupId: formData.telegramGroupId,
       });
-    }, 1800);
+
+      if (res.success) {
+        const successMsg =
+          typeof res.data === "string"
+            ? res.data
+            : res.data?.message ||
+              `⚡ Test message dispatched successfully to Telegram Group (${formData.telegramGroupId})!`;
+        setTestResult({
+          success: true,
+          message: successMsg,
+        });
+      } else {
+        setTestResult({
+          success: false,
+          message: res.error || "Failed to dispatch test message to Telegram.",
+        });
+      }
+    } catch (err: any) {
+      setTestResult({
+        success: false,
+        message:
+          err?.message ||
+          "An unexpected error occurred while testing Telegram connection.",
+      });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   return (

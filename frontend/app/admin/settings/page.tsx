@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Store,
@@ -17,6 +17,8 @@ import { SecuritySettingsTab } from "@/components/admin/settings/SecuritySetting
 import { TelegramSettingsTab } from "@/components/admin/settings/TelegramSettingsTab";
 import { DeliveryZoneSettingsTab } from "@/components/admin/settings/DeliveryZoneSettingsTab";
 import { Button } from "@/components/ui/button";
+
+import { Api } from "@/lib/api";
 
 type SettingTabKey = "general" | "audio" | "security" | "telegram" | "delivery";
 
@@ -81,14 +83,109 @@ function SettingsPageContent() {
   });
 
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Fetch settings from live backend API on mount
+  useEffect(() => {
+    async function loadSettings() {
+      const res = await Api.get("/settings.php");
+      if (res.success && res.data) {
+        setFormData((prev) => ({
+          ...prev,
+          // General
+          storeName: res.data.store_name ?? prev.storeName,
+          storePhone: res.data.store_phone ?? prev.storePhone,
+          storeAddress: res.data.store_address ?? prev.storeAddress,
+          openingTime: res.data.opening_time ?? prev.openingTime,
+          closingTime: res.data.closing_time ?? prev.closingTime,
+          taxRate: res.data.tax_rate ?? prev.taxRate,
+
+          // Audio
+          enableAudioChimes: res.data.enable_audio_chimes ?? prev.enableAudioChimes,
+          chimeTone: res.data.chime_tone ?? prev.chimeTone,
+          chimeRepeatCount: res.data.chime_repeat_count ?? prev.chimeRepeatCount,
+          volumeLevel: res.data.volume_level ?? prev.volumeLevel,
+          enablePushAlerts: res.data.enable_push_alerts ?? prev.enablePushAlerts,
+          autoRefreshSeconds: res.data.auto_refresh_seconds ?? prev.autoRefreshSeconds,
+
+          // Security
+          sessionTimeout: res.data.session_timeout ?? prev.sessionTimeout,
+          logRetentionDays: res.data.log_retention_days ?? prev.logRetentionDays,
+
+          // Telegram
+          telegramBotToken: res.data.telegram_bot_token ?? prev.telegramBotToken,
+          telegramGroupId: res.data.telegram_group_id ?? prev.telegramGroupId,
+          telegramKitchenGroupId: res.data.telegram_kitchen_group_id ?? prev.telegramKitchenGroupId,
+          telegramDriverGroupId: res.data.telegram_driver_group_id ?? prev.telegramDriverGroupId,
+          telegramNotifyNewOrder: res.data.telegram_notify_new_order ?? prev.telegramNotifyNewOrder,
+          telegramNotifyKitchenReady: res.data.telegram_notify_kitchen_ready ?? prev.telegramNotifyKitchenReady,
+          telegramNotifyDriverAssigned: res.data.telegram_notify_driver_assigned ?? prev.telegramNotifyDriverAssigned,
+          telegramNotifyCancelled: res.data.telegram_notify_cancelled ?? prev.telegramNotifyCancelled,
+
+          // Delivery
+          storeLatitude: res.data.store_latitude ?? prev.storeLatitude,
+          storeLongitude: res.data.store_longitude ?? prev.storeLongitude,
+          maxDeliveryRadiusKm: res.data.max_delivery_radius_km ?? prev.maxDeliveryRadiusKm,
+          enableZoneBlocker: res.data.enable_zone_blocker ?? prev.enableZoneBlocker,
+          outOfZoneMessage: res.data.out_of_zone_message ?? prev.outOfZoneMessage,
+          baseDeliveryFee: res.data.base_delivery_fee ?? prev.baseDeliveryFee,
+          baseIncludedKm: res.data.base_included_km ?? prev.baseIncludedKm,
+          extraFeePerKm: res.data.extra_fee_per_km ?? prev.extraFeePerKm,
+          freeDeliveryMinSubtotal: res.data.free_delivery_min_subtotal ?? prev.freeDeliveryMinSubtotal,
+        }));
+      }
+    }
+    loadSettings();
+  }, []);
 
   const handleFieldChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSaveSettings = () => {
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+  const handleSaveSettings = async () => {
+    setSaving(true);
+    const res = await Api.post("/settings.php", {
+      store_name: formData.storeName,
+      store_phone: formData.storePhone,
+      store_address: formData.storeAddress,
+      opening_time: formData.openingTime,
+      closing_time: formData.closingTime,
+      tax_rate: formData.taxRate,
+
+      enable_audio_chimes: formData.enableAudioChimes,
+      chime_tone: formData.chimeTone,
+      chime_repeat_count: formData.chimeRepeatCount,
+      volume_level: formData.volumeLevel,
+      enable_push_alerts: formData.enablePushAlerts,
+      auto_refresh_seconds: formData.autoRefreshSeconds,
+
+      session_timeout: formData.sessionTimeout,
+      log_retention_days: formData.logRetentionDays,
+
+      telegram_bot_token: formData.telegramBotToken,
+      telegram_group_id: formData.telegramGroupId,
+      telegram_kitchen_group_id: formData.telegramKitchenGroupId,
+      telegram_driver_group_id: formData.telegramDriverGroupId,
+      telegram_notify_new_order: formData.telegramNotifyNewOrder,
+      telegram_notify_kitchen_ready: formData.telegramNotifyKitchenReady,
+      telegram_notify_driver_assigned: formData.telegramNotifyDriverAssigned,
+      telegram_notify_cancelled: formData.telegramNotifyCancelled,
+
+      store_latitude: formData.storeLatitude,
+      store_longitude: formData.storeLongitude,
+      max_delivery_radius_km: formData.maxDeliveryRadiusKm,
+      enable_zone_blocker: formData.enableZoneBlocker,
+      out_of_zone_message: formData.outOfZoneMessage,
+      base_delivery_fee: formData.baseDeliveryFee,
+      base_included_km: formData.baseIncludedKm,
+      extra_fee_per_km: formData.extraFeePerKm,
+      free_delivery_min_subtotal: formData.freeDeliveryMinSubtotal,
+    });
+    setSaving(false);
+    if (res.success) {
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    }
   };
 
   return (

@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
-import { MapPin, ChevronDown, Bell, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { MapPin, ChevronDown, Bell, User, LogIn } from 'lucide-react';
+import { useAuthStore } from '@/lib/store/useAuthStore';
 
 interface CustomerHeaderProps {
   currentAddress?: string;
@@ -13,13 +15,26 @@ interface CustomerHeaderProps {
 }
 
 export const CustomerHeader: React.FC<CustomerHeaderProps> = ({
-  currentAddress = '244 Oak Street, Apt 4B',
+  currentAddress = 'Phnom Penh, Cambodia',
   onOpenLocation,
   onOpenNotifications,
   onOpenProfile,
-  unreadNotifications = true,
-  avatarUrl = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAiE9xKCdnv_bglgxg_2LERQbUBlAt1FErmCjJlM_VLK5dW_V-8xiETqMbrDniEM2ZCbQDo_2QKUNG1OinMh1B4XXpwt9n7cccMS_56WCxtMvDwQxsI8pYloDdLducI9tPkTmY9k1J9DgWvY0tNX2DVDPQwP05xPeK0_ZTRvRRrm17jeMPPglgidJwtV3vvobKKha1REpz9pb_kGucgUkNYqPL8qWHCW-ebONnap7f-tdnyxqvtE7Q9',
+  unreadNotifications = false,
+  avatarUrl,
 }) => {
+  const router = useRouter();
+  const { token, userId, avatarUrl: storeAvatarUrl } = useAuthStore();
+  const isLoggedIn = Boolean(token || userId);
+  const userAvatar = storeAvatarUrl || avatarUrl;
+
+  const handleProfileClick = () => {
+    if (!isLoggedIn) {
+      router.push('/login');
+    } else if (onOpenProfile) {
+      onOpenProfile();
+    }
+  };
+
   return (
     <header className="sticky top-0 w-full max-w-md mx-auto z-40 pt-safe bg-surface/90 backdrop-blur-xl border-b border-surface-container/40 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
       <div className="h-16 px-space-lg flex items-center justify-between gap-space-xs">
@@ -48,40 +63,54 @@ export const CustomerHeader: React.FC<CustomerHeaderProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons: Notifications & Profile Avatar */}
+        {/* Action Buttons: Notifications & Profile Avatar / Login */}
         <div className="flex items-center gap-space-xs flex-shrink-0">
-          <button
-            aria-label="Notifications"
-            onClick={onOpenNotifications}
-            className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors relative active:scale-95"
-            type="button"
-          >
-            <Bell className="w-5 h-5 text-on-surface" />
-            {unreadNotifications && (
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary ring-2 ring-surface animate-pulse" />
-            )}
-          </button>
+          {isLoggedIn && (
+            <button
+              aria-label="Notifications"
+              onClick={onOpenNotifications}
+              className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors relative active:scale-95"
+              type="button"
+            >
+              <Bell className="w-5 h-5 text-on-surface" />
+              {unreadNotifications && (
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary ring-2 ring-surface animate-pulse" />
+              )}
+            </button>
+          )}
 
-          <button
-            aria-label="User Profile"
-            onClick={onOpenProfile}
-            className="w-10 h-10 flex items-center justify-center rounded-full p-0.5 hover:ring-2 hover:ring-primary/40 transition-all active:scale-95 overflow-hidden border border-outline-variant/50 shadow-sm"
-            type="button"
-          >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Profile"
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-primary-container text-on-primary-container flex items-center justify-center rounded-full">
-                <User className="w-5 h-5" />
-              </div>
-            )}
-          </button>
+          {isLoggedIn ? (
+            <button
+              aria-label="User Profile"
+              onClick={handleProfileClick}
+              className="w-10 h-10 flex items-center justify-center rounded-full p-0.5 hover:ring-2 hover:ring-primary/40 transition-all active:scale-95 overflow-hidden border border-outline-variant/50 shadow-sm"
+              type="button"
+            >
+              {userAvatar ? (
+                <img
+                  src={userAvatar}
+                  alt="Profile"
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-primary-container text-on-primary-container flex items-center justify-center rounded-full">
+                  <User className="w-5 h-5" />
+                </div>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/login')}
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-on-primary font-bold text-xs shadow-sm hover:opacity-95 active:scale-95 transition-all"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Log In</span>
+            </button>
+          )}
         </div>
       </div>
     </header>
   );
 };
+

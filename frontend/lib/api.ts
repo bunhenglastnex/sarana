@@ -19,6 +19,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Cookies from "js-cookie";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 // ==========================================
 // 1. Types & Interfaces
@@ -208,9 +210,15 @@ export function clearApiCache(endpointPattern?: string | RegExp): void {
 function buildFullUrl(endpoint: string, params?: Record<string, any>): string {
   let url = endpoint;
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    const base = DEFAULT_BASE_URL.replace(/\/+$/, "");
-    const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-    url = `${base}${path}`;
+    let base = DEFAULT_BASE_URL.replace(/\/+$/, "");
+    if (base.toLowerCase().endsWith("/api")) {
+      base = base.substring(0, base.length - 4);
+    }
+    let cleanPath = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    if (!cleanPath.startsWith("/api/")) {
+      cleanPath = `/api${cleanPath}`;
+    }
+    url = `${base}${cleanPath}`;
   }
 
   if (params && Object.keys(params).length > 0) {
@@ -240,7 +248,7 @@ async function executeRequest<T = any>(
   const {
     params,
     body,
-    cache = method === "GET", // Default cache true for GET, false for others
+    cache = method === "GET",
     ttl = DEFAULT_CACHE_TTL,
     forceRefresh = false,
     headers = {},
@@ -276,6 +284,38 @@ async function executeRequest<T = any>(
         Accept: "application/json",
         ...headers,
       };
+
+      // Auto-attach Authorization Bearer token from Zustand Store, Cookie, or localStorage
+      if (typeof window !== "undefined" && !requestHeaders["Authorization"]) {
+        try {
+          // 1. Check active Zustand store memory first
+          let token = useAuthStore.getState().token;
+
+          // 2. Check Cookie storage
+          if (!token) {
+            const cookieVal = Cookies.get("auth-storage");
+            if (cookieVal) {
+              const parsed = JSON.parse(cookieVal);
+              token = parsed?.state?.token;
+            }
+          }
+
+          // 3. Check localStorage fallback
+          if (!token) {
+            const localVal = window.localStorage.getItem("auth-storage");
+            if (localVal) {
+              const parsed = JSON.parse(localVal);
+              token = parsed?.state?.token;
+            }
+          }
+
+          if (token) {
+            requestHeaders["Authorization"] = `Bearer ${token}`;
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
 
       let serializedBody: BodyInit | undefined = undefined;
       if (body !== undefined && body !== null) {

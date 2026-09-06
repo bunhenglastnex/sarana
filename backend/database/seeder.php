@@ -47,5 +47,25 @@ function seedDatabase(PDO $pdo): void {
         (1, 1, 1, 'Classic Double Cheeseburger', 4.50, 2, 9.00),
         (2, 2, 1, 'Classic Double Cheeseburger', 4.50, 1, 4.50)");
 
+    // Seed Settings (General, Audio, Security, Telegram, Delivery)
+    $pdo->exec("INSERT IGNORE INTO settings (setting_key, setting_value, setting_group) VALUES
+        ('store_name', 'Amber & Ember Bistro', 'general'),
+        ('store_phone', '+855 23 888 999', 'general'),
+        ('store_address', '520 N Michigan Ave, Suite 14F, Phnom Penh', 'general'),
+        ('opening_time', '10:00', 'general'),
+        ('closing_time', '22:00', 'general'),
+        ('tax_rate', '9.25', 'general'),
+        ('enable_audio_chimes', 'true', 'audio'),
+        ('chime_tone', 'Classic Bistro Bell', 'audio'),
+        ('chime_repeat_count', '5', 'audio'),
+        ('volume_level', '100%', 'audio'),
+        ('telegram_bot_username', 'bunheng1dev_bot', 'telegram'),
+        ('telegram_notify_new_order', 'true', 'telegram'),
+        ('max_delivery_radius_km', '7.5', 'delivery'),
+        ('base_delivery_fee', '1.5', 'delivery'),
+        ('base_included_km', '3.0', 'delivery'),
+        ('extra_fee_per_km', '0.5', 'delivery'),
+        ('free_delivery_min_subtotal', '25.0', 'delivery')");
+
     echo "  ✅ Sample data seeded successfully!\n";
 }

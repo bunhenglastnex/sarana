@@ -11,8 +11,8 @@ require_once __DIR__ . '/../config/env.php';
  * @param string $parseMode ('HTML' or 'MarkdownV2')
  * @return array
  */
-function sendTelegramMessage($chatId, string $text, string $parseMode = 'HTML'): array {
-    $botToken = env('TELEGRAM_BOT_TOKEN');
+function sendTelegramMessage($chatId, string $text, string $parseMode = 'HTML', ?string $overrideBotToken = null): array {
+    $botToken = !empty($overrideBotToken) ? $overrideBotToken : env('TELEGRAM_BOT_TOKEN');
 
     if (empty($botToken) || empty($chatId)) {
         return [

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,17 +13,25 @@ import {
   CreditCard,
   Gift,
   BellRing,
-  Headphones,
-  Utensils,
+  ShieldCheck,
   ChevronRight,
   LogOut,
+  Sparkles,
+  ArrowRight,
+  UtensilsCrossed,
+  Utensils,
+  X,
+  ExternalLink,
+  User,
   Globe,
   Send,
   CheckCircle2,
+  Headphones,
 } from "lucide-react";
+import { TelegramBotModal } from "@/components/customer/TelegramBotModal";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LocationModal } from "./LocationModal";
-import { useAuthStore } from "@/lib/store/useAuthStore";
 
 interface CustomerProfileViewProps {
   name?: string;
@@ -42,7 +50,7 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
   avatarUrl: propAvatarUrl,
   points = 340,
   maxPoints = 500,
-  tierName = "Firebrand Patron",
+  tierName = "Amber Patron",
 }) => {
   const router = useRouter();
   const {
@@ -56,13 +64,16 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
     setTelegramLink,
   } = useAuthStore();
 
-  const name = authName || propName || "Customer";
+  useEffect(() => {
+    if (!authUserId && !authPhone && !authName) {
+      router.push("/login");
+    }
+  }, [authUserId, authPhone, authName, router]);
+
+  const name = authName || propName || "Valued Customer";
   const phone = authPhone || propPhone || "No phone linked";
-  const email = authEmail || propEmail || "customer@example.com";
-  const avatarUrl =
-    authAvatarUrl ||
-    propAvatarUrl ||
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80";
+  const email = authEmail || propEmail || "No email linked";
+  const avatarUrl = authAvatarUrl || propAvatarUrl;
 
   const [smsAlerts, setSmsAlerts] = useState(true);
   const [currentAddress, setCurrentAddress] = useState(

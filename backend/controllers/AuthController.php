@@ -6,6 +6,7 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
 require_once __DIR__ . '/../services/AuthService.php';
 require_once __DIR__ . '/../middleware/AuthMiddleware.php';
+require_once __DIR__ . '/../middleware/RateLimitMiddleware.php';
 
 class AuthController {
     private AuthService $authService;
@@ -26,7 +27,13 @@ class AuthController {
                 if ($method !== 'POST') {
                     jsonResponse(0, 'Method Not Allowed', null, 405);
                 }
+                // Security Rate Limit: Max 5 registration attempts per IP per 5 minutes (Lock out for 15 minutes if exceeded)
+                RateLimitMiddleware::check($this->pdo, 'register', 5, 300, 900);
+
                 $data = $this->authService->registerCustomer($input);
+
+                // Clear rate limit on successful registration
+                RateLimitMiddleware::clear($this->pdo, 'register');
                 jsonResponse(1, 'Registration successful', $data, 201);
                 break;
 
@@ -34,7 +41,13 @@ class AuthController {
                 if ($method !== 'POST') {
                     jsonResponse(0, 'Method Not Allowed', null, 405);
                 }
+                // Security Rate Limit: Max 10 login attempts per IP per 5 minutes (Lock out for 10 minutes if exceeded)
+                RateLimitMiddleware::check($this->pdo, 'login', 10, 300, 600);
+
                 $data = $this->authService->loginUser($input);
+
+                // Clear rate limit on successful login
+                RateLimitMiddleware::clear($this->pdo, 'login');
                 jsonResponse(1, 'Login successful', $data, 200);
                 break;
 

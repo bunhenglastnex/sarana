@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   UtensilsCrossed,
@@ -19,12 +17,34 @@ import {
   ShieldCheck,
   Receipt,
   X,
+  Loader2,
 } from "lucide-react";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useApi } from "@/lib/api";
 
 export const OrdersView: React.FC = () => {
   const router = useRouter();
+  const { token, userId, phone } = useAuthStore();
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [showCustomerRefundProof, setShowCustomerRefundProof] = useState(false);
+
+  useEffect(() => {
+    if (!token && !userId) {
+      router.push("/login");
+    }
+  }, [token, userId, router]);
+
+  const { data: fetchedOrders, loading, error, refetch } = useApi<any[]>(
+    token || userId ? "/api/orders.php" : null
+  );
+
+  const orders = Array.isArray(fetchedOrders) ? fetchedOrders : [];
+  const activeOrders = orders.filter(
+    (o) => o.status !== "delivered" && o.status !== "cancelled" && o.status !== "refunded"
+  );
+  const historyOrders = orders.filter(
+    (o) => o.status === "delivered" || o.status === "cancelled" || o.status === "refunded"
+  );
 
   return (
     <main className="flex flex-col relative w-full max-w-md px-screen-edge-padding pt-4 pb-28 bg-surface min-h-screen">
@@ -41,7 +61,7 @@ export const OrdersView: React.FC = () => {
         <div className="flex items-center gap-1.5 bg-surface-container-high px-space-xs py-1 rounded-full text-on-surface-variant border border-surface-container-highest/60">
           <UtensilsCrossed className="w-3.5 h-3.5 text-primary" />
           <span className="font-label-sm text-label-sm font-semibold">
-            5 Total
+            {orders.length} Total
           </span>
         </div>
       </div>
@@ -65,7 +85,7 @@ export const OrdersView: React.FC = () => {
                 : "bg-surface-variant text-on-surface-variant"
             }`}
           >
-            1
+            {activeOrders.length}
           </span>
         </button>
 
@@ -86,7 +106,7 @@ export const OrdersView: React.FC = () => {
                 : "bg-surface-variant text-on-surface-variant"
             }`}
           >
-            4
+            {historyOrders.length}
           </span>
         </button>
       </div>

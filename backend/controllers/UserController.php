@@ -20,6 +20,8 @@ class UserController {
         $method = $_SERVER['REQUEST_METHOD'];
 
         if ($method === 'GET') {
+            // Require Admin role for listing users
+            $adminUser = AuthMiddleware::authenticate($this->pdo, ['admin']);
             $role   = $_GET['role'] ?? null;
             $status = $_GET['status'] ?? null;
             $users  = $this->userService->getUsers($role, $status);

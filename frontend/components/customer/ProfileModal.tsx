@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import {
   X,
   MapPin,
@@ -14,6 +15,7 @@ import {
   Globe,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -26,34 +28,58 @@ interface ProfileModalProps {
 export const ProfileModal: React.FC<ProfileModalProps> = ({
   isOpen,
   onClose,
-  userName = "Sarah Jenkins",
-  userEmail = "sarah.j@example.com",
-  avatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuAiE9xKCdnv_bglgxg_2LERQbUBlAt1FErmCjJlM_VLK5dW_V-8xiETqMbrDniEM2ZCbQDo_2QKUNG1OinMh1B4XXpwt9n7cccMS_56WCxtMvDwQxsI8pYloDdLducI9tPkTmY9k1J9DgWvY0tNX2DVDPQwP05xPeK0_ZTRvRRrm17jeMPPglgidJwtV3vvobKKha1REpz9pb_kGucgUkNYqPL8qWHCW-ebONnap7f-tdnyxqvtE7Q9",
+  userName,
+  userEmail,
+  avatarUrl,
 }) => {
+  const router = useRouter();
+  const {
+    token,
+    userId,
+    name: authName,
+    email: authEmail,
+    phone: authPhone,
+    avatarUrl: authAvatarUrl,
+    clearSession,
+  } = useAuthStore();
+
   if (!isOpen) return null;
+
+  const isLoggedIn = Boolean(token || userId);
+
+  if (!isLoggedIn) {
+    onClose();
+    router.push("/login");
+    return null;
+  }
+
+  const displayName = userName || authName || "Valued Customer";
+  const displayEmail = userEmail || authEmail || authPhone || "Customer Account";
+  const displayAvatar = authAvatarUrl || avatarUrl;
+
+  const handleLogout = () => {
+    clearSession();
+    onClose();
+    router.push("/login");
+  };
+
+  const handleNavigate = (path: string) => {
+    onClose();
+    router.push(path);
+  };
 
   const menuSections = [
     {
       title: "Orders & Saved",
       items: [
-        { icon: Receipt, label: "Order History & Tracking", badge: "2 Active" },
-        { icon: Heart, label: "Favorite Dishes & Restaurants" },
-        {
-          icon: MapPin,
-          label: "Delivery Addresses",
-          detail: "244 Oak Street...",
-        },
+        { icon: Receipt, label: "Order History & Tracking", path: "/orders" },
+        { icon: Heart, label: "Favorite Dishes", path: "/favorites" },
       ],
     },
     {
-      title: "Payment & Account",
+      title: "Settings & Account",
       items: [
-        {
-          icon: CreditCard,
-          label: "Payment Methods",
-          detail: "Visa ending in 4242",
-        },
-        { icon: Settings, label: "App Settings & Notifications" },
+        { icon: Settings, label: "Account Profile & Telegram", path: "/customer-profile" },
       ],
     },
   ];
@@ -85,10 +111,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         {/* User Info Card */}
         <div className="p-space-lg flex items-center gap-3 border-b border-surface-container bg-surface-container-lowest">
           <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-primary shadow-sm flex-shrink-0">
-            {avatarUrl ? (
+            {displayAvatar ? (
               <img
-                src={avatarUrl}
-                alt={userName}
+                src={displayAvatar}
+                alt={displayName}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -99,18 +125,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
           <div className="flex flex-col min-w-0">
             <span className="font-extrabold text-base text-on-surface truncate">
-              {userName}
+              {displayName}
             </span>
             <span className="text-xs text-on-surface-variant truncate">
-              {userEmail}
+              {displayEmail}
             </span>
             <span className="mt-1 inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant w-fit">
-              VIP Member
+              Active Account
             </span>
           </div>
         </div>
 
-        {/* Language Selection Card in Settings */}
+        {/* Language Selection Card */}
         <div className="px-space-md pt-space-md">
           <div className="bg-primary/5 rounded-xl p-3 border border-primary/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -134,7 +160,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <button
                       key={item.label}
                       type="button"
-                      onClick={onClose}
+                      onClick={() => handleNavigate(item.path)}
                       className="w-full p-3 flex items-center justify-between hover:bg-surface-container-low transition-colors text-left group"
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -145,20 +171,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           <span className="text-xs font-bold text-on-surface truncate">
                             {item.label}
                           </span>
-                          {item.detail && (
-                            <span className="text-[11px] text-on-surface-variant truncate">
-                              {item.detail}
-                            </span>
-                          )}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1.5 flex-shrink-0">
-                        {item.badge && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary text-on-primary">
-                            {item.badge}
-                          </span>
-                        )}
                         <ChevronRight className="w-4 h-4 text-outline group-hover:text-on-surface transition-colors" />
                       </div>
                     </button>
@@ -173,7 +189,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         <div className="p-space-lg border-t border-surface-container bg-surface-container-low">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleLogout}
             className="w-full py-2.5 px-4 rounded-xl border border-destructive/30 text-destructive font-bold text-xs flex items-center justify-center gap-2 hover:bg-destructive/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
