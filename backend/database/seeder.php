@@ -8,15 +8,22 @@
 function seedDatabase(PDO $pdo): void {
     echo "🌱 Seeding sample data...\n";
 
-    // Seed Users: Admin, Staff, Delivery Rider
+    // Seed Users: Admin, Staff, Delivery Riders
     $adminPassword = password_hash('admin123', PASSWORD_BCRYPT);
     $driverPassword = password_hash('driver123', PASSWORD_BCRYPT);
 
-    $stmt = $pdo->prepare("INSERT IGNORE INTO users (id, name, phone, email, role, password) VALUES
-        (1, 'Restaurant Admin', '012111222', 'admin@restaurant.com', 'admin', ?),
-        (2, 'Vanna Delivery', '098333444', 'delivery1@restaurant.com', 'delivery', ?),
-        (3, 'Sokha Delivery', '099555666', 'delivery2@restaurant.com', 'delivery', ?)");
-    $stmt->execute([$adminPassword, $driverPassword, $driverPassword]);
+    $stmt = $pdo->prepare("INSERT IGNORE INTO users (id, name, phone, email, role, password, avatar_url) VALUES
+        (1, 'Restaurant Admin', '012111222', 'admin@restaurant.com', 'admin', ?, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'),
+        (2, 'Liem Vance', '098333444', 'delivery1@restaurant.com', 'delivery', ?, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'),
+        (3, 'David Chen', '099555666', 'delivery2@restaurant.com', 'delivery', ?, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'),
+        (4, 'Sokha Seng', '099777888', 'delivery3@restaurant.com', 'delivery', ?, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150')");
+    $stmt->execute([$adminPassword, $driverPassword, $driverPassword, $driverPassword]);
+
+    // Seed Courier Telemetry (GPS positions & vehicle labels)
+    $pdo->exec("INSERT IGNORE INTO courier_telemetry (id, user_id, vehicle_type, vehicle_label, lat, lng, speed_kmh, temp_celsius, status) VALUES
+        (1, 2, 'motorbike', 'Motorbike #2 (CB150)', 11.55980000, 104.93150000, 28, 65, 'on_delivery'),
+        (2, 3, 'motorbike', 'Motorbike #1', 11.54850000, 104.92100000, 24, 68, 'on_delivery'),
+        (3, 4, 'e_scooter', 'E-Scooter #4', 11.56100000, 104.92500000, 22, 62, 'on_delivery')");
 
     // Seed Categories
     $pdo->exec("INSERT IGNORE INTO categories (id, name, icon) VALUES
@@ -49,15 +56,16 @@ function seedDatabase(PDO $pdo): void {
 
     // Seed Orders
     $pdo->exec("INSERT IGNORE INTO orders 
-        (id, order_number, user_id, customer_name, customer_phone, fulfillment_type, delivery_address, delivery_fee, food_amount, total_amount, amount_khr, payment_method, payment_status, payment_proof_url, payment_txn_ref, status, delivery_staff_id, notes, created_at) 
+        (id, order_number, user_id, customer_name, customer_phone, fulfillment_type, delivery_address, delivery_lat, delivery_lng, delivery_fee, food_amount, total_amount, amount_khr, payment_method, payment_status, payment_proof_url, payment_txn_ref, status, delivery_staff_id, notes, created_at) 
         VALUES
-        (1026, '#1026', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F, Chicago, IL 60611', 0.00, 29.50, 29.50, 118000, 'khqr', 'verified', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10', 'KHQR-889102', 'pending', NULL, 'Ring buzzer 14F on arrival', NOW()),
-        (1025, '#1025', 102, 'Clara Oswald', '+1 (555) 604-3382', 'pickup', NULL, 0.00, 15.00, 15.00, 60000, 'counter_cash', 'pending', NULL, NULL, 'pending', NULL, 'Dressing on Side', NOW()),
-        (1024, '#1024', 103, 'John Smith', '+1 (555) 382-9012', 'delivery', '742 Evergreen Terr, Apt 3B, River North, Chicago, IL 60654', 0.00, 34.50, 34.50, 138000, 'cod', 'pending', NULL, 'COD-PENDING-1', 'preparing', 2, 'Leave at front door, ring bell twice.', DATE_SUB(NOW(), INTERVAL 12 MINUTE)),
-        (1023, '#1023', 104, 'Sophia Lin', '+1 (555) 492-1084', 'pickup', NULL, 0.00, 28.00, 28.00, 112000, 'khqr', 'verified', 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop', 'APPLE-PAY-4401', 'ready_for_pickup', NULL, 'House BBQ Sauce', DATE_SUB(NOW(), INTERVAL 19 MINUTE)),
-        (1022, '#1022', 105, 'Marcus Vance', '+1 (555) 891-2240', 'delivery', '128 W Huron St, Suite 500, Chicago, IL 60654', 3.00, 38.20, 41.20, 164800, 'khqr', 'verified', 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop', 'CARD-889105', 'on_the_way', 2, 'Leave at front desk', DATE_SUB(NOW(), INTERVAL 32 MINUTE)),
-        (1021, '#1021', 106, 'Amina Patel', '+1 (555) 773-4019', 'delivery', '401 N Wabash Ave, Apt 18A, Chicago, IL 60611', 0.00, 24.00, 24.00, 96000, 'khqr', 'verified', NULL, 'CARD-889106', 'delivered', 2, 'Delivered to front desk', DATE_SUB(NOW(), INTERVAL 45 MINUTE)),
-        (1019, '#1019', 107, 'Elena Vance', '+1 (555) 301-4490', 'delivery', '333 N Dearborn St, Chicago, IL 60654', 0.00, 38.50, 38.50, 154000, 'khqr', 'refunded', NULL, 'KHQR-REFUND-19', 'cancelled', NULL, 'Customer requested cancellation due to address change & item sold out.', DATE_SUB(NOW(), INTERVAL 72 MINUTE))");
+        (1026, '#1026', 101, 'David Chen', '+1 (555) 234-9912', 'delivery', '520 N Michigan Ave, Apt 14F', 11.55900000, 104.93000000, 0.00, 29.50, 29.50, 118000, 'khqr', 'verified', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10', 'KHQR-889102', 'pending', NULL, 'Ring buzzer 14F on arrival', NOW()),
+        (1025, '#1025', 102, 'Clara Oswald', '+1 (555) 604-3382', 'pickup', NULL, NULL, NULL, 0.00, 15.00, 15.00, 60000, 'counter_cash', 'pending', NULL, NULL, 'pending', NULL, 'Dressing on Side', NOW()),
+        (1024, '#1024', 103, 'John Smith', '+1 (555) 382-9012', 'delivery', '742 Evergreen Terr, Apt 3B', 11.56450000, 104.93720000, 0.00, 34.50, 34.50, 138000, 'cod', 'pending', NULL, 'COD-PENDING-1', 'on_the_way', 2, 'Leave at front door, ring bell twice.', DATE_SUB(NOW(), INTERVAL 12 MINUTE)),
+        (1027, '#1027', 107, 'Elena Vance', '+1 (555) 301-4490', 'delivery', '12 Riverside Promenade', 11.54120000, 104.91450000, 0.00, 62.00, 62.00, 248000, 'khqr', 'verified', NULL, 'KHQR-889127', 'on_the_way', 3, 'Crossing South Bridge', DATE_SUB(NOW(), INTERVAL 18 MINUTE)),
+        (1023, '#1023', 104, 'Sophia Lin', '+1 (555) 492-1084', 'pickup', NULL, NULL, NULL, 0.00, 28.00, 28.00, 112000, 'khqr', 'verified', 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop', 'APPLE-PAY-4401', 'ready_for_pickup', NULL, 'House BBQ Sauce', DATE_SUB(NOW(), INTERVAL 19 MINUTE)),
+        (1022, '#1022', 105, 'Marcus Vance', '+1 (555) 891-2240', 'delivery', '128 W Huron St, Suite 500', 11.55800000, 104.92000000, 3.00, 38.20, 41.20, 164800, 'khqr', 'verified', 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop', 'CARD-889105', 'on_the_way', 2, 'Leave at front desk', DATE_SUB(NOW(), INTERVAL 32 MINUTE)),
+        (1021, '#1021', 106, 'Sophia Meng', '+1 (555) 773-4019', 'delivery', '88 Belmont St, Suite 12', 11.56320000, 104.92420000, 0.00, 69.00, 69.00, 276000, 'cod', 'pending', NULL, 'COD-889106', 'on_the_way', 4, 'At building entrance', DATE_SUB(NOW(), INTERVAL 8 MINUTE)),
+        (1019, '#1019', 107, 'Elena Vance', '+1 (555) 301-4490', 'delivery', '333 N Dearborn St', 11.55000000, 104.92000000, 0.00, 38.50, 38.50, 154000, 'khqr', 'refunded', NULL, 'KHQR-REFUND-19', 'cancelled', NULL, 'Customer requested cancellation', DATE_SUB(NOW(), INTERVAL 72 MINUTE))");
 
     // Seed Order Items
     $pdo->exec("INSERT IGNORE INTO order_items (id, order_id, food_id, food_name, price, quantity, subtotal) VALUES
@@ -76,9 +84,14 @@ function seedDatabase(PDO $pdo): void {
 
     // Seed Settings (General, Audio, Security, Telegram, Delivery)
     $pdo->exec("INSERT IGNORE INTO settings (setting_key, setting_value, setting_group) VALUES
-        ('store_name', 'Amber & Ember Bistro', 'general'),
+        ('store_name', 'Bistro Kitchen HQ', 'general'),
+        ('store_subtitle', 'Central Dispatch Hub · Phnom Penh', 'general'),
         ('store_phone', '+855 23 888 999', 'general'),
         ('store_address', '520 N Michigan Ave, Suite 14F, Phnom Penh', 'general'),
+        ('store_lat', '11.556400', 'general'),
+        ('store_lng', '104.928200', 'general'),
+        ('store_latitude', '11.556400', 'delivery'),
+        ('store_longitude', '104.928200', 'delivery'),
         ('opening_time', '10:00', 'general'),
         ('closing_time', '22:00', 'general'),
         ('tax_rate', '9.25', 'general'),

@@ -31,6 +31,14 @@ export default function OrdersPage() {
     },
   });
 
+  // Real-Time 5-second Auto-Polling for Master Orders Directory
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      refresh();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [refresh]);
+
   const metrics = extraData?.metrics || {
     activeCount: counts?.all || orders.length,
     prepCount: counts?.preparing || 0,

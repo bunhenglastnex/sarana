@@ -3,12 +3,16 @@
 import React from "react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { GlobalAdminOrderListener } from "@/components/admin/GlobalAdminOrderListener";
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   return (
     <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col selection:bg-primary/20 selection:text-primary w-full antialiased">
+      {/* Background Realtime Order & Sound Alert Listener */}
+      <GlobalAdminOrderListener />
+
       {/* Fixed Left Desktop Sidebar */}
       <AdminSidebar />
 

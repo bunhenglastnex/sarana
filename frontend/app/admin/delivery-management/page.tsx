@@ -1,10 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
-import { CourierRecord } from "@/types/deliveryFleet";
+import React, { useState, useEffect } from "react";
+import { CourierRecord, StoreConfig } from "@/types/deliveryFleet";
 import { DeliveryRadarHeader } from "@/components/admin/delivery/DeliveryRadarHeader";
 import { DeliveryInteractiveMap } from "@/components/admin/delivery/DeliveryInteractiveMap";
 import { DeliveryFleetRoster } from "@/components/admin/delivery/DeliveryFleetRoster";
+import { Api } from "@/lib/api";
+
+const defaultStore: StoreConfig = {
+  name: "Bistro Kitchen HQ",
+  subtitle: "Central Dispatch Hub · Phnom Penh",
+  address: "520 N Michigan Ave, Suite 14F, Phnom Penh",
+  lat: 11.5564,
+  lng: 104.9282,
+};
 
 const mockCouriers: CourierRecord[] = [
   {
@@ -29,6 +38,11 @@ const mockCouriers: CourierRecord[] = [
     amount: 34.5,
     isFocused: true,
     coordinates: { x: 520, y: 210 },
+    lat: 11.5598,
+    lng: 104.9315,
+    destLat: 11.5645,
+    destLng: 104.9372,
+    destName: "John Smith (Apt 3B)",
   },
   {
     id: "AE-DRV-4798",
@@ -51,6 +65,11 @@ const mockCouriers: CourierRecord[] = [
     paymentBadgeLabel: "KHQR PAID",
     amount: 62.0,
     coordinates: { x: 580, y: 410 },
+    lat: 11.5485,
+    lng: 104.921,
+    destLat: 11.5412,
+    destLng: 104.9145,
+    destName: "Elena Vance (Riverside)",
   },
   {
     id: "AE-DRV-4802",
@@ -73,17 +92,57 @@ const mockCouriers: CourierRecord[] = [
     paymentBadgeLabel: "COD CASH",
     amount: 69.0,
     coordinates: { x: 740, y: 180 },
+    lat: 11.561,
+    lng: 104.925,
+    destLat: 11.5632,
+    destLng: 104.9242,
+    destName: "Sophia Meng (Belmont St)",
   },
 ];
 
 export default function DeliveryManagementPage() {
-  const [couriers] = useState<CourierRecord[]>(mockCouriers);
+  const [couriers, setCouriers] = useState<CourierRecord[]>(mockCouriers);
+  const [store, setStore] = useState<StoreConfig>(defaultStore);
+  const [stats, setStats] = useState({
+    activeCourierCount: 3,
+    avgFulfillmentMinutes: 18.4,
+    totalCodOnRoad: 103.50,
+  });
   const [selectedCourierId, setSelectedCourierId] =
     useState<string>("AE-DRV-4791");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const totalCodOnRoad = couriers
-    .filter((c) => c.paymentMethod === "cod")
-    .reduce((sum, c) => sum + c.amount, 0);
+  const fetchLiveTelemetry = async () => {
+    try {
+      const res = await Api.get<any>("/api/delivery.php", {
+        action: "fleet_radar",
+      }, { forceRefresh: true });
+
+      if (res.success && res.data) {
+        if (res.data.couriers && Array.isArray(res.data.couriers)) {
+          setCouriers(res.data.couriers);
+        } else if (Array.isArray(res.data)) {
+          setCouriers(res.data);
+        }
+        if (res.data.store) {
+          setStore(res.data.store);
+        }
+        if (res.data.stats) {
+          setStats(res.data.stats);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch live fleet telemetry, using fallback mock:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveTelemetry();
+    const interval = setInterval(fetchLiveTelemetry, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCallCourier = (name: string, phone: string) => {
     alert(`Initiating dispatch radio call to ${name} (${phone})...`);
@@ -93,9 +152,9 @@ export default function DeliveryManagementPage() {
     <div className="flex flex-col w-full min-h-screen pb-space-2xl">
       {/* Header & Telemetry Bar */}
       <DeliveryRadarHeader
-        activeCourierCount={couriers.length}
-        avgFulfillmentMinutes={18.4}
-        totalCodOnRoad={totalCodOnRoad}
+        activeCourierCount={stats.activeCourierCount}
+        avgFulfillmentMinutes={stats.avgFulfillmentMinutes}
+        totalCodOnRoad={stats.totalCodOnRoad}
       />
 
       {/* Main Interactive GPS Radar Map */}
@@ -103,6 +162,7 @@ export default function DeliveryManagementPage() {
         activeCouriers={couriers}
         selectedCourierId={selectedCourierId}
         onSelectCourier={setSelectedCourierId}
+        store={store}
       />
 
       {/* In-Transit Courier Roster & Health Footer */}

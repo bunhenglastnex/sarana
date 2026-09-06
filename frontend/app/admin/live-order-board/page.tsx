@@ -14,7 +14,38 @@ export default function LiveOrderBoardPage() {
     limit: 50,
   });
 
+  // Fetch Settings Config for Refresh Rate and Audio Chime
+  const { data: settingsRes } = useApi<any>("/settings.php");
+  const settings = settingsRes?.data || settingsRes || {};
+
+  // Parse dynamic refresh interval from Settings (default: 5s = 5000ms)
+  const refreshRateStr = settings.auto_refresh_seconds || settings.autoRefreshSeconds || "5s";
+  const refreshMs = (parseInt(refreshRateStr, 10) || 5) * 1000;
+
+  // Real-Time Dynamic Auto-Polling based on Settings Configuration
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch(true);
+    }, refreshMs);
+    return () => clearInterval(interval);
+  }, [refetch, refreshMs]);
+
   const rawOrders: any[] = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+
+  // Audio chime alert for new incoming orders
+  const prevPendingCountRef = React.useRef(0);
+  const currentPendingCount = rawOrders.filter((o: any) => String(o.status || "").toLowerCase() === "pending").length;
+  const enableChime = settings.enable_audio_chimes ?? settings.enableAudioChimes ?? true;
+
+  useEffect(() => {
+    if (enableChime && currentPendingCount > prevPendingCountRef.current && prevPendingCountRef.current > 0) {
+      try {
+        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+        audio.play().catch(() => {});
+      } catch (e) {}
+    }
+    prevPendingCountRef.current = currentPendingCount;
+  }, [currentPendingCount, enableChime]);
 
   const mapOrderToTicket = (o: any): KdsTicket => {
     const rawSt = String(o.status || "pending").toLowerCase();

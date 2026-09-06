@@ -60,6 +60,8 @@ function createOrdersTable(PDO $pdo): void {
     $alterQueries = [
         "ALTER TABLE orders ADD COLUMN user_id INT NULL AFTER order_number",
         "ALTER TABLE orders ADD COLUMN telegram_chat_id VARCHAR(50) NULL AFTER customer_phone",
+        "ALTER TABLE orders ADD COLUMN delivery_lat DECIMAL(10,8) NULL AFTER delivery_address",
+        "ALTER TABLE orders ADD COLUMN delivery_lng DECIMAL(11,8) NULL AFTER delivery_lat",
         "ALTER TABLE orders ADD COLUMN amount_khr INT DEFAULT 0 AFTER total_amount",
         "ALTER TABLE orders ADD COLUMN payment_proof_url VARCHAR(255) NULL AFTER payment_status",
         "ALTER TABLE orders ADD COLUMN payment_txn_ref VARCHAR(100) NULL AFTER payment_proof_url",

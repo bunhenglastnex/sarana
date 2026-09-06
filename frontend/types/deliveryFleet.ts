@@ -19,4 +19,19 @@ export interface CourierRecord {
   amount: number;
   isFocused?: boolean;
   coordinates: { x: number; y: number };
+  lat: number;
+  lng: number;
+  destLat: number;
+  destLng: number;
+  destName?: string;
 }
+
+export interface StoreConfig {
+  name: string;
+  subtitle: string;
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+
