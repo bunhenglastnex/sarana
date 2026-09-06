@@ -229,18 +229,10 @@ export default function CustomerPageLayout() {
         <BistroInfoCard />
 
         {/* Search & Quick Filter Bar */}
-        <SearchBar
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onFilterClick={() =>
-            alert("Filter options: Sort by Popularity, Delivery Time, Price")
-          }
-        />
+        <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
         {/* Promotional Hero Banner */}
-        <PromoBanner
-          onClaim={() => alert("Coupon AMBER20 applied to your next order!")}
-        />
+        <PromoBanner />
 
         {/* Horizontal Scroll Categories */}
         <CategoryScroll

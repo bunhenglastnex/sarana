@@ -71,6 +71,74 @@ interface DeliveryState {
   getOrderById: (id: string) => DeliveryOrder | undefined;
 }
 
+export function mapRawOrderToDeliveryOrder(o: any): DeliveryOrder {
+  const isCod = o.payment_method === "cod" || o.payment_method === "cash_on_delivery";
+  const isCompleted = o.status === "completed" || o.status === "delivered";
+  const isOnWay = o.status === "on_the_way";
+
+  const itemsList: DeliveryItemDetail[] = Array.isArray(o.items)
+    ? o.items.map((i: any) => ({
+        id: String(i.id || i.food_id),
+        name: i.food_name || "Menu Item",
+        quantity: Number(i.quantity || 1),
+        optionsNote: i.notes || undefined,
+        image:
+          i.image_url ||
+          "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80",
+        isVerified: true,
+      }))
+    : [];
+
+  const itemsSummary =
+    itemsList.length > 0
+      ? itemsList.map((i) => `${i.quantity}x ${i.name}`).join(", ")
+      : "Delivery Order Ticket";
+
+  return {
+    id: String(o.id),
+    orderNumber: o.order_number
+      ? o.order_number.startsWith("#")
+        ? o.order_number
+        : `#${o.order_number}`
+      : `#${o.id}`,
+    customerName: o.customer_name || "Customer",
+    customerPhone: o.customer_phone || "+855 12 345 678",
+    prepStatus: isOnWay
+      ? "Out for Delivery"
+      : isCompleted
+      ? "Delivered & Completed"
+      : "Ready for Pickup",
+    prepStatusType: isOnWay ? "urgent" : isCompleted ? "ready" : "ready",
+    totalPrice: Number(o.total_amount || 0),
+    itemCount: itemsList.length > 0 ? itemsList.length : 1,
+    distance: "1.8 mi",
+    eta: "10 min",
+    address: o.delivery_address || "Customer Delivery Address",
+    dropOffInstruction: o.notes || "Ring bell upon arrival.",
+    itemsSummary,
+    itemImage:
+      itemsList[0]?.image ||
+      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80",
+    itemsList,
+    paymentType: isCod ? "cod" : "khqr",
+    codAmount: isCod ? Number(o.total_amount || 0) : undefined,
+    deliveryStage: isCompleted
+      ? "completed"
+      : isOnWay
+      ? "picked_up"
+      : "accepted",
+    storeLat: o.store?.lat ? Number(o.store.lat) : undefined,
+    storeLng: o.store?.lng ? Number(o.store.lng) : undefined,
+    storeName: o.store?.name || undefined,
+    storeAddress: o.store?.address || undefined,
+    deliveryLat: o.delivery_lat ? Number(o.delivery_lat) : undefined,
+    deliveryLng: o.delivery_lng ? Number(o.delivery_lng) : undefined,
+    driverLat: o.driver_lat ? Number(o.driver_lat) : undefined,
+    driverLng: o.driver_lng ? Number(o.driver_lng) : undefined,
+    driverSpeed: o.driver_speed ? Number(o.driver_speed) : undefined,
+  };
+}
+
 export const useDeliveryStore = create<DeliveryState>((set, get) => ({
   isOnline: true,
   activeZone: "Zone 1 • Downtown Hearth",
@@ -184,108 +252,44 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
   fetchLiveOrders: async () => {
     set({ isLoading: true });
     try {
-      const authUserId = useAuthStore.getState().userId;
-      const staffIdQuery = authUserId ? `?staff_id=${authUserId}` : "";
-      const res = await Api.get(`/delivery.php${staffIdQuery}`, undefined, { forceRefresh: true });
-      if (res.success && res.data) {
-        if (typeof res.data.is_online === "boolean") {
-          set({ isOnline: res.data.is_online });
-        }
-        if (Array.isArray(res.data.orders)) {
-          const liveOrders: DeliveryOrder[] = res.data.orders.map((o: any) => {
-            const isCod =
-              o.payment_method === "cod" ||
-              o.payment_method === "cash_on_delivery";
-            const isCompleted =
-              o.status === "completed" || o.status === "delivered";
-            const isOnWay = o.status === "on_the_way";
+      const [resAvailable, resMyDeliveries] = await Promise.all([
+        Api.get("/delivery-available.php", undefined, { forceRefresh: true }),
+        Api.get("/delivery-my-deliveries.php", undefined, { forceRefresh: true }),
+      ]);
 
-            const itemsList: DeliveryItemDetail[] = Array.isArray(o.items)
-              ? o.items.map((i: any) => ({
-                  id: String(i.id || i.food_id),
-                  name: i.food_name || "Menu Item",
-                  quantity: Number(i.quantity || 1),
-                  optionsNote: i.notes || undefined,
-                  image:
-                    i.image_url ||
-                    "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80",
-                  isVerified: true,
-                }))
-              : [];
+      let availableOrders: DeliveryOrder[] = [];
+      let myDeliveries: DeliveryOrder[] = [];
 
-            const itemsSummary =
-              itemsList.length > 0
-                ? itemsList.map((i) => `${i.quantity}x ${i.name}`).join(", ")
-                : "Delivery Order Ticket";
-
-            return {
-              id: String(o.id),
-              orderNumber: o.order_number
-                ? o.order_number.startsWith("#")
-                  ? o.order_number
-                  : `#${o.order_number}`
-                : `#${o.id}`,
-              customerName: o.customer_name || "Customer",
-              customerPhone: o.customer_phone || "+855 12 345 678",
-              prepStatus: isOnWay
-                ? "Out for Delivery"
-                : isCompleted
-                ? "Delivered & Completed"
-                : "Ready for Pickup",
-              prepStatusType: isOnWay
-                ? "urgent"
-                : isCompleted
-                ? "ready"
-                : "ready",
-              totalPrice: Number(o.total_amount || 0),
-              itemCount: itemsList.length > 0 ? itemsList.length : 1,
-              distance: "1.8 mi",
-              eta: "10 min",
-              address: o.delivery_address || "Customer Delivery Address",
-              dropOffInstruction: o.notes || "Ring bell upon arrival.",
-              itemsSummary: itemsSummary,
-              itemImage:
-                itemsList[0]?.image ||
-                "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80",
-              itemsList: itemsList,
-              paymentType: isCod ? "cod" : "khqr",
-              codAmount: isCod ? Number(o.total_amount || 0) : undefined,
-              deliveryStage: isCompleted
-                ? "completed"
-                : isOnWay
-                ? "picked_up"
-                : "accepted",
-              storeLat: o.store?.lat ? Number(o.store.lat) : undefined,
-              storeLng: o.store?.lng ? Number(o.store.lng) : undefined,
-              storeName: o.store?.name || undefined,
-              storeAddress: o.store?.address || undefined,
-              deliveryLat: o.delivery_lat ? Number(o.delivery_lat) : undefined,
-              deliveryLng: o.delivery_lng ? Number(o.delivery_lng) : undefined,
-              driverLat: o.driver_lat ? Number(o.driver_lat) : undefined,
-              driverLng: o.driver_lng ? Number(o.driver_lng) : undefined,
-              driverSpeed: o.driver_speed ? Number(o.driver_speed) : undefined,
-            };
-          });
-
-          const available = liveOrders.filter(
-            (o) => o.deliveryStage !== "completed" && o.deliveryStage !== "picked_up"
-          );
-          const assigned = liveOrders.filter(
-            (o) => o.deliveryStage === "picked_up" || o.deliveryStage === "accepted"
-          );
-
-          set({
-            availableOrders: available,
-            myDeliveries: assigned,
-            isLoading: false,
-          });
-          return;
-        }
+      if (resAvailable.success && resAvailable.data) {
+        const rawAvail = Array.isArray(resAvailable.data.orders)
+          ? resAvailable.data.orders
+          : Array.isArray(resAvailable.data)
+          ? resAvailable.data
+          : [];
+        availableOrders = rawAvail.map(mapRawOrderToDeliveryOrder);
       }
+
+      if (resMyDeliveries.success && resMyDeliveries.data) {
+        if (typeof resMyDeliveries.data.is_online === "boolean") {
+          set({ isOnline: resMyDeliveries.data.is_online });
+        }
+        const rawMy = Array.isArray(resMyDeliveries.data.orders)
+          ? resMyDeliveries.data.orders
+          : Array.isArray(resMyDeliveries.data)
+          ? resMyDeliveries.data
+          : [];
+        myDeliveries = rawMy.map(mapRawOrderToDeliveryOrder);
+      }
+
+      set({
+        availableOrders,
+        myDeliveries,
+        isLoading: false,
+      });
     } catch (err) {
       console.error("Failed to fetch live delivery orders:", err);
+      set({ isLoading: false });
     }
-    set({ isLoading: false });
   },
 
   fetchOrderById: async (id: string) => {

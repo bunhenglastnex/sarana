@@ -64,11 +64,13 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
     setTelegramLink,
   } = useAuthStore();
 
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
   useEffect(() => {
     if (!authUserId && !authPhone && !authName) {
-      router.push("/login");
+      setShowLoginPrompt(true);
     }
-  }, [authUserId, authPhone, authName, router]);
+  }, [authUserId, authPhone, authName]);
 
   const name = authName || propName || "Valued Customer";
   const phone = authPhone || propPhone || "No phone linked";
@@ -473,6 +475,43 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Sign In Prompt Confirmation Modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-surface-container-lowest border border-border/40 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-5 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+              <User className="w-7 h-7 text-primary" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="font-headline-sm text-lg font-bold text-on-surface">
+                Sign In Required
+              </h3>
+              <p className="font-body-sm text-xs text-on-surface-variant leading-relaxed">
+                You need to be signed in to access your saved profile and account settings. Would you like to sign in now?
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs shadow-md hover:bg-primary-container transition-all"
+              >
+                Sign In / Register
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/")}
+                className="w-full py-2.5 rounded-xl bg-surface-container-low text-on-surface-variant font-semibold text-xs hover:bg-surface-container transition-all"
+              >
+                Explore Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

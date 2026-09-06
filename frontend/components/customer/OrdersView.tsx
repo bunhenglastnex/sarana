@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -28,22 +30,34 @@ export const OrdersView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
   const [showCustomerRefundProof, setShowCustomerRefundProof] = useState(false);
 
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
   useEffect(() => {
     if (!token && !userId) {
-      router.push("/login");
+      setShowLoginPrompt(true);
     }
-  }, [token, userId, router]);
+  }, [token, userId]);
 
-  const { data: fetchedOrders, loading, error, refetch } = useApi<any[]>(
-    token || userId ? "/api/orders.php" : null
-  );
+  const endpoint = phone || userId ? `/customer-orders.php?phone=${encodeURIComponent(phone || '')}` : null;
+  const {
+    data: fetchedOrders,
+    loading,
+    error,
+    refetch,
+  } = useApi<any[]>(endpoint);
 
   const orders = Array.isArray(fetchedOrders) ? fetchedOrders : [];
   const activeOrders = orders.filter(
-    (o) => o.status !== "delivered" && o.status !== "cancelled" && o.status !== "refunded"
+    (o) =>
+      o.status !== "delivered" &&
+      o.status !== "cancelled" &&
+      o.status !== "refunded",
   );
   const historyOrders = orders.filter(
-    (o) => o.status === "delivered" || o.status === "cancelled" || o.status === "refunded"
+    (o) =>
+      o.status === "delivered" ||
+      o.status === "cancelled" ||
+      o.status === "refunded",
   );
 
   return (
@@ -414,7 +428,10 @@ export const OrdersView: React.FC = () => {
                 </span>
               </div>
               <p className="font-body-sm text-[11px] text-on-surface-variant">
-                Kitchen note: <span className="italic text-on-surface">“Hearth-Smoked Ribs sold out tonight.”</span>
+                Kitchen note:{" "}
+                <span className="italic text-on-surface">
+                  “Hearth-Smoked Ribs sold out tonight.”
+                </span>
               </p>
             </div>
 
@@ -497,11 +514,15 @@ export const OrdersView: React.FC = () => {
               </div>
               <div className="flex justify-between font-label-sm text-[11px] text-on-surface-variant">
                 <span>Transfer Type:</span>
-                <span className="font-semibold text-on-surface">ABA Mobile Instant</span>
+                <span className="font-semibold text-on-surface">
+                  ABA Mobile Instant
+                </span>
               </div>
               <div className="flex justify-between font-label-sm text-[11px] text-on-surface-variant">
                 <span>Status:</span>
-                <span className="font-bold text-emerald-700">✓ Transfer Verified</span>
+                <span className="font-bold text-emerald-700">
+                  ✓ Transfer Verified
+                </span>
               </div>
             </div>
 
@@ -536,6 +557,43 @@ export const OrdersView: React.FC = () => {
           Contact
         </a>
       </div>
+
+      {/* Sign In Prompt Confirmation Modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-surface-container-lowest border border-border/40 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-5 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+              <Receipt className="w-7 h-7 text-primary" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="font-headline-sm text-lg font-bold text-on-surface">
+                Sign In Required
+              </h3>
+              <p className="font-body-sm text-xs text-on-surface-variant leading-relaxed">
+                Please sign in or register an account to view your active order status and order history.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs shadow-md hover:bg-primary-container transition-all"
+              >
+                Sign In / Register
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/")}
+                className="w-full py-2.5 rounded-xl bg-surface-container-low text-on-surface-variant font-semibold text-xs hover:bg-surface-container transition-all"
+              >
+                Explore Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

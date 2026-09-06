@@ -11,20 +11,15 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useApi } from "@/lib/api";
 
 export const CourierProfileView: React.FC = () => {
-  const { name, userId, phone } = useAuthStore();
-  const { data } = useApi<any>("/delivery.php");
+  const { name, userId, phone, avatarUrl: authAvatarUrl } = useAuthStore();
+  const { data } = useApi<any>("/delivery-profile.php");
 
-  const displayName = name || "";
-  const driverCode = `#AE-DRV-${4790 + (userId || 2)}`;
-  const cashInHand = Number(
-    data?.data?.cash_in_hand || data?.cash_in_hand || 0,
-  );
-
-  const completedOrdersCount = Array.isArray(data?.data?.orders || data?.orders)
-    ? (data?.data?.orders || data?.orders).filter(
-        (o: any) => o.status === "completed" || o.status === "delivered",
-      ).length
-    : 0;
+  const profileData = data?.data || data || {};
+  const displayName = profileData.name || name || "Courier Driver";
+  const driverCode = profileData.code || `#AE-DRV-${4790 + (userId || 2)}`;
+  const avatar = profileData.avatar_url || authAvatarUrl || undefined;
+  const deliveriesToday = profileData.deliveries_today ?? 0;
+  const vehicleLabel = profileData.vehicle_label || "Honda Click 150i";
 
   return (
     <div className="flex flex-col w-full px-screen-edge-padding space-y-space-lg max-w-md mx-auto pt-2 pb-24">
@@ -32,22 +27,23 @@ export const CourierProfileView: React.FC = () => {
       <HeroProfileCard
         name={displayName}
         driverCode={driverCode}
-        courierTitle={` · Phone: ${phone || ""}`}
-        rating={4.95}
-        totalDeliveries={`${completedOrdersCount} completed today`}
+        courierTitle={` · Phone: ${profileData.phone || phone || ""}`}
+        rating={profileData.rating || 4.95}
+        totalDeliveries={`${deliveriesToday} completed today`}
+        avatarUrl={avatar}
       />
 
       {/* 2. Today's Performance & Shift Tracker */}
       <ShiftPerformanceCard
-        ordersCompleted={completedOrdersCount}
+        ordersCompleted={deliveriesToday}
         onlineHours="4.2h"
         onTimeRate="98%"
-        todayEarnings={cashInHand}
+        todayEarnings={0}
       />
 
       {/* 3. Quick Vehicle & Equipment Card */}
       <EquipmentCard
-        vehicleName="Honda Click 150i"
+        vehicleName={vehicleLabel}
         vehiclePlate="Plate: 1-AB 4910 • Insured"
         fleetCode={`Fleet #${userId || 2}`}
         thermalBagCode="Thermal Hearth Bag #04"

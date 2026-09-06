@@ -5,6 +5,7 @@
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
+require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 require_once __DIR__ . '/../lib/telegram.php';
 require_once __DIR__ . '/../lib/logger.php';
 
@@ -252,14 +253,26 @@ if ($method === 'GET') {
             return;
         }
 
-        // Delivery staff ID (resolve dynamically if not passed)
+        // Resolve authenticated courier from Bearer Token or staff_id parameter
+        $authUser = null;
+        try {
+            $authUser = AuthMiddleware::authenticate($pdo, ['delivery', 'admin']);
+        } catch (Exception $e) {
+            // Unauthenticated or invalid token
+        }
+
         $reqStaffId = $_GET['staff_id'] ?? null;
-        if (!empty($reqStaffId)) {
+        if ($authUser) {
+            if ($authUser['role'] === 'admin' && !empty($reqStaffId)) {
+                $staffId = (int)$reqStaffId;
+            } else {
+                $staffId = (int)$authUser['id'];
+            }
+        } elseif (!empty($reqStaffId)) {
             $staffId = (int)$reqStaffId;
         } else {
-            $defaultRiderStmt = $pdo->query("SELECT id FROM users WHERE role = 'delivery' AND status = 'active' ORDER BY id DESC LIMIT 1");
-            $defaultRiderRow = $defaultRiderStmt->fetch();
-            $staffId = $defaultRiderRow ? (int)$defaultRiderRow['id'] : 2;
+            jsonResponse(0, 'Unauthorized: Access token or valid session is required', null, 401);
+            return;
         }
 
         // Fetch Orders:
@@ -328,13 +341,27 @@ if ($method === 'GET') {
     }
 
     $action = $input['action'];
+
+    // Resolve authenticated courier for POST actions
+    $authUser = null;
+    try {
+        $authUser = AuthMiddleware::authenticate($pdo, ['delivery', 'admin']);
+    } catch (Exception $e) {
+        // Unauthenticated or invalid token
+    }
+
     $reqStaffId = $input['staff_id'] ?? null;
-    if (!empty($reqStaffId)) {
+    if ($authUser) {
+        if ($authUser['role'] === 'admin' && !empty($reqStaffId)) {
+            $staffId = (int)$reqStaffId;
+        } else {
+            $staffId = (int)$authUser['id'];
+        }
+    } elseif (!empty($reqStaffId)) {
         $staffId = (int)$reqStaffId;
     } else {
-        $defaultRiderStmt = $pdo->query("SELECT id FROM users WHERE role = 'delivery' AND status = 'active' ORDER BY id DESC LIMIT 1");
-        $defaultRiderRow = $defaultRiderStmt->fetch();
-        $staffId = $defaultRiderRow ? (int)$defaultRiderRow['id'] : 2;
+        jsonResponse(0, 'Unauthorized: Access token or valid session is required', null, 401);
+        return;
     }
 
     try {
