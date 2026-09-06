@@ -4,7 +4,9 @@ import React, { useState } from "react";
 import { Calendar, Power } from "lucide-react";
 
 export const HearthStatusStrip: React.FC = () => {
-  const [selectedRange, setSelectedRange] = useState<"today" | "week" | "month" | "custom">("today");
+  const [selectedRange, setSelectedRange] = useState<
+    "today" | "week" | "month" | "custom"
+  >("today");
   const [isKitchenActive, setIsKitchenActive] = useState<boolean>(true);
 
   return (
@@ -24,7 +26,8 @@ export const HearthStatusStrip: React.FC = () => {
           Good morning, Bistro Manager
         </h1>
         <p className="font-body-sm text-sm text-on-surface-variant">
-          Live operations, service dispatch queue, and culinary sales rhythm for today.
+          Live operations, service dispatch queue, and culinary sales rhythm for
+          today.
         </p>
       </div>
 
@@ -60,7 +63,7 @@ export const HearthStatusStrip: React.FC = () => {
                 : "text-on-surface-variant hover:text-on-surface"
             }`}
           >
-            This Month
+            Month
           </button>
           <button
             onClick={() => setSelectedRange("custom")}
@@ -83,7 +86,9 @@ export const HearthStatusStrip: React.FC = () => {
             )}
             <span
               className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                isKitchenActive ? "bg-secondary-container" : "bg-muted-foreground"
+                isKitchenActive
+                  ? "bg-secondary-container"
+                  : "bg-muted-foreground"
               }`}
             ></span>
           </span>
@@ -100,7 +105,9 @@ export const HearthStatusStrip: React.FC = () => {
             title="Toggle Kitchen Acceptance"
             className="ml-space-xs p-1 hover:bg-surface-container rounded transition-colors text-on-surface-variant"
           >
-            <Power className={`w-4 h-4 ${isKitchenActive ? "text-primary font-bold" : "text-muted-foreground"}`} />
+            <Power
+              className={`w-4 h-4 ${isKitchenActive ? "text-primary font-bold" : "text-muted-foreground"}`}
+            />
           </button>
         </div>
       </div>

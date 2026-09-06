@@ -14,20 +14,28 @@ import { Badge } from "@/components/ui/badge";
 
 interface AnalyticsKpiCardsProps {
   timeRange: string;
+  kpi?: {
+    grossSales: string;
+    grossGrowth: string;
+    totalOrders: string;
+    avgTicket: string;
+    khqrRatio: number;
+    cancelledCount: string;
+    cancelledAmount: string;
+  };
 }
 
 export const AnalyticsKpiCards: React.FC<AnalyticsKpiCardsProps> = ({
   timeRange,
+  kpi,
 }) => {
-  const isMonth = timeRange === "month";
-  const is7Days = timeRange === "7days";
-
-  const grossSales = isMonth ? "$54,280.00" : is7Days ? "$14,820.50" : "$2,480.00";
-  const grossGrowth = isMonth ? "+18.4%" : is7Days ? "+14.2%" : "+9.8%";
-  const totalOrders = isMonth ? "1,420" : is7Days ? "384" : "64";
-  const avgTicket = isMonth ? "$38.22" : is7Days ? "$38.59" : "$38.75";
-  const cancelledCount = isMonth ? "18" : is7Days ? "5" : "2";
-  const cancelledAmount = isMonth ? "$492.00" : is7Days ? "$148.50" : "$48.00";
+  const grossSales = kpi?.grossSales || "$0.00";
+  const grossGrowth = kpi?.grossGrowth || "+0.0%";
+  const totalOrders = kpi?.totalOrders || "0";
+  const avgTicket = kpi?.avgTicket || "$0.00";
+  const khqrRatio = kpi?.khqrRatio !== undefined ? `${kpi.khqrRatio}%` : "0%";
+  const cancelledCount = kpi?.cancelledCount || "0";
+  const cancelledAmount = kpi?.cancelledAmount || "$0.00";
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
@@ -106,7 +114,7 @@ export const AnalyticsKpiCards: React.FC<AnalyticsKpiCardsProps> = ({
         <CardContent className="p-4 pt-0 space-y-3">
           <div>
             <div className="font-display-lg text-2xl font-extrabold text-emerald-700 tracking-tight flex items-center gap-1.5">
-              94.8%
+              {khqrRatio}
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             </div>
             <div className="flex items-center gap-1.5 mt-1">

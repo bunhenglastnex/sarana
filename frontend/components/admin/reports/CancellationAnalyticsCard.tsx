@@ -8,6 +8,7 @@ import {
   TrendingDown,
   Info,
   DollarSign,
+  CheckCircle,
 } from "lucide-react";
 import {
   Card,
@@ -31,48 +32,28 @@ interface CancellationReason {
   recommendation: string;
 }
 
-const mockReasons: CancellationReason[] = [
-  {
-    id: "sold_out",
-    reason: "Ingredient Sold Out / Capacity Limit",
-    count: 4,
-    percentage: 57,
-    refundAmount: 112.5,
-    impactLevel: "high",
-    indicatorColor: "bg-error",
-    recommendation: "Auto-toggle 80% stock alert on KDS",
-  },
-  {
-    id: "customer_change",
-    reason: "Customer Requested Change / Address",
-    count: 2,
-    percentage: 29,
-    refundAmount: 52.0,
-    impactLevel: "medium",
-    indicatorColor: "bg-amber-500",
-    recommendation: "Customer app address radius check",
-  },
-  {
-    id: "invalid_slip",
-    reason: "Invalid KHQR Slip / Payment Issue",
-    count: 1,
-    percentage: 14,
-    refundAmount: 20.5,
-    impactLevel: "low",
-    indicatorColor: "bg-slate-400",
-    recommendation: "Bakong API automated hash verify",
-  },
-];
+interface CancellationAnalyticsCardProps {
+  data?: CancellationReason[];
+  cancelledAmount?: string;
+}
 
-export const CancellationAnalyticsCard: React.FC = () => {
-  const totalRefunded = mockReasons.reduce(
+export const CancellationAnalyticsCard: React.FC<CancellationAnalyticsCardProps> = ({
+  data,
+  cancelledAmount,
+}) => {
+  const reasons = data || [];
+  const hasReasons = reasons.length > 0;
+
+  const totalRefunded = reasons.reduce(
     (sum, item) => sum + item.refundAmount,
     0
   );
-  const totalIncidents = mockReasons.reduce(
+  const totalIncidents = reasons.reduce(
     (sum, item) => sum + item.count,
     0
   );
+
+  const displayRefundText = cancelledAmount || `$${totalRefunded.toFixed(2)}`;
 
   return (
     <Card className="bg-surface-container-lowest border-border/40 shadow-xs flex flex-col justify-between h-full">
@@ -89,8 +70,8 @@ export const CancellationAnalyticsCard: React.FC = () => {
             </CardDescription>
           </div>
 
-          <Badge variant="destructive" className="bg-error-container/40 text-error border-none text-[11px] font-bold shrink-0 px-2.5 py-1">
-            {totalIncidents} Incidents (${totalRefunded.toFixed(2)})
+          <Badge variant={hasReasons ? "destructive" : "secondary"} className={hasReasons ? "bg-error-container/40 text-error border-none text-[11px] font-bold shrink-0 px-2.5 py-1" : "bg-emerald-100 text-emerald-800 border-none text-[11px] font-bold shrink-0 px-2.5 py-1"}>
+            {totalIncidents} Incidents ({displayRefundText})
           </Badge>
         </div>
       </CardHeader>
@@ -100,73 +81,80 @@ export const CancellationAnalyticsCard: React.FC = () => {
         {/* Total Financial Impact Strip */}
         <div className="bg-surface-container-low p-3 rounded-xl border border-border/30 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-error-container/30 text-error flex items-center justify-center font-bold text-xs">
-              <TrendingDown className="w-4 h-4" />
+            <div className={`w-8 h-8 rounded-lg ${hasReasons ? 'bg-error-container/30 text-error' : 'bg-emerald-100 text-emerald-700'} flex items-center justify-center font-bold text-xs`}>
+              {hasReasons ? <TrendingDown className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
             </div>
             <div>
               <div className="font-label-sm text-[11px] text-on-surface-variant font-medium">
                 Total Revenue Refunded
               </div>
-              <div className="font-display-lg text-base font-extrabold text-error">
-                ${totalRefunded.toFixed(2)}{" "}
+              <div className={`font-display-lg text-base font-extrabold ${hasReasons ? 'text-error' : 'text-emerald-700'}`}>
+                {displayRefundText}{" "}
                 <span className="text-[11px] font-semibold text-on-surface-variant">
-                  (1.4% of total sales)
+                  (Loss Control)
                 </span>
               </div>
             </div>
           </div>
 
-          <Badge variant="outline" className="text-[10px] font-bold border-error/30 text-error bg-error-container/20">
-            Healthy Threshold (&lt;3%)
+          <Badge variant="outline" className={`text-[10px] font-bold ${hasReasons ? 'border-error/30 text-error bg-error-container/20' : 'border-emerald-300 text-emerald-800 bg-emerald-50'}`}>
+            {hasReasons ? "Healthy Threshold (<3%)" : "Zero Loss Detected"}
           </Badge>
         </div>
 
         {/* Reason Breakdown List using Shadcn Progress */}
-        <div className="space-y-3 pt-1">
-          {mockReasons.map((item) => (
-            <div key={item.id} className="space-y-1.5 bg-surface-container-lowest p-2.5 rounded-xl border border-border/20 hover:border-border/40 transition-colors">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="font-label-md text-xs font-bold text-on-surface truncate">
-                    {item.reason}
+        {hasReasons ? (
+          <div className="space-y-3 pt-1">
+            {reasons.map((item) => (
+              <div key={item.id} className="space-y-1.5 bg-surface-container-lowest p-2.5 rounded-xl border border-border/20 hover:border-border/40 transition-colors">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="font-label-md text-xs font-bold text-on-surface truncate">
+                      {item.reason}
+                    </span>
+                    <Badge
+                      variant={
+                        item.impactLevel === "high"
+                          ? "destructive"
+                          : item.impactLevel === "medium"
+                          ? "warning"
+                          : "secondary"
+                      }
+                      className="text-[9px] px-1.5 py-0 font-bold uppercase shrink-0"
+                    >
+                      {item.impactLevel}
+                    </Badge>
+                  </div>
+                  <span className="font-headline-sm text-xs font-extrabold text-on-surface shrink-0 ml-2">
+                    {item.count} orders ({item.percentage}%) • ${item.refundAmount.toFixed(2)}
                   </span>
-                  <Badge
-                    variant={
-                      item.impactLevel === "high"
-                        ? "destructive"
-                        : item.impactLevel === "medium"
-                        ? "warning"
-                        : "secondary"
-                    }
-                    className="text-[9px] px-1.5 py-0 font-bold uppercase shrink-0"
-                  >
-                    {item.impactLevel}
-                  </Badge>
                 </div>
-                <span className="font-headline-sm text-xs font-extrabold text-on-surface shrink-0 ml-2">
-                  {item.count} orders ({item.percentage}%) • ${item.refundAmount.toFixed(2)}
-                </span>
-              </div>
 
-              {/* Shadcn Progress Indicator Bar */}
-              <Progress
-                value={item.percentage}
-                indicatorClassName={item.indicatorColor}
-                className="h-2 bg-surface-container-high"
-              />
+                {/* Shadcn Progress Indicator Bar */}
+                <Progress
+                  value={item.percentage}
+                  indicatorClassName={item.indicatorColor}
+                  className="h-2 bg-surface-container-high"
+                />
 
-              <div className="flex items-center justify-between text-[11px] text-on-surface-variant pt-0.5">
-                <span className="flex items-center gap-1">
-                  <Info className="w-3 h-3 text-secondary shrink-0" />
-                  <span>Recommendation: {item.recommendation}</span>
-                </span>
-                <span className="font-bold text-on-surface">
-                  ${(item.refundAmount / item.count).toFixed(2)} avg/order
-                </span>
+                <div className="flex items-center justify-between text-[11px] text-on-surface-variant pt-0.5">
+                  <span className="flex items-center gap-1">
+                    <Info className="w-3 h-3 text-secondary shrink-0" />
+                    <span>Recommendation: {item.recommendation}</span>
+                  </span>
+                  <span className="font-bold text-on-surface">
+                    ${item.count > 0 ? (item.refundAmount / item.count).toFixed(2) : "0.00"} avg/order
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 border border-dashed border-border/60 rounded-xl bg-surface-container-low text-center flex flex-col items-center justify-center gap-1">
+            <span className="font-label-md text-xs font-bold text-on-surface">No Cancellations</span>
+            <span className="font-body-sm text-[11px] text-on-surface-variant">No order cancellations or refund requests recorded in this period.</span>
+          </div>
+        )}
       </CardContent>
 
       {/* Card Footer with Prevention Status */}
@@ -186,3 +174,4 @@ export const CancellationAnalyticsCard: React.FC = () => {
     </Card>
   );
 };
+

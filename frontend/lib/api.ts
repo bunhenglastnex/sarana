@@ -603,6 +603,8 @@ export function useApi<T = any>(
   const paramsRef = useRef(params);
   paramsRef.current = params;
 
+  const paramsString = JSON.stringify(params || {});
+
   const fetchData = useCallback(
     async (forceRefresh = false): Promise<ApiResponse<T>> => {
       if (!endpoint) {
@@ -615,10 +617,7 @@ export function useApi<T = any>(
         };
       }
 
-      // If we don't already have cached data or it's a force refresh, show loading
-      if (forceRefresh || !data) {
-        setLoading(true);
-      }
+      setLoading(true);
       setError(null);
 
       const response = await Api.get<T>(endpoint, paramsRef.current, {
@@ -634,14 +633,14 @@ export function useApi<T = any>(
 
       return response;
     },
-    [endpoint, data],
+    [endpoint],
   );
 
   useEffect(() => {
     if (endpoint) {
-      fetchData(false);
+      fetchData(true);
     }
-  }, [endpoint, fetchData]);
+  }, [endpoint, paramsString, fetchData]);
 
   return {
     data,

@@ -5,6 +5,8 @@ import {
   FileSpreadsheet,
   Printer,
   TrendingUp,
+  RotateCcw,
+  FilterX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +24,10 @@ interface AnalyticsHeaderProps {
   onTimeRangeChange: (range: string) => void;
   channelFilter: string;
   onChannelFilterChange: (channel: string) => void;
+  selectedDate: string;
+  onSelectedDateChange: (date: string) => void;
+  onExportCSV?: () => void;
+  onClearFilters?: () => void;
 }
 
 export const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
@@ -29,16 +35,28 @@ export const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
   onTimeRangeChange,
   channelFilter,
   onChannelFilterChange,
+  selectedDate,
+  onSelectedDateChange,
+  onExportCSV,
+  onClearFilters,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>("2026-09-05");
+
+  const isFiltered =
+    timeRange !== "7days" ||
+    channelFilter !== "all" ||
+    (selectedDate !== "" && selectedDate !== "2026-09-05");
 
   const handleExportCSV = () => {
     setIsExporting(true);
+    if (onExportCSV) {
+      onExportCSV();
+    } else {
+      alert("Exporting CSV Report...");
+    }
     setTimeout(() => {
       setIsExporting(false);
-      alert("CSV Analytics Report exported successfully!");
-    }, 800);
+    }, 600);
   };
 
   const handlePrintPDF = () => {
@@ -69,7 +87,10 @@ export const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
         {/* Date Picker (Shadcn Popover + Calendar) */}
         <DatePicker
           value={selectedDate}
-          onChange={setSelectedDate}
+          onChange={(newDate) => {
+            onSelectedDateChange(newDate);
+            onTimeRangeChange("custom");
+          }}
           placeholder="Filter date"
         />
 
@@ -85,6 +106,11 @@ export const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
             <TabsTrigger value="month" className="text-xs px-3 font-semibold">
               This Month
             </TabsTrigger>
+            {timeRange === "custom" && (
+              <TabsTrigger value="custom" className="text-xs px-3 font-semibold text-primary">
+                Custom Date ({selectedDate || "..."})
+              </TabsTrigger>
+            )}
           </TabsList>
         </Tabs>
 
@@ -99,6 +125,24 @@ export const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
             <SelectItem value="pickup" className="text-xs font-medium">Express Pickup</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Clear Filters Button */}
+        {onClearFilters && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClearFilters}
+            className={`h-9 px-3 text-xs font-bold transition-all ${
+              isFiltered
+                ? "bg-amber-500/10 text-amber-900 border-amber-400 hover:bg-amber-500/20"
+                : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container border-border/30 opacity-80"
+            }`}
+            title="Reset filters to default"
+          >
+            <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-amber-700" />
+            <span>Clear Filter</span>
+          </Button>
+        )}
 
         {/* Action Buttons (Shadcn Button) */}
         <div className="flex items-center gap-1.5">

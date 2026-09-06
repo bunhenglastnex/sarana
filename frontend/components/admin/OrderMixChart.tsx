@@ -3,14 +3,17 @@
 import React from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 
-const pieData = [
-  { name: "Delivery", value: 65, count: 16, revenue: 295.2, color: "#a43700" },
-  { name: "Pickup / Dine", value: 35, count: 8, revenue: 130.3, color: "#fea047" },
-];
-
 const CustomPieTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    if (data.count === 0 && data.revenue === 0) {
+      return (
+        <div className="bg-surface-container-lowest p-2.5 rounded-lg shadow-md border border-border/60 text-xs">
+          <p className="font-bold text-on-surface">No Activity</p>
+          <p className="text-on-surface-variant font-medium">0 Orders in this period</p>
+        </div>
+      );
+    }
     return (
       <div className="bg-surface-container-lowest p-2.5 rounded-lg shadow-md border border-border/60 text-xs">
         <p className="font-bold text-on-surface">{data.name}</p>
@@ -24,7 +27,32 @@ const CustomPieTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-export const OrderMixChart: React.FC = () => {
+interface OrderMixChartProps {
+  data?: {
+    totalOrders: number;
+    delivery: { name: string; value: number; count: number; revenue: number; color: string };
+    pickup: { name: string; value: number; count: number; revenue: number; color: string };
+  };
+}
+
+export const OrderMixChart: React.FC<OrderMixChartProps> = ({ data }) => {
+  const totalOrders = data?.totalOrders ?? 0;
+  const deliveryPct = data?.delivery?.value ?? 0;
+  const deliveryCount = data?.delivery?.count ?? 0;
+  const deliveryRev = data?.delivery?.revenue ?? 0;
+  const pickupPct = data?.pickup?.value ?? 0;
+  const pickupCount = data?.pickup?.count ?? 0;
+  const pickupRev = data?.pickup?.revenue ?? 0;
+
+  const hasOrders = totalOrders > 0;
+
+  const currentPieData = hasOrders
+    ? [
+        data?.delivery || { name: "Delivery", value: 0, count: 0, revenue: 0, color: "#a43700" },
+        data?.pickup || { name: "Pickup / Dine", value: 0, count: 0, revenue: 0, color: "#fea047" },
+      ]
+    : [{ name: "No Orders", value: 100, count: 0, revenue: 0, color: "#e5e7eb" }];
+
   return (
     <div className="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm border border-border/40 flex flex-col justify-between h-full">
       <div className="flex items-center justify-between">
@@ -32,7 +60,7 @@ export const OrderMixChart: React.FC = () => {
           Order Channel Mix
         </h3>
         <span className="font-label-sm text-xs text-on-surface-variant font-medium">
-          24 Orders total
+          {totalOrders} Orders total
         </span>
       </div>
 
@@ -44,15 +72,15 @@ export const OrderMixChart: React.FC = () => {
             <PieChart>
               <Tooltip content={<CustomPieTooltip />} />
               <Pie
-                data={pieData}
+                data={currentPieData}
                 cx="50%"
                 cy="50%"
                 innerRadius={36}
                 outerRadius={54}
-                paddingAngle={3}
+                paddingAngle={hasOrders ? 3 : 0}
                 dataKey="value"
               >
-                {pieData.map((entry, index) => (
+                {currentPieData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
@@ -60,10 +88,10 @@ export const OrderMixChart: React.FC = () => {
           </ResponsiveContainer>
           <div className="absolute flex flex-col items-center justify-center text-center pointer-events-none">
             <span className="font-display-lg text-xl font-bold text-on-surface leading-none">
-              65%
+              {hasOrders ? `${deliveryPct}%` : "0%"}
             </span>
             <span className="font-label-sm text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">
-              Delivery
+              {hasOrders ? "Delivery" : "Orders"}
             </span>
           </div>
         </div>
@@ -74,10 +102,10 @@ export const OrderMixChart: React.FC = () => {
             <div className="w-3.5 h-3.5 rounded bg-primary shrink-0"></div>
             <div className="flex flex-col">
               <span className="font-label-md text-xs font-bold text-on-surface leading-tight">
-                Delivery (65%)
+                Delivery ({deliveryPct}%)
               </span>
               <span className="font-body-sm text-[11px] text-on-surface-variant">
-                16 Orders • $295.20
+                {deliveryCount} Orders • ${deliveryRev.toFixed(2)}
               </span>
             </div>
           </div>
@@ -85,10 +113,10 @@ export const OrderMixChart: React.FC = () => {
             <div className="w-3.5 h-3.5 rounded bg-secondary-container shrink-0"></div>
             <div className="flex flex-col">
               <span className="font-label-md text-xs font-bold text-on-surface leading-tight">
-                Pickup / Dine (35%)
+                Pickup / Dine ({pickupPct}%)
               </span>
               <span className="font-body-sm text-[11px] text-on-surface-variant">
-                8 Orders • $130.30
+                {pickupCount} Orders • ${pickupRev.toFixed(2)}
               </span>
             </div>
           </div>
@@ -100,9 +128,10 @@ export const OrderMixChart: React.FC = () => {
           Courier Active Fulfillment
         </span>
         <span className="font-label-sm text-xs text-primary font-bold">
-          Fastest: 18 min
+          {hasOrders ? "Fastest: 18 min" : "Inactive"}
         </span>
       </div>
     </div>
   );
 };
+
