@@ -1,10 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { Search, Timer, Bell, SlidersHorizontal, User } from "lucide-react";
+import { Search, Timer, Bell, SlidersHorizontal, User, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export const AdminHeader: React.FC = () => {
+  const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const { name, role, clearSession } = useAuthStore();
 
   // Focus search input on pressing '/'
   useEffect(() => {
@@ -21,6 +25,11 @@ export const AdminHeader: React.FC = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const handleLogout = () => {
+    clearSession();
+    router.push("/admin/login");
+  };
 
   return (
     <header className="fixed top-0 left-64 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-border/40 z-40 px-space-lg flex items-center justify-between gap-space-md">
@@ -44,14 +53,14 @@ export const AdminHeader: React.FC = () => {
         <div className="hidden lg:flex items-center gap-space-xs px-space-sm py-1 bg-surface-container rounded-full text-on-surface-variant border border-border/40">
           <Timer className="w-4 h-4 text-secondary" />
           <span className="font-label-sm text-xs text-on-surface font-medium">
-            Shift: 05h 42m
+            Shift: Active
           </span>
         </div>
 
         {/* Action Controls */}
         <div className="flex items-center gap-space-xs">
           <button
-            onClick={() => alert("Notifications: 2 new kitchen alerts")}
+            onClick={() => alert("Notifications: System operational.")}
             aria-label="Notifications"
             className="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
           >
@@ -59,7 +68,7 @@ export const AdminHeader: React.FC = () => {
             <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span>
           </button>
           <button
-            onClick={() => alert("Adjusting station display settings")}
+            onClick={() => alert("Station display configuration")}
             aria-label="Station Settings"
             className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
           >
@@ -70,19 +79,26 @@ export const AdminHeader: React.FC = () => {
         {/* Divider */}
         <div className="h-6 w-px bg-surface-container-high"></div>
 
-        {/* Terminal Station Badge */}
-        <div className="flex items-center gap-space-xs">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary">
-            <User className="w-4 h-4" />
+        {/* Admin Profile & Logout Button */}
+        <div className="flex items-center gap-space-sm">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-xs">
+            {name ? name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
           </div>
           <div className="hidden sm:flex flex-col">
             <span className="font-label-md text-xs text-on-surface leading-tight font-semibold">
-              Admin Terminal
+              {name || "Restaurant Admin"}
             </span>
-            <span className="font-label-sm text-[10px] text-secondary font-bold uppercase tracking-wider">
-              Station 01
+            <span className="font-label-sm text-[10px] text-emerald-600 font-extrabold uppercase tracking-wider">
+              {role === "admin" ? "Super Admin" : role}
             </span>
           </div>
+          <button
+            onClick={handleLogout}
+            title="Sign out of Admin Console"
+            className="p-1.5 ml-1 rounded-lg text-error/80 hover:bg-error-container/20 hover:text-error transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>

@@ -30,7 +30,7 @@ function createOrdersTable(PDO $pdo): void {
 
         -- Payment method & status
         payment_method ENUM('cash_on_delivery', 'cash_at_counter', 'khqr', 'cod', 'counter_cash') NOT NULL DEFAULT 'cash_on_delivery',
-        payment_status ENUM('pending', 'pending_review', 'paid', 'verified', 'rejected', 'failed') DEFAULT 'pending',
+        payment_status ENUM('pending', 'pending_review', 'paid', 'verified', 'rejected', 'failed', 'flagged', 'refunded') DEFAULT 'pending',
         payment_proof_url VARCHAR(255) NULL,
         payment_txn_ref VARCHAR(100) NULL,
 
@@ -64,7 +64,7 @@ function createOrdersTable(PDO $pdo): void {
         "ALTER TABLE orders ADD COLUMN payment_proof_url VARCHAR(255) NULL AFTER payment_status",
         "ALTER TABLE orders ADD COLUMN payment_txn_ref VARCHAR(100) NULL AFTER payment_proof_url",
         "ALTER TABLE orders MODIFY COLUMN payment_method ENUM('cash_on_delivery', 'cash_at_counter', 'khqr', 'cod', 'counter_cash') NOT NULL DEFAULT 'cash_on_delivery'",
-        "ALTER TABLE orders MODIFY COLUMN payment_status ENUM('pending', 'pending_review', 'paid', 'verified', 'rejected', 'failed') DEFAULT 'pending'",
+        "ALTER TABLE orders MODIFY COLUMN payment_status ENUM('pending', 'pending_review', 'paid', 'verified', 'rejected', 'failed', 'flagged', 'refunded') DEFAULT 'pending'",
         "ALTER TABLE orders MODIFY COLUMN status ENUM('pending', 'accepted', 'preparing', 'ready_for_pickup', 'ready_for_delivery', 'on_the_way', 'completed', 'delivered', 'cancelled') DEFAULT 'pending'"
     ];
 

@@ -3,12 +3,16 @@
 // System Activity Logs API Endpoint (Fetch logs, filters, metrics & clear old logs)
 
 require_once __DIR__ . '/../config/cors.php';
+require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
 require_once __DIR__ . '/../lib/logger.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
+
+// Require Admin Role Authentication
+$adminUser = AuthMiddleware::authenticate($pdo, ['admin']);
 
 if ($method === 'GET') {
     try {

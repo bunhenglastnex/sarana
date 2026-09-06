@@ -1,210 +1,171 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Api } from "@/lib/api";
 import { TransactionRecord, PaymentSummaryMetrics } from "@/types/payments";
 import { PaymentSubHeader } from "@/components/admin/payments/PaymentSubHeader";
 import { PaymentTable } from "@/components/admin/payments/PaymentTable";
 import { PaymentSlipModal } from "@/components/admin/payments/PaymentSlipModal";
+import { Loader2, RefreshCw } from "lucide-react";
 
-const initialTransactions: TransactionRecord[] = [
-  {
-    id: "TXN-901",
-    orderId: "#1082",
-    customerName: "David Chen",
-    customerPhone: "+1 (555) 234-9912",
-    gateway: "ABA KHQR",
-    method: "khqr",
-    amountUsd: 41.5,
-    amountKhr: 166000,
-    status: "verified",
-    txnRef: "KHQR-889102",
-    proofImageUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10",
-    timestamp: "19:22:15",
-    dateLabel: "Today, 19:22",
-    dateIso: "2026-09-05",
-  },
-  {
-    id: "TXN-902",
-    orderId: "#1084",
-    customerName: "Marcus Vance",
-    customerPhone: "+1 (555) 891-2240",
-    gateway: "Wing KHQR",
-    method: "khqr",
-    amountUsd: 23.0,
-    amountKhr: 92000,
-    status: "pending_review",
-    txnRef: "KHQR-889105",
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop",
-    timestamp: "18:55:04",
-    dateLabel: "Today, 18:55",
-    dateIso: "2026-09-05",
-  },
-  {
-    id: "TXN-903",
-    orderId: "#1081",
-    customerName: "Clara Oswald",
-    customerPhone: "+1 (555) 604-3382",
-    gateway: "Counter POS",
-    method: "counter_cash",
-    amountUsd: 28.0,
-    amountKhr: 112000,
-    status: "verified",
-    txnRef: "POS-440192",
-    timestamp: "19:18:10",
-    dateLabel: "Today, 19:18",
-    dateIso: "2026-09-05",
-  },
-  {
-    id: "TXN-904",
-    orderId: "#1080",
-    customerName: "Alex Rivera",
-    customerPhone: "+1 (555) 382-9012",
-    gateway: "Canadia KHQR",
-    method: "khqr",
-    amountUsd: 23.5,
-    amountKhr: 94000,
-    status: "pending_review",
-    txnRef: "KHQR-889108",
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop",
-    timestamp: "18:40:22",
-    dateLabel: "Today, 18:40",
-    dateIso: "2026-09-05",
-  },
-  {
-    id: "TXN-905",
-    orderId: "#1079",
-    customerName: "Sophia Lin",
-    customerPhone: "+1 (555) 492-1084",
-    gateway: "COD Courier",
-    method: "cod",
-    amountUsd: 31.0,
-    amountKhr: 124000,
-    status: "verified",
-    txnRef: "COD-DRIVER-4",
-    timestamp: "19:08:40",
-    dateLabel: "Today, 19:08",
-    dateIso: "2026-09-05",
-  },
-  {
-    id: "TXN-906",
-    orderId: "#1078",
-    customerName: "Julian Thorne",
-    customerPhone: "+1 (555) 773-4019",
-    gateway: "ABA KHQR",
-    method: "khqr",
-    amountUsd: 27.0,
-    amountKhr: 108000,
-    status: "verified",
-    txnRef: "KHQR-889090",
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=500&auto=format&fit=crop",
-    timestamp: "18:30:12",
-    dateLabel: "Today, 18:30",
-    dateIso: "2026-09-05",
-  },
-  {
-    id: "TXN-907",
-    orderId: "#1026",
-    customerName: "David Chen",
-    customerPhone: "+1 (555) 234-9912",
-    gateway: "Wing KHQR",
-    method: "khqr",
-    amountUsd: 29.5,
-    amountKhr: 118000,
-    status: "verified",
-    txnRef: "KHQR-888900",
-    proofImageUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10",
-    timestamp: "20:15:00",
-    dateLabel: "Yesterday",
-    dateIso: "2026-09-04",
-  },
-  {
-    id: "TXN-908",
-    orderId: "#1018",
-    customerName: "Elena Vance",
-    customerPhone: "+1 (555) 714-2209",
-    gateway: "ABA KHQR",
-    method: "khqr",
-    amountUsd: 54.0,
-    amountKhr: 216000,
-    status: "verified",
-    txnRef: "KHQR-888710",
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop",
-    timestamp: "14:20:10",
-    dateLabel: "Sep 03, 2026",
-    dateIso: "2026-09-03",
-  },
-  {
-    id: "TXN-909",
-    orderId: "#1012",
-    customerName: "Marcus Brody",
-    customerPhone: "+1 (555) 392-8812",
-    gateway: "COD Courier",
-    method: "cod",
-    amountUsd: 48.5,
-    amountKhr: 194000,
-    status: "verified",
-    txnRef: "COD-DRIVER-2",
-    timestamp: "11:05:30",
-    dateLabel: "Sep 01, 2026",
-    dateIso: "2026-09-01",
-  },
-  {
-    id: "TXN-910",
-    orderId: "#0995",
-    customerName: "Arthur Pendelton",
-    customerPhone: "+1 (555) 120-9931",
-    gateway: "ABA KHQR",
-    method: "khqr",
-    amountUsd: 82.0,
-    amountKhr: 328000,
-    status: "verified",
-    txnRef: "KHQR-888420",
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop",
-    timestamp: "19:45:10",
-    dateLabel: "Aug 28, 2026",
-    dateIso: "2026-08-28",
-  },
-];
+const initialMetrics: PaymentSummaryMetrics = {
+  totalSettledUsd: 0,
+  totalSettledKhr: 0,
+  khqrSharePercentage: 0,
+  pendingVerificationCount: 0,
+  pendingVerificationAmountUsd: 0,
+  codOnHandUsd: 0,
+  cancelledCount: 0,
+  cancelledAmountUsd: 0,
+};
 
 export default function PaymentsPage() {
   const [isMounted, setIsMounted] = useState(false);
-  const [transactions, setTransactions] = useState<TransactionRecord[]>(initialTransactions);
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [totalRecordsCount, setTotalRecordsCount] = useState(0);
+  const [metrics, setMetrics] = useState<PaymentSummaryMetrics>(initialMetrics);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [datePreset, setDatePreset] = useState<"today" | "week" | "month" | "all" | "custom">("today");
-  const [dateFrom, setDateFrom] = useState("2026-09-05");
-  const [dateTo, setDateTo] = useState("2026-09-05");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [selectedTxnForProof, setSelectedTxnForProof] = useState<TransactionRecord | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // Fetch payments from backend API
+  const fetchPayments = useCallback(async (isRefresh = false) => {
+    if (!isRefresh && loading === false) {
+      setLoading(true);
+    }
+    setError(null);
+
+    const res = await Api.get<{
+      data: TransactionRecord[];
+      totalRecordsCount: number;
+      metrics: PaymentSummaryMetrics;
+    }>("/payments.php", {
+      filter: selectedFilter,
+      search: searchQuery,
+      date_preset: datePreset,
+      date_from: dateFrom,
+      date_to: dateTo,
+    }, { forceRefresh: isRefresh });
+
+    if (res.success && res.data) {
+      const responseData = res.data as any;
+      setTransactions(responseData.data || []);
+      setTotalRecordsCount(responseData.totalRecordsCount || 0);
+      if (responseData.metrics) {
+        setMetrics(responseData.metrics);
+      }
+    } else {
+      setError(res.error || "Failed to fetch payments");
+    }
+    setLoading(false);
+  }, [selectedFilter, searchQuery, datePreset, dateFrom, dateTo]);
+
+  useEffect(() => {
+    if (isMounted) {
+      fetchPayments(true);
+    }
+  }, [isMounted, fetchPayments]);
+
   if (!isMounted) {
     return null;
   }
 
-  const handleVerifyTransaction = (txnId: string) => {
+  const handleVerifyTransaction = async (txnId: string) => {
+    // Optimistic UI update
     setTransactions((prev) =>
       prev.map((t) => (t.id === txnId ? { ...t, status: "verified" } : t))
     );
+
+    const res = await Api.post("/payments.php", {
+      action: "verify",
+      txn_id: txnId,
+    });
+
+    if (res.success) {
+      fetchPayments(true);
+    } else {
+      alert(`Failed to verify transaction: ${res.error}`);
+      fetchPayments(true);
+    }
   };
 
-  const handleFlagTransaction = (txnId: string) => {
+  const handleFlagTransaction = async (txnId: string) => {
+    // Optimistic UI update
     setTransactions((prev) =>
       prev.map((t) => (t.id === txnId ? { ...t, status: "flagged" } : t))
     );
+
+    const res = await Api.post("/payments.php", {
+      action: "flag",
+      txn_id: txnId,
+    });
+
+    if (res.success) {
+      fetchPayments(true);
+    } else {
+      alert(`Failed to flag transaction: ${res.error}`);
+      fetchPayments(true);
+    }
   };
 
   const handleExportCsv = () => {
-    alert(`Exporting financial reconciliation report (CSV) for ${datePreset} period...`);
+    if (transactions.length === 0) {
+      alert("No transaction records available to export for the selected filters.");
+      return;
+    }
+
+    const headers = [
+      "Txn Ref",
+      "Order ID",
+      "Customer Name",
+      "Customer Phone",
+      "Gateway",
+      "Method",
+      "Amount (USD)",
+      "Amount (KHR)",
+      "Status",
+      "Date",
+      "Time",
+    ];
+
+    const rows = transactions.map((t) => [
+      `"${t.txnRef}"`,
+      `"${t.orderId}"`,
+      `"${t.customerName.replace(/"/g, '""')}"`,
+      `"${t.customerPhone}"`,
+      `"${t.gateway}"`,
+      `"${t.method}"`,
+      t.amountUsd.toFixed(2),
+      t.amountKhr,
+      `"${t.status}"`,
+      `"${t.dateLabel}"`,
+      `"${t.timestamp}"`,
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `financial_reconciliation_${datePreset}_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleClearFilters = () => {
@@ -222,108 +183,52 @@ export default function PaymentsPage() {
     dateFrom !== "" ||
     dateTo !== "";
 
-  // Date filtering logic
-  const isDateInRange = (tDateIso: string) => {
-    if (datePreset === "today") {
-      return tDateIso === "2026-09-05";
-    }
-    if (datePreset === "week") {
-      return tDateIso >= "2026-08-30" && tDateIso <= "2026-09-05";
-    }
-    if (datePreset === "month") {
-      return tDateIso >= "2026-09-01" && tDateIso <= "2026-09-30";
-    }
-    if (datePreset === "custom") {
-      if (dateFrom && tDateIso < dateFrom) return false;
-      if (dateTo && tDateIso > dateTo) return false;
-      return true;
-    }
-    return true; // "all"
-  };
-
-  const filteredTransactions = transactions.filter((t) => {
-    // 1. Date filter
-    if (!isDateInRange(t.dateIso)) return false;
-
-    // 2. Method & Status Filter
-    if (selectedFilter === "khqr" && t.method !== "khqr") return false;
-    if (selectedFilter === "pending_audit" && t.status !== "pending_review") return false;
-    if (selectedFilter === "cod" && t.method !== "cod") return false;
-    if (selectedFilter === "counter" && t.method !== "counter_cash") return false;
-    if (selectedFilter === "cancelled" && t.status !== "refunded" && t.status !== "flagged") return false;
-
-    // 3. Search query filter
-    if (searchQuery.trim() !== "") {
-      const q = searchQuery.toLowerCase();
-      return (
-        t.txnRef.toLowerCase().includes(q) ||
-        t.orderId.toLowerCase().includes(q) ||
-        t.customerName.toLowerCase().includes(q) ||
-        t.customerPhone.toLowerCase().includes(q) ||
-        t.gateway.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
-
-  // Calculate metrics for current date selection
-  const dateFilteredOnly = transactions.filter((t) => isDateInRange(t.dateIso));
-
-  const verifiedKhqrUsd = dateFilteredOnly
-    .filter((t) => t.method === "khqr" && t.status === "verified")
-    .reduce((sum, t) => sum + t.amountUsd, 0);
-
-  const totalUsd = dateFilteredOnly
-    .filter((t) => t.status === "verified")
-    .reduce((sum, t) => sum + t.amountUsd, 0);
-
-  const pendingKhqrList = dateFilteredOnly.filter((t) => t.status === "pending_review");
-  const pendingAmountUsd = pendingKhqrList.reduce((sum, t) => sum + t.amountUsd, 0);
-
-  const codOnHandUsd = dateFilteredOnly
-    .filter((t) => t.method === "cod" && t.status === "verified")
-    .reduce((sum, t) => sum + t.amountUsd, 0);
-
-  const cancelledList = dateFilteredOnly.filter(
-    (t) => t.status === "refunded" || t.status === "flagged"
-  );
-  const cancelledAmountUsd = cancelledList.reduce((sum, t) => sum + t.amountUsd, 0);
-
-  const metrics: PaymentSummaryMetrics = {
-    totalSettledUsd: totalUsd,
-    totalSettledKhr: totalUsd * 4000,
-    khqrSharePercentage: Math.round((verifiedKhqrUsd / (totalUsd || 1)) * 100),
-    pendingVerificationCount: pendingKhqrList.length,
-    pendingVerificationAmountUsd: pendingAmountUsd,
-    codOnHandUsd: codOnHandUsd,
-    cancelledCount: cancelledList.length,
-    cancelledAmountUsd: cancelledAmountUsd,
-  };
-
   return (
     <div className="flex flex-col w-full min-h-screen pb-space-2xl gap-space-lg">
       {/* SubHeader & Financial Metrics Cards */}
       <PaymentSubHeader metrics={metrics} onExportCsv={handleExportCsv} />
 
-      {/* Transactions Audit Table */}
-      <PaymentTable
-        transactions={filteredTransactions}
-        totalRecordsCount={transactions.length}
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
-        selectedFilter={selectedFilter}
-        onFilterChange={setSelectedFilter}
-        datePreset={datePreset}
-        onDatePresetChange={setDatePreset}
-        dateFrom={dateFrom}
-        onDateFromChange={setDateFrom}
-        dateTo={dateTo}
-        onDateToChange={setDateTo}
-        hasActiveFilters={hasActiveFilters}
-        onClearFilters={handleClearFilters}
-        onSelectTransactionForProof={setSelectedTxnForProof}
-        onVerifyTransaction={handleVerifyTransaction}
-      />
+      {/* Error alert if backend call failed */}
+      {error && (
+        <div className="bg-error-container/20 border border-error/30 p-space-md rounded-2xl flex items-center justify-between text-error text-xs font-bold">
+          <span>Backend API Error: {error}</span>
+          <button
+            type="button"
+            onClick={() => fetchPayments(true)}
+            className="px-3 py-1 bg-error text-white rounded-lg hover:bg-error/80 flex items-center gap-1.5 transition-all"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Retry
+          </button>
+        </div>
+      )}
+
+      {/* Loading Skeleton Indicator */}
+      {loading && transactions.length === 0 ? (
+        <div className="bg-surface-container-lowest rounded-2xl shadow-xs border border-border/40 p-12 flex flex-col items-center justify-center gap-3 text-on-surface-variant">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <span className="font-label-md text-sm font-bold">Loading live payment transactions...</span>
+        </div>
+      ) : (
+        /* Transactions Audit Table */
+        <PaymentTable
+          transactions={transactions}
+          totalRecordsCount={totalRecordsCount}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          datePreset={datePreset}
+          onDatePresetChange={setDatePreset}
+          dateFrom={dateFrom}
+          onDateFromChange={setDateFrom}
+          dateTo={dateTo}
+          onDateToChange={setDateTo}
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={handleClearFilters}
+          onSelectTransactionForProof={setSelectedTxnForProof}
+          onVerifyTransaction={handleVerifyTransaction}
+        />
+      )}
 
       {/* KHQR Proof Slip Viewer Modal */}
       {selectedTxnForProof && (
@@ -337,4 +242,5 @@ export default function PaymentsPage() {
     </div>
   );
 }
+
 

@@ -14,6 +14,9 @@ CorsMiddleware::handle();
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
 
+// Require Admin Role Authentication
+$adminUser = AuthMiddleware::authenticate($pdo, ['admin']);
+
 if ($method === 'GET') {
     try {
         $targetId = $_GET['id'] ?? null;
