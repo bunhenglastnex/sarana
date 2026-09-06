@@ -204,10 +204,11 @@ if ($method === 'GET') {
             LEFT JOIN users u ON o.delivery_staff_id = u.id
             WHERE o.fulfillment_type = 'delivery'
               AND (
-                o.status = 'ready_for_delivery'
+                o.status IN ('pending', 'preparing', 'ready_for_delivery')
                 OR (o.delivery_staff_id = ? AND o.status IN ('on_the_way', 'completed'))
+                OR o.delivery_staff_id IS NULL
               )
-            ORDER BY FIELD(o.status, 'on_the_way', 'ready_for_delivery', 'completed'), o.id DESC
+            ORDER BY FIELD(o.status, 'on_the_way', 'ready_for_delivery', 'preparing', 'pending', 'completed'), o.id DESC
         ");
         $stmt->execute([$staffId]);
         $orders = $stmt->fetchAll();
@@ -226,6 +227,13 @@ if ($method === 'GET') {
         $cashRow = $cashStmt->fetch();
         $cashInHand = $cashRow['cash_in_hand'] ? (float)$cashRow['cash_in_hand'] : 0.00;
 
+        // Fetch Courier Duty Status from courier_telemetry
+        $dutyStmt = $pdo->prepare("SELECT status FROM courier_telemetry WHERE user_id = ?");
+        $dutyStmt->execute([$staffId]);
+        $dutyRow = $dutyStmt->fetch();
+        $dutyStatus = $dutyRow['status'] ?? 'active';
+        $isOnline = ($dutyStatus !== 'offline');
+
         foreach ($orders as &$order) {
             $order['id'] = (int)$order['id'];
             $itemStmt = $pdo->prepare("SELECT id, food_id, food_name, price, quantity, subtotal FROM order_items WHERE order_id = ?");
@@ -235,6 +243,8 @@ if ($method === 'GET') {
 
         jsonResponse(1, 'Delivery staff dashboard fetched successfully', [
             'staff_id'     => $staffId,
+            'duty_status'  => $dutyStatus,
+            'is_online'    => $isOnline,
             'cash_in_hand' => $cashInHand,
             'orders'       => $orders
         ]);
@@ -245,15 +255,47 @@ if ($method === 'GET') {
     // Delivery Staff Action
     $input = json_decode(file_get_contents('php://input'), true);
 
-    if (empty($input['order_id']) || empty($input['action'])) {
-        jsonResponse(0, 'Validation Error: order_id and action are required', null, 400);
+    if (empty($input['action'])) {
+        jsonResponse(0, 'Validation Error: action is required', null, 400);
     }
 
-    $orderId = (int)$input['order_id'];
     $action = $input['action'];
     $staffId = isset($input['staff_id']) ? (int)$input['staff_id'] : 2;
 
     try {
+        if ($action === 'update_duty_status' || $action === 'toggle_shift') {
+            $isOnline = !empty($input['is_online']) || (isset($input['status']) && in_array($input['status'], ['active', 'available', 'online']));
+            $statusStr = $isOnline ? 'active' : 'offline';
+
+            $stmt = $pdo->prepare("
+                INSERT INTO courier_telemetry (user_id, status)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE status = VALUES(status)
+            ");
+            $stmt->execute([$staffId, $statusStr]);
+
+            logSystemAction(
+                $pdo,
+                'COURIER_SHIFT_TOGGLE',
+                'DELIVERY',
+                "Courier #{$staffId} shift status updated to '{$statusStr}'.",
+                'info',
+                $staffId
+            );
+
+            jsonResponse(1, "Shift status updated to {$statusStr}", [
+                'staff_id'  => $staffId,
+                'status'    => $statusStr,
+                'is_online' => $isOnline
+            ]);
+            return;
+        }
+
+        if (empty($input['order_id'])) {
+            jsonResponse(0, 'Validation Error: order_id is required for this action', null, 400);
+        }
+
+        $orderId = (int)$input['order_id'];
         // Fetch order details & rider details
         $orderStmt = $pdo->prepare("SELECT id, order_number, customer_name, customer_phone, telegram_chat_id, status FROM orders WHERE id = ?");
         $orderStmt->execute([$orderId]);
@@ -264,7 +306,29 @@ if ($method === 'GET') {
         $staff = $staffStmt->fetch();
         $riderName = $staff['name'] ?? 'Delivery Rider';
 
-        if ($action === 'pickup_from_kitchen') {
+        if ($action === 'accept_order') {
+            $stmt = $pdo->prepare("
+                UPDATE orders
+                SET delivery_staff_id = ?
+                WHERE id = ? AND fulfillment_type = 'delivery'
+            ");
+            $stmt->execute([$staffId, $orderId]);
+
+            logSystemAction(
+                $pdo,
+                'DELIVERY_ACCEPT',
+                'DELIVERY',
+                "Rider '{$riderName}' accepted order '{$order['order_number']}'.",
+                'info',
+                $staffId,
+                $riderName
+            );
+
+            jsonResponse(1, 'Order accepted by delivery rider.', [
+                'order_id'          => $orderId,
+                'delivery_staff_id' => $staffId
+            ]);
+        } elseif ($action === 'pickup_from_kitchen') {
             // Rider picks up order -> status becomes on_the_way
             $stmt = $pdo->prepare("
                 UPDATE orders

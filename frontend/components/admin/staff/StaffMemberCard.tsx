@@ -42,12 +42,13 @@ export const StaffMemberCard: React.FC<StaffMemberCardProps> = ({
             <span>ONLINE</span>
           </span>
         );
+      case "offline":
       case "logout":
       default:
         return (
-          <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[10px] font-bold border border-border/30 shrink-0 flex items-center gap-1">
-            <LogOut className="w-3 h-3 text-on-surface-variant" />
-            <span>LOGOUT</span>
+          <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold border border-slate-300/60 shrink-0 flex items-center gap-1">
+            <LogOut className="w-3 h-3 text-slate-500" />
+            <span>OFFLINE</span>
           </span>
         );
     }

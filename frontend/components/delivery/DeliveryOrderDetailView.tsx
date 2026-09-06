@@ -28,7 +28,12 @@ export const DeliveryOrderDetailView: React.FC<DeliveryOrderDetailViewProps> = (
   orderId = "1024",
 }) => {
   const router = useRouter();
-  const { getOrderById, updateDeliveryStage, showToast } = useDeliveryStore();
+  const { getOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
+  
+  React.useEffect(() => {
+    fetchLiveOrders();
+  }, [fetchLiveOrders]);
+
   const order: DeliveryOrder = getOrderById(orderId) || getOrderById("1024")!;
 
   const [currentStage, setCurrentStage] = useState<

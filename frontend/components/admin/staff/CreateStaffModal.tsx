@@ -273,6 +273,23 @@ export const CreateStaffModal: React.FC<CreateStaffModalProps> = ({
             </div>
           </div>
 
+          {/* Account Password Field */}
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-on-surface">
+              Account Login Password (Default: <code className="bg-surface-container px-1 py-0.5 rounded text-[11px] text-primary">driver123</code>)
+            </label>
+            <div className="relative">
+              <Shield className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+              <input
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="driver123"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-surface-container-low border border-border/40 text-on-surface focus:outline-none focus:border-primary font-medium"
+              />
+            </div>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/30">
             <button

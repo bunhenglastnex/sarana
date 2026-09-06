@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDeliveryStore } from "@/lib/store/useDeliveryStore";
+import { Api } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import { PickupHeroCard } from "./pickup/PickupHeroCard";
 import { PickupRestaurantCard } from "./pickup/PickupRestaurantCard";
 import { PickupChecklistCard, ChecklistItem } from "./pickup/PickupChecklistCard";
@@ -23,7 +25,12 @@ export const RestaurantPickupView: React.FC<RestaurantPickupViewProps> = ({
   orderId = "1024",
 }) => {
   const router = useRouter();
-  const { getOrderById, updateDeliveryStage, showToast } = useDeliveryStore();
+  const { getOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
+
+  React.useEffect(() => {
+    fetchLiveOrders();
+  }, [fetchLiveOrders]);
+
   const order = getOrderById(orderId) || getOrderById("1024")!;
 
   const [statusState, setStatusState] = useState<
@@ -87,7 +94,7 @@ export const RestaurantPickupView: React.FC<RestaurantPickupViewProps> = ({
   const checkedCount = checklistItems.filter((item) => checkedState[item.id]).length;
   const remainingCount = checklistItems.length - checkedCount;
 
-  const handleConfirmPickup = () => {
+  const handleConfirmPickup = async () => {
     if (isConfirmed) {
       router.push(`/delivery/${order.id}/navigate`);
       return;
@@ -98,6 +105,17 @@ export const RestaurantPickupView: React.FC<RestaurantPickupViewProps> = ({
     setStatusState("OUT_FOR_DELIVERY");
     updateDeliveryStage(order.id, "picked_up");
     showToast(`Confirmed Pickup! Order ${order.orderNumber} is now Out for Delivery.`);
+
+    try {
+      const authUserId = useAuthStore.getState().userId;
+      await Api.post("/delivery.php", {
+        action: "pickup_from_kitchen",
+        order_id: Number(order.id),
+        staff_id: authUserId ? Number(authUserId) : undefined,
+      });
+    } catch (err) {
+      console.error("Failed to record kitchen pickup on server:", err);
+    }
 
     if (typeof window !== "undefined" && window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(100);

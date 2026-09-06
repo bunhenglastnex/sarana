@@ -22,7 +22,12 @@ export const ActiveNavigationContainer: React.FC<ActiveNavigationContainerProps>
   orderId = "1024",
 }) => {
   const router = useRouter();
-  const { getOrderById, updateDeliveryStage, showToast } = useDeliveryStore();
+  const { getOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
+
+  React.useEffect(() => {
+    fetchLiveOrders();
+  }, [fetchLiveOrders]);
+
   const order = getOrderById(orderId) || getOrderById("1024")!;
 
   const [showSmsToast, setShowSmsToast] = useState(false);

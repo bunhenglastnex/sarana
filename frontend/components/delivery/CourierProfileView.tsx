@@ -7,31 +7,47 @@ import { EquipmentCard } from "./profile/EquipmentCard";
 import { ProfileMenuList } from "./profile/ProfileMenuList";
 import { EndShiftSection } from "./profile/EndShiftSection";
 
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useApi } from "@/lib/api";
+
 export const CourierProfileView: React.FC = () => {
+  const { name, userId, phone } = useAuthStore();
+  const { data } = useApi<any>("/delivery.php");
+
+  const displayName = name || "Delivery Rider";
+  const driverCode = `#AE-DRV-${4790 + (userId || 2)}`;
+  const cashInHand = Number(data?.data?.cash_in_hand || data?.cash_in_hand || 0);
+
+  const completedOrdersCount = Array.isArray(data?.data?.orders || data?.orders)
+    ? (data?.data?.orders || data?.orders).filter(
+        (o: any) => o.status === "completed" || o.status === "delivered"
+      ).length
+    : 0;
+
   return (
     <div className="flex flex-col w-full px-screen-edge-padding space-y-space-lg max-w-md mx-auto pt-2 pb-24">
       {/* 1. Top Hero Profile Card */}
       <HeroProfileCard
-        name="Liem Vance"
-        driverCode="#AE-DRV-4791"
-        courierTitle="Senior Bistro Courier • Motorbike #2"
+        name={displayName}
+        driverCode={driverCode}
+        courierTitle={`Bistro Courier · Phone: ${phone || "+855 12 345 678"}`}
         rating={4.95}
-        totalDeliveries="320+ deliveries"
+        totalDeliveries={`${completedOrdersCount} completed today`}
       />
 
       {/* 2. Today's Performance & Shift Tracker */}
       <ShiftPerformanceCard
-        ordersCompleted={8}
+        ordersCompleted={completedOrdersCount}
         onlineHours="4.2h"
         onTimeRate="98%"
-        todayEarnings={42.0}
+        todayEarnings={cashInHand}
       />
 
       {/* 3. Quick Vehicle & Equipment Card */}
       <EquipmentCard
-        vehicleName="Honda PCX 150"
-        vehiclePlate="Plate: 68-B2 491.20 • Insured"
-        fleetCode="Fleet #02"
+        vehicleName="Honda Click 150i"
+        vehiclePlate="Plate: 1-AB 4910 • Insured"
+        fleetCode={`Fleet #${userId || 2}`}
         thermalBagCode="Thermal Hearth Bag #04"
         thermalBagTempHold="Inspected Today: 68°C hold certified"
       />

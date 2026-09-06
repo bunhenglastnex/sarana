@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ShiftStatusBeacon } from "@/components/delivery/ShiftStatusBeacon";
 import { DeliveryCard } from "@/components/delivery/DeliveryCard";
 import { useDeliveryStore } from "@/lib/store/useDeliveryStore";
@@ -11,11 +11,16 @@ export default function DeliveryHomePage() {
     availableOrders,
     acceptOrder,
     resetAvailableOrders,
+    fetchLiveOrders,
     selectedFilter,
     setSelectedFilter,
   } = useDeliveryStore();
 
   const [viewMode, setViewMode] = useState<"orders" | "empty">("orders");
+
+  useEffect(() => {
+    fetchLiveOrders();
+  }, [fetchLiveOrders]);
 
   // Filter orders based on active pill
   const filteredOrders = availableOrders.filter((order) => {

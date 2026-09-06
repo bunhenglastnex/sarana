@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { LogOut, Loader2, Check } from "lucide-react";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export const EndShiftSection: React.FC = () => {
+  const router = useRouter();
+  const clearSession = useAuthStore((state) => state.clearSession);
   const [shiftStatus, setShiftStatus] = useState<"idle" | "closing" | "closed">(
     "idle"
   );
@@ -16,7 +20,9 @@ export const EndShiftSection: React.FC = () => {
       setShiftStatus("closing");
       setTimeout(() => {
         setShiftStatus("closed");
-      }, 900);
+        clearSession();
+        router.push("/delivery/login");
+      }, 800);
     }
   };
 

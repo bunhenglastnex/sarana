@@ -31,11 +31,17 @@ export default function StaffPage() {
           avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80`,
           role: "delivery",
           roleLabel: "Delivery Driver",
-          status: (user.status === "active"
+          status: (user.status === "active" || user.status === "available"
             ? "available"
+            : user.status === "on_delivery"
+            ? "on_delivery"
             : "offline") as StaffStatus,
           statusLabel:
-            user.status === "active" ? "ONLINE (AVAILABLE)" : "OFFLINE",
+            user.status === "active" || user.status === "available"
+              ? "ONLINE (AVAILABLE)"
+              : user.status === "on_delivery"
+              ? "ON DELIVERY"
+              : "OFFLINE (PAUSED)",
           vehicleType: "motorbike",
           vehicleLabel: "Honda Click (Motorbike)",
           deliveriesToday: 0,

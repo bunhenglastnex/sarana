@@ -14,20 +14,41 @@ class UserService {
     }
 
     public function getUsers(?string $role = null, ?string $status = null): array {
-        $query = "SELECT id, name, phone, email, avatar_url, role, status, telegram_chat_id, telegram_username, created_at FROM users WHERE 1=1";
+        $query = "
+            SELECT 
+                u.id, 
+                u.name, 
+                u.phone, 
+                u.email, 
+                u.avatar_url, 
+                u.role, 
+                u.status as account_status,
+                COALESCE(t.status, u.status) as status,
+                t.status as courier_status,
+                t.vehicle_type,
+                t.vehicle_label,
+                t.speed_kmh,
+                t.temp_celsius,
+                u.telegram_chat_id, 
+                u.telegram_username, 
+                u.created_at 
+            FROM users u
+            LEFT JOIN courier_telemetry t ON u.id = t.user_id
+            WHERE 1=1
+        ";
         $params = [];
 
         if (!empty($role)) {
-            $query .= " AND role = ?";
+            $query .= " AND u.role = ?";
             $params[] = $role;
         }
 
         if (!empty($status)) {
-            $query .= " AND status = ?";
+            $query .= " AND COALESCE(t.status, u.status) = ?";
             $params[] = $status;
         }
 
-        $query .= " ORDER BY id DESC";
+        $query .= " ORDER BY u.id DESC";
 
         $stmt = $this->pdo->prepare($query);
         $stmt->execute($params);

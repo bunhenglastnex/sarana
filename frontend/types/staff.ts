@@ -1,6 +1,6 @@
 export type StaffRole = "all" | "delivery" | "kitchen" | "management" | "service";
 
-export type StaffStatus = "all" | "on_delivery" | "available" | "logout";
+export type StaffStatus = "all" | "on_delivery" | "available" | "offline" | "logout";
 
 export interface StaffRecord {
   id: string;

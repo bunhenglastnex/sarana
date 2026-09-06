@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDeliveryStore } from "@/lib/store/useDeliveryStore";
+import { Api } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import { ConfirmHeaderSummary } from "./confirm/ConfirmHeaderSummary";
 import { ConfirmCashCard } from "./confirm/ConfirmCashCard";
 import { ConfirmProofCard } from "./confirm/ConfirmProofCard";
@@ -21,7 +23,12 @@ export const DeliveryConfirmContainer: React.FC<DeliveryConfirmContainerProps> =
   orderId = "1024",
 }) => {
   const router = useRouter();
-  const { getOrderById, updateDeliveryStage, showToast } = useDeliveryStore();
+  const { getOrderById, updateDeliveryStage, showToast, fetchLiveOrders } = useDeliveryStore();
+
+  React.useEffect(() => {
+    fetchLiveOrders();
+  }, [fetchLiveOrders]);
+
   const order = getOrderById(orderId) || getOrderById("1024")!;
 
   const [isCashChecked, setIsCashChecked] = useState(true);
@@ -34,13 +41,23 @@ export const DeliveryConfirmContainer: React.FC<DeliveryConfirmContainerProps> =
     setIsCashChecked(!isCashChecked);
   };
 
-  const handleConfirmDelivery = () => {
+  const handleConfirmDelivery = async () => {
     if (!isCashChecked || isSubmitting) return;
 
     setIsSubmitting(true);
     showToast(`Verifying cash payment ($${amountToCollect}) with Admin...`);
 
-    // Static 3-second simulation for admin verification
+    try {
+      const authUserId = useAuthStore.getState().userId;
+      await Api.post("/delivery.php", {
+        action: "confirm_delivered",
+        order_id: Number(order.id),
+        staff_id: authUserId ? Number(authUserId) : undefined,
+      });
+    } catch (err) {
+      console.error("Failed to complete delivery on server:", err);
+    }
+
     setTimeout(() => {
       setIsSubmitting(false);
       updateDeliveryStage(order.id, "completed");
@@ -49,7 +66,7 @@ export const DeliveryConfirmContainer: React.FC<DeliveryConfirmContainerProps> =
       if (typeof window !== "undefined" && window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(100);
       }
-    }, 3000);
+    }, 1500);
   };
 
   return (

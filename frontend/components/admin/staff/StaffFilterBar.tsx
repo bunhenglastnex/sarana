@@ -64,15 +64,15 @@ export const StaffFilterBar: React.FC<StaffFilterBarProps> = ({
 
         <button
           type="button"
-          onClick={() => onStatusFilterChange("logout")}
+          onClick={() => onStatusFilterChange("offline")}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-            statusFilter === "logout"
+            statusFilter === "offline" || statusFilter === "logout"
               ? "bg-slate-700 text-white shadow-xs"
               : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
           }`}
         >
           <LogOut className="w-3.5 h-3.5" />
-          <span>LOGOUT</span>
+          <span>OFFLINE</span>
         </button>
       </div>
 
