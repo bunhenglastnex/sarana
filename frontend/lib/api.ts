@@ -1,6 +1,6 @@
 /**
  * sarana - Unified API Client with Intelligent Caching & Error Handling
- * 
+ *
  * Features:
  * - Simple syntax: Api.get(...), Api.post(...), Api.put(...), Api.patch(...), Api.delete(...)
  * - Smart Caching (In-Memory + SessionStorage):
@@ -16,15 +16,15 @@
  *   `useApi(...)` for seamless client-side page fetching with caching.
  */
 
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // ==========================================
 // 1. Types & Interfaces
 // ==========================================
 
-export interface RequestOptions extends Omit<RequestInit, 'body' | 'cache'> {
+export interface RequestOptions extends Omit<RequestInit, "body" | "cache"> {
   params?: Record<string, any>;
   body?: any;
   /**
@@ -61,9 +61,9 @@ interface CacheEntry<T = any> {
 
 // Default Configuration
 const DEFAULT_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const DEFAULT_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in ms
-const SESSION_CACHE_PREFIX = 'sarana_api_cache:';
+const SESSION_CACHE_PREFIX = "sarana_api_cache:";
 
 // ==========================================
 // 2. Cache Store (In-Memory + SessionStorage)
@@ -78,14 +78,20 @@ const inFlightRequests = new Map<string, Promise<ApiResponse<any>>>();
 /**
  * Generate a unique deterministic cache key based on Method, URL, and Params
  */
-function createCacheKey(method: string, url: string, params?: Record<string, any>): string {
+function createCacheKey(
+  method: string,
+  url: string,
+  params?: Record<string, any>,
+): string {
   if (!params || Object.keys(params).length === 0) {
     return `${method}:${url}`;
   }
   const sortedKeys = Object.keys(params).sort();
   const queryString = sortedKeys
-    .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k] ?? '')}`)
-    .join('&');
+    .map(
+      (k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k] ?? "")}`,
+    )
+    .join("&");
   return `${method}:${url}?${queryString}`;
 }
 
@@ -103,9 +109,11 @@ function getFromCache<T>(cacheKey: string): T | null {
   }
 
   // 2. Check browser sessionStorage (survives tab reloads)
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     try {
-      const stored = window.sessionStorage.getItem(SESSION_CACHE_PREFIX + cacheKey);
+      const stored = window.sessionStorage.getItem(
+        SESSION_CACHE_PREFIX + cacheKey,
+      );
       if (stored) {
         const entry: CacheEntry<T> = JSON.parse(stored);
         if (Date.now() <= entry.expiresAt) {
@@ -135,11 +143,11 @@ function saveToCache<T>(cacheKey: string, data: T, ttlMs: number): void {
 
   memoryCache.set(cacheKey, entry);
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     try {
       window.sessionStorage.setItem(
         SESSION_CACHE_PREFIX + cacheKey,
-        JSON.stringify(entry)
+        JSON.stringify(entry),
       );
     } catch {
       // Storage quota or private mode fallback
@@ -153,7 +161,7 @@ function saveToCache<T>(cacheKey: string, data: T, ttlMs: number): void {
 export function clearApiCache(endpointPattern?: string | RegExp): void {
   if (!endpointPattern) {
     memoryCache.clear();
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
         const keysToRemove: string[] = [];
         for (let i = 0; i < window.sessionStorage.length; i++) {
@@ -173,13 +181,13 @@ export function clearApiCache(endpointPattern?: string | RegExp): void {
   // Selective invalidation
   for (const key of Array.from(memoryCache.keys())) {
     const isMatch =
-      typeof endpointPattern === 'string'
+      typeof endpointPattern === "string"
         ? key.includes(endpointPattern)
         : endpointPattern.test(key);
 
     if (isMatch) {
       memoryCache.delete(key);
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         try {
           window.sessionStorage.removeItem(SESSION_CACHE_PREFIX + key);
         } catch {
@@ -199,22 +207,22 @@ export function clearApiCache(endpointPattern?: string | RegExp): void {
  */
 function buildFullUrl(endpoint: string, params?: Record<string, any>): string {
   let url = endpoint;
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    const base = DEFAULT_BASE_URL.replace(/\/+$/, '');
-    const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    const base = DEFAULT_BASE_URL.replace(/\/+$/, "");
+    const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
     url = `${base}${path}`;
   }
 
   if (params && Object.keys(params).length > 0) {
     const searchParams = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined && value !== null && value !== '') {
+      if (value !== undefined && value !== null && value !== "") {
         searchParams.append(key, String(value));
       }
     }
     const queryString = searchParams.toString();
     if (queryString) {
-      url += (url.includes('?') ? '&' : '?') + queryString;
+      url += (url.includes("?") ? "&" : "?") + queryString;
     }
   }
 
@@ -225,14 +233,14 @@ function buildFullUrl(endpoint: string, params?: Record<string, any>): string {
  * Low-level HTTP execution with caching, in-flight deduplication, and error catching
  */
 async function executeRequest<T = any>(
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   endpoint: string,
-  options: RequestOptions = {}
+  options: RequestOptions = {},
 ): Promise<ApiResponse<T>> {
   const {
     params,
     body,
-    cache = method === 'GET', // Default cache true for GET, false for others
+    cache = method === "GET", // Default cache true for GET, false for others
     ttl = DEFAULT_CACHE_TTL,
     forceRefresh = false,
     headers = {},
@@ -243,7 +251,7 @@ async function executeRequest<T = any>(
   const cacheKey = createCacheKey(method, fullUrl);
 
   // 1. Check Cache for GET requests (Prevent refetch on page navigation)
-  if (method === 'GET' && cache && !forceRefresh) {
+  if (method === "GET" && cache && !forceRefresh) {
     const cachedData = getFromCache<T>(cacheKey);
     if (cachedData !== null) {
       return {
@@ -265,7 +273,7 @@ async function executeRequest<T = any>(
   const fetchPromise = (async (): Promise<ApiResponse<T>> => {
     try {
       const requestHeaders: Record<string, string> = {
-        Accept: 'application/json',
+        Accept: "application/json",
         ...headers,
       };
 
@@ -276,7 +284,7 @@ async function executeRequest<T = any>(
           // Let browser set boundary automatically for FormData
         } else {
           serializedBody = JSON.stringify(body);
-          requestHeaders['Content-Type'] = 'application/json';
+          requestHeaders["Content-Type"] = "application/json";
         }
       }
 
@@ -313,13 +321,17 @@ async function executeRequest<T = any>(
       }
 
       // Handle API responses with { code: 1|0, msg: '...', data: ... }
-      if (parsedData && typeof parsedData === 'object' && 'code' in parsedData) {
+      if (
+        parsedData &&
+        typeof parsedData === "object" &&
+        "code" in parsedData
+      ) {
         const isSuccessCode = parsedData.code === 1 || parsedData.code === 200;
         if (!isSuccessCode) {
           return {
             success: false,
             data: parsedData.data ?? null,
-            error: parsedData.msg || parsedData.message || 'Operation failed',
+            error: parsedData.msg || parsedData.message || "Operation failed",
             status: response.status,
             fromCache: false,
           };
@@ -331,24 +343,28 @@ async function executeRequest<T = any>(
       }
 
       // Handle legacy API responses where backend returns { success: false, message: '...' }
-      if (parsedData && typeof parsedData === 'object' && parsedData.success === false) {
+      if (
+        parsedData &&
+        typeof parsedData === "object" &&
+        parsedData.success === false
+      ) {
         return {
           success: false,
           data: parsedData,
-          error: parsedData.message || parsedData.msg || 'Operation failed',
+          error: parsedData.message || parsedData.msg || "Operation failed",
           status: response.status,
           fromCache: false,
         };
       }
 
       // If caching is enabled for this GET request, save to cache
-      if (method === 'GET' && cache) {
+      if (method === "GET" && cache) {
         saveToCache(cacheKey, parsedData, ttl);
       }
 
       // Automatically invalidate related GET cache on successful mutation
-      if (method !== 'GET') {
-        const baseEndpoint = endpoint.split('?')[0];
+      if (method !== "GET") {
+        const baseEndpoint = endpoint.split("?")[0];
         clearApiCache(baseEndpoint);
       }
 
@@ -362,9 +378,9 @@ async function executeRequest<T = any>(
     } catch (err: any) {
       // Catch network failure or server unreachable without crashing
       const message =
-        err?.name === 'AbortError'
-          ? 'Request was cancelled'
-          : err?.message || 'Network error: Backend server unreachable.';
+        err?.name === "AbortError"
+          ? "Request was cancelled"
+          : err?.message || "Network error: Backend server unreachable.";
 
       return {
         success: false,
@@ -375,13 +391,13 @@ async function executeRequest<T = any>(
       };
     } finally {
       // Clean up in-flight tracker
-      if (method === 'GET') {
+      if (method === "GET") {
         inFlightRequests.delete(cacheKey);
       }
     }
   })();
 
-  if (method === 'GET' && cache) {
+  if (method === "GET" && cache) {
     inFlightRequests.set(cacheKey, fetchPromise);
   }
 
@@ -402,9 +418,9 @@ export const Api = {
   get: <T = any>(
     endpoint: string,
     params?: Record<string, any>,
-    options?: Omit<RequestOptions, 'params'>
+    options?: Omit<RequestOptions, "params">,
   ): Promise<ApiResponse<T>> => {
-    return executeRequest<T>('GET', endpoint, { ...options, params });
+    return executeRequest<T>("GET", endpoint, { ...options, params });
   },
 
   /**
@@ -416,9 +432,9 @@ export const Api = {
   post: <T = any>(
     endpoint: string,
     body?: any,
-    options?: Omit<RequestOptions, 'body'>
+    options?: Omit<RequestOptions, "body">,
   ): Promise<ApiResponse<T>> => {
-    return executeRequest<T>('POST', endpoint, { ...options, body });
+    return executeRequest<T>("POST", endpoint, { ...options, body });
   },
 
   /**
@@ -430,9 +446,9 @@ export const Api = {
   put: <T = any>(
     endpoint: string,
     body?: any,
-    options?: Omit<RequestOptions, 'body'>
+    options?: Omit<RequestOptions, "body">,
   ): Promise<ApiResponse<T>> => {
-    return executeRequest<T>('PUT', endpoint, { ...options, body });
+    return executeRequest<T>("PUT", endpoint, { ...options, body });
   },
 
   /**
@@ -444,9 +460,9 @@ export const Api = {
   patch: <T = any>(
     endpoint: string,
     body?: any,
-    options?: Omit<RequestOptions, 'body'>
+    options?: Omit<RequestOptions, "body">,
   ): Promise<ApiResponse<T>> => {
-    return executeRequest<T>('PATCH', endpoint, { ...options, body });
+    return executeRequest<T>("PATCH", endpoint, { ...options, body });
   },
 
   /**
@@ -458,9 +474,9 @@ export const Api = {
   delete: <T = any>(
     endpoint: string,
     params?: Record<string, any>,
-    options?: Omit<RequestOptions, 'params'>
+    options?: Omit<RequestOptions, "params">,
   ): Promise<ApiResponse<T>> => {
-    return executeRequest<T>('DELETE', endpoint, { ...options, params });
+    return executeRequest<T>("DELETE", endpoint, { ...options, params });
   },
 
   /**
@@ -470,13 +486,17 @@ export const Api = {
     /**
      * Clear all cached data or a specific endpoint
      */
-    clear: (endpointPattern?: string | RegExp) => clearApiCache(endpointPattern),
+    clear: (endpointPattern?: string | RegExp) =>
+      clearApiCache(endpointPattern),
     /**
      * Manually get data from cache
      */
-    get: <T = any>(endpoint: string, params?: Record<string, any>): T | null => {
+    get: <T = any>(
+      endpoint: string,
+      params?: Record<string, any>,
+    ): T | null => {
       const fullUrl = buildFullUrl(endpoint, params);
-      const key = createCacheKey('GET', fullUrl);
+      const key = createCacheKey("GET", fullUrl);
       return getFromCache<T>(key);
     },
     /**
@@ -486,10 +506,10 @@ export const Api = {
       endpoint: string,
       data: T,
       params?: Record<string, any>,
-      ttl: number = DEFAULT_CACHE_TTL
+      ttl: number = DEFAULT_CACHE_TTL,
     ): void => {
       const fullUrl = buildFullUrl(endpoint, params);
-      const key = createCacheKey('GET', fullUrl);
+      const key = createCacheKey("GET", fullUrl);
       saveToCache(key, data, ttl);
     },
   },
@@ -515,7 +535,7 @@ export interface UseApiResult<T> {
 /**
  * Custom React Hook for fetching data with automatic caching and state management.
  * Great for pages to instantly display cached data when navigating back!
- * 
+ *
  * Example:
  * ```tsx
  * const { data, loading, error, refetch } = useApi<FoodsResponse>('/api/foods.php');
@@ -524,13 +544,15 @@ export interface UseApiResult<T> {
 export function useApi<T = any>(
   endpoint: string | null,
   params?: Record<string, any>,
-  options?: RequestOptions
+  options?: RequestOptions,
 ): UseApiResult<T> {
   // Check initial cache synchronously to avoid flickering if already cached
   const initialData = endpoint ? Api.cache.get<T>(endpoint, params) : null;
 
   const [data, setData] = useState<T | null>(initialData);
-  const [loading, setLoading] = useState<boolean>(!initialData && Boolean(endpoint));
+  const [loading, setLoading] = useState<boolean>(
+    !initialData && Boolean(endpoint),
+  );
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState<boolean>(Boolean(initialData));
   const [status, setStatus] = useState<number>(initialData ? 200 : 0);
@@ -547,7 +569,7 @@ export function useApi<T = any>(
         return {
           success: false,
           data: null,
-          error: 'No endpoint provided',
+          error: "No endpoint provided",
           status: 0,
           fromCache: false,
         };
@@ -572,7 +594,7 @@ export function useApi<T = any>(
 
       return response;
     },
-    [endpoint, data]
+    [endpoint, data],
   );
 
   useEffect(() => {

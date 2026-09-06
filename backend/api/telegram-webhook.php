@@ -21,42 +21,41 @@ $text     = trim($message['text'] ?? '');
 
 $pdo = getDB();
 
-// Handle /start or /start <phone>
+// Handle /start or /start <phone_or_email>
 if (strpos($text, '/start') === 0) {
-    $parts = explode(' ', $text, 2);
-    $param = trim($parts[1] ?? '');
+    $param = trim(preg_replace('/^\/start[=\s]*/i', '', $text));
 
     if (!empty($param)) {
-        // Parameter passed, e.g., phone number or order number
-        $phone = $param;
+        $identifier = trim(urldecode($param));
 
-        // Find or link user by phone
-        $stmt = $pdo->prepare("SELECT id, name, phone FROM users WHERE phone = ?");
-        $stmt->execute([$phone]);
+        // Find or link user by phone, email or name
+        $stmt = $pdo->prepare("SELECT id, name, phone, email FROM users WHERE phone = ? OR email = ? OR name = ?");
+        $stmt->execute([$identifier, $identifier, $identifier]);
         $user = $stmt->fetch();
 
         if ($user) {
             $updateStmt = $pdo->prepare("UPDATE users SET telegram_chat_id = ?, telegram_username = ? WHERE id = ?");
             $updateStmt->execute([$chatId, $username, $user['id']]);
 
-            // Update any recent orders with this phone to link telegram_chat_id
-            $orderStmt = $pdo->prepare("UPDATE orders SET telegram_chat_id = ? WHERE customer_phone = ?");
-            $orderStmt->execute([$chatId, $phone]);
+            // Update any recent orders with this phone or user_id to link telegram_chat_id
+            $orderStmt = $pdo->prepare("UPDATE orders SET telegram_chat_id = ? WHERE customer_phone = ? OR user_id = ?");
+            $orderStmt->execute([$chatId, $user['phone'], $user['id']]);
 
-            $reply = "✅ <b>Account Linked Successfully!</b>\n\nWelcome back, <b>" . htmlspecialchars($user['name']) . "</b>!\nYour Telegram account is now connected. You will receive live updates here for your orders! 🍽️";
+            $userName = htmlspecialchars($user['name']);
+            $reply = "🎉 <b>Welcome to Amber Bistro, {$userName}!</b>\n\n✅ <b>Account Linked Successfully!</b>\nYour account (<code>{$identifier}</code>) is connected to Telegram. You will receive live status updates for all your orders! 🍽️📦";
         } else {
             // Create user
-            $insertStmt = $pdo->prepare("INSERT INTO users (name, phone, role, password, telegram_chat_id, telegram_username) VALUES (?, ?, 'customer', 'nopassword', ?, ?)");
-            $insertStmt->execute([$firstName, $phone, $chatId, $username]);
+            $isEmail = strpos($identifier, '@') !== false;
+            $phoneVal = $isEmail ? ('+855' . rand(10000000, 99999999)) : $identifier;
+            $emailVal = $isEmail ? $identifier : null;
 
-            // Update any pending orders with this phone
-            $orderStmt = $pdo->prepare("UPDATE orders SET telegram_chat_id = ? WHERE customer_phone = ?");
-            $orderStmt->execute([$chatId, $phone]);
+            $insertStmt = $pdo->prepare("INSERT INTO users (name, phone, email, role, password, telegram_chat_id, telegram_username, status) VALUES (?, ?, ?, 'customer', 'nopassword', ?, ?, 'active')");
+            $insertStmt->execute([$firstName, $phoneVal, $emailVal, $chatId, $username]);
 
-            $reply = "🎉 <b>Welcome to Online Ordering!</b>\n\nYour phone (<code>{$phone}</code>) is linked to Telegram! You will receive order notifications right here.";
+            $reply = "🎉 <b>Welcome to Amber Bistro, " . htmlspecialchars($firstName) . "!</b>\n\n✅ <b>Telegram Connected!</b>\nYour account (<code>{$identifier}</code>) is linked to Telegram! You will receive order notifications right here.";
         }
     } else {
-        $reply = "👋 <b>Hello {$firstName}!</b>\n\nWelcome to our Restaurant Ordering Bot.\n\nTo link your account, use link from website or send your phone number like:\n<code>/start 012345678</code>";
+        $reply = "👋 <b>Hello " . htmlspecialchars($firstName) . "!</b>\n\nWelcome to <b>Amber Bistro Bot</b>.\nTo link your account, use link from website or send:\n<code>/start YOUR_PHONE_OR_EMAIL</code>";
     }
 
     sendTelegramMessage($chatId, $reply);

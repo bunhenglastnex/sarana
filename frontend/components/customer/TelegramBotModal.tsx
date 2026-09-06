@@ -22,20 +22,36 @@ interface TelegramBotModalProps {
 export const TelegramBotModal: React.FC<TelegramBotModalProps> = ({
   isOpen,
   onClose,
-  userName = "Valued Customer",
-  botUsername = "AmberBistro_order_bot",
-  telegramUrl = "https://t.me/AmberBistro_order_bot",
+  userName,
+  botUsername,
+  telegramUrl,
 }) => {
-  const setTelegramLink = useAuthStore((state) => state.setTelegramLink);
+  const { userId: authUserId, name: authName, phone: authPhone, email: authEmail, isTelegramLinked, setTelegramLink } = useAuthStore();
 
   if (!isOpen) return null;
 
+  const currentUserName = userName || authName || "Valued Customer";
+  const currentBotUsername = botUsername || process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "bunheng1dev_bot";
+  
+  let startParam = "";
+  if (authUserId) {
+    startParam = `usr_${authUserId}`;
+  } else if (authPhone) {
+    startParam = authPhone.replace(/[^0-9]/g, "");
+  } else if (authEmail) {
+    startParam = authEmail.replace(/@/g, "_at_").replace(/\./g, "_dot_").replace(/[^a-zA-Z0-9_]/g, "");
+  } else if (authName) {
+    startParam = authName.replace(/[^a-zA-Z0-9_]/g, "_");
+  }
+
+  const currentTelegramUrl = telegramUrl || (startParam ? `https://t.me/${currentBotUsername}?start=${startParam}` : `https://t.me/${currentBotUsername}`);
+
   const handleConnectTelegram = () => {
-    // Save demo telegram link status in store
-    setTelegramLink("@" + botUsername, botUsername);
-    // Open official Telegram bot link in new tab
+    // Save telegram link status in store
+    setTelegramLink("@" + currentBotUsername, currentBotUsername);
+    // Open official Telegram bot link in new tab with start parameter
     if (typeof window !== "undefined") {
-      window.open(telegramUrl, "_blank", "noopener,noreferrer");
+      window.open(currentTelegramUrl, "_blank", "noopener,noreferrer");
     }
     onClose();
   };
@@ -80,7 +96,7 @@ export const TelegramBotModal: React.FC<TelegramBotModalProps> = ({
         {/* Welcome Card & Benefits */}
         <div className="space-y-3 bg-zinc-800/60 border border-white/5 p-4 rounded-2xl z-10">
           <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-            <span>Welcome, {userName}</span>
+            <span>Welcome, {currentUserName}</span>
           </div>
 
           <p className="text-xs text-zinc-300 leading-relaxed">
@@ -111,7 +127,7 @@ export const TelegramBotModal: React.FC<TelegramBotModalProps> = ({
             className="w-full h-11 bg-[#24A1DE] hover:bg-[#1f8ec4] text-white font-bold text-xs rounded-xl shadow-lg shadow-sky-500/25 flex items-center justify-center gap-2 transition-all active:scale-98"
           >
             <Send className="w-4 h-4" />
-            <span>Open Telegram Bot (@{botUsername})</span>
+            <span>Open Telegram Bot (@{currentBotUsername})</span>
             <ExternalLink className="w-3.5 h-3.5 opacity-80" />
           </button>
 

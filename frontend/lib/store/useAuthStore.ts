@@ -9,6 +9,8 @@ export interface AuthState {
   userId: number | null;
   name: string | null;
   phone: string | null;
+  email: string | null;
+  avatarUrl: string | null;
   role: 'admin' | 'staff' | 'delivery' | 'customer';
   telegramChatId: string | null;
   telegramUsername: string | null;
@@ -27,6 +29,8 @@ export const useAuthStore = create<AuthState>()(
       userId: null,
       name: null,
       phone: null,
+      email: null,
+      avatarUrl: null,
       role: 'customer',
       telegramChatId: null,
       telegramUsername: null,
@@ -45,6 +49,8 @@ export const useAuthStore = create<AuthState>()(
           userId: null,
           name: null,
           phone: null,
+          email: null,
+          avatarUrl: null,
           role: 'customer',
           telegramChatId: null,
           telegramUsername: null,

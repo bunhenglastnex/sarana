@@ -11,16 +11,23 @@ function createUsersTable(PDO $pdo): void {
         name VARCHAR(100) NOT NULL,
         phone VARCHAR(20) NOT NULL UNIQUE,
         email VARCHAR(100) NULL,
+        avatar_url VARCHAR(255) NULL,
         role ENUM('admin', 'staff', 'delivery', 'customer') DEFAULT 'customer',
         password VARCHAR(255) NOT NULL,
         telegram_chat_id VARCHAR(50) NULL,
         telegram_username VARCHAR(100) NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        status ENUM('active', 'inactive') DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
     $pdo->exec($sql);
 
     // Safely add columns if table already existed
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255) NULL AFTER email");
+    } catch (PDOException $e) {}
+
     try {
         $pdo->exec("ALTER TABLE users ADD COLUMN telegram_chat_id VARCHAR(50) NULL");
     } catch (PDOException $e) {}
@@ -29,5 +36,14 @@ function createUsersTable(PDO $pdo): void {
         $pdo->exec("ALTER TABLE users ADD COLUMN telegram_username VARCHAR(100) NULL");
     } catch (PDOException $e) {}
 
-    echo "  ✅ Table 'users' ready (with Telegram integration).\n";
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN status ENUM('active', 'inactive') DEFAULT 'active'");
+    } catch (PDOException $e) {}
+
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+    } catch (PDOException $e) {}
+
+    echo "  ✅ Table 'users' ready (with Telegram, Avatar & Status support).\n";
 }
+

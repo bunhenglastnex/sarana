@@ -1,20 +1,67 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StaffRecord, StaffStatus } from "@/types/staff";
-import { mockStaffMembers } from "@/components/admin/staff/mockStaff";
 import { StaffHeader } from "@/components/admin/staff/StaffHeader";
 import { StaffFilterBar } from "@/components/admin/staff/StaffFilterBar";
 import { StaffMemberCard } from "@/components/admin/staff/StaffMemberCard";
 import { StaffDetailModal } from "@/components/admin/staff/StaffDetailModal";
 import { CreateStaffModal } from "@/components/admin/staff/CreateStaffModal";
+import { Api } from "@/lib/api";
 
 export default function StaffPage() {
-  const [staffList, setStaffList] = useState<StaffRecord[]>(mockStaffMembers);
+  const [staffList, setStaffList] = useState<StaffRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StaffStatus>("all");
   const [selectedStaff, setSelectedStaff] = useState<StaffRecord | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const fetchDrivers = async () => {
+    setIsLoading(true);
+    try {
+      const res = await Api.get("/users.php", { role: "delivery" });
+      if (res.success && Array.isArray(res.data)) {
+        const mappedStaff: StaffRecord[] = res.data.map((user: any) => ({
+          id: String(user.id),
+          code: `DRV-${user.id}`,
+          name: user.name,
+          phone: user.phone,
+          email: user.email || undefined,
+          avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80`,
+          role: "delivery",
+          roleLabel: "Delivery Driver",
+          status: (user.status === "active"
+            ? "available"
+            : "offline") as StaffStatus,
+          statusLabel:
+            user.status === "active" ? "ONLINE (AVAILABLE)" : "OFFLINE",
+          vehicleType: "motorbike",
+          vehicleLabel: "Honda Click (Motorbike)",
+          deliveriesToday: 0,
+          codCashCollected: 0,
+          tipsToday: 0,
+          rating: 5.0,
+          joinedDate: user.created_at
+            ? new Date(user.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "Recently",
+        }));
+        setStaffList(mappedStaff);
+      }
+    } catch (err) {
+      console.error("Failed to load delivery staff:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDrivers();
+  }, []);
 
   // Compute Drivers KPI Statistics
   const totalDriverCount = staffList.length;
@@ -99,7 +146,7 @@ export default function StaffPage() {
         onSearchChange={setSearchQuery}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
-        onRefresh={() => setStaffList([...mockStaffMembers])}
+        onRefresh={fetchDrivers}
       />
 
       {/* Main Delivery Driver Roster Grid (Responsive: 1 col on mobile, 2 on md, 3 on xl, 4 on 2xl) */}

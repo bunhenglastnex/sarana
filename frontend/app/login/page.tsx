@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Api } from "@/lib/api";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export default function CustomerLoginPage() {
@@ -27,37 +28,83 @@ export default function CustomerLoginPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
 
     if (authMode === "signup" && password !== confirmPassword) {
-      alert("Passwords do not match. Please re-enter your password.");
+      setErrorMessage("Passwords do not match. Please re-enter your password.");
       return;
     }
 
     setIsLoading(true);
 
-    setSession({
-      token: "demo-customer-token",
-      role: "customer",
-      phone: phoneOrEmail || "+855 12 345 678",
-      name:
-        authMode === "signup"
-          ? fullName || "Customer"
-          : phoneOrEmail
-          ? phoneOrEmail.split("@")[0]
-          : "Customer",
-    });
-
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
       if (authMode === "signup") {
-        router.push("/?telegram_prompt=1");
+        // Customer Registration (Strictly creates role = 'customer')
+        const res = await Api.post("/auth.php?action=register", {
+          name: fullName,
+          phone: phoneOrEmail,
+          password: password,
+        });
+
+        if (res.success && res.data) {
+          setSession({
+            token: res.data.token,
+            userId: res.data.userId,
+            name: res.data.name,
+            phone: res.data.phone,
+            email: res.data.email || (phoneOrEmail.includes("@") ? phoneOrEmail : null),
+            avatarUrl: res.data.avatarUrl || null,
+            role: "customer",
+            telegramChatId: null,
+            telegramUsername: null,
+          });
+          router.push("/?telegram_prompt=1");
+        } else {
+          setErrorMessage(res.error || "Failed to create account.");
+        }
       } else {
-        router.push("/");
+        // Customer Login
+        const res = await Api.post("/auth.php?action=login", {
+          identifier: phoneOrEmail,
+          password: password,
+          required_role: "customer",
+        });
+
+        if (res.success && res.data) {
+          const hasTelegram = Boolean(res.data.telegramChatId || res.data.telegram_chat_id);
+          setSession({
+            token: res.data.token,
+            userId: res.data.userId,
+            name: res.data.name,
+            phone: res.data.phone,
+            email: res.data.email || (phoneOrEmail.includes("@") ? phoneOrEmail : null),
+            avatarUrl: res.data.avatarUrl || null,
+            role: res.data.role || "customer",
+            telegramChatId: res.data.telegramChatId || res.data.telegram_chat_id || null,
+            telegramUsername: res.data.telegramUsername || res.data.telegram_username || null,
+          });
+
+          // If customer has NOT linked Telegram yet, popup Telegram modal!
+          if (!hasTelegram) {
+            router.push("/?telegram_prompt=1");
+          } else {
+            router.push("/");
+          }
+        } else {
+          setErrorMessage(res.error || "Invalid phone/email or password.");
+        }
       }
-    }, 1000);
+    } catch (err: any) {
+      setErrorMessage(
+        "Network error: Unable to connect to authentication server.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -94,7 +141,10 @@ export default function CustomerLoginPage() {
         <div className="grid grid-cols-2 p-1 bg-zinc-800/80 rounded-2xl border border-white/5 text-xs font-bold">
           <button
             type="button"
-            onClick={() => setAuthMode("login")}
+            onClick={() => {
+              setAuthMode("login");
+              setErrorMessage(null);
+            }}
             className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               authMode === "login"
                 ? "bg-amber-500 text-zinc-950 shadow-md font-black"
@@ -106,7 +156,10 @@ export default function CustomerLoginPage() {
           </button>
           <button
             type="button"
-            onClick={() => setAuthMode("signup")}
+            onClick={() => {
+              setAuthMode("signup");
+              setErrorMessage(null);
+            }}
             className={`py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               authMode === "signup"
                 ? "bg-amber-500 text-zinc-950 shadow-md font-black"
@@ -117,6 +170,13 @@ export default function CustomerLoginPage() {
             <span>Sign Up</span>
           </button>
         </div>
+
+        {/* Error Alert Message */}
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-semibold text-center animate-fadeIn">
+            ⚠️ {errorMessage}
+          </div>
+        )}
 
         {/* Customer Form */}
         <form onSubmit={handleAuthSubmit} className="space-y-4">

@@ -16,21 +16,49 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+import { Api } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+
 export default function DeliveryDriverLoginPage() {
   const router = useRouter();
+  const setSession = useAuthStore((state) => state.setSession);
   const [username, setUsername] = useState("");
   const [pinCode, setPinCode] = useState("");
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleDriverLogin = (e: React.FormEvent) => {
+  const handleDriverLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await Api.post("/auth.php?action=login", {
+        identifier: username,
+        password: pinCode,
+        required_role: "delivery",
+      });
+
+      if (res.success && res.data) {
+        setSession({
+          token: res.data.token,
+          userId: res.data.userId,
+          name: res.data.name,
+          phone: res.data.phone,
+          role: "delivery",
+        });
+        router.push("/delivery");
+      } else {
+        setErrorMessage(
+          res.error || "Access denied. Delivery driver account required.",
+        );
+      }
+    } catch (err: any) {
+      setErrorMessage("Network error: Unable to connect to auth server.");
+    } finally {
       setIsLoading(false);
-      router.push("/delivery");
-    }, 1200);
+    }
   };
 
   return (
@@ -64,6 +92,12 @@ export default function DeliveryDriverLoginPage() {
 
         {/* Driver Login Form */}
         <form onSubmit={handleDriverLogin} className="space-y-4">
+          {errorMessage && (
+            <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-semibold text-center animate-fadeIn">
+              ⚠️ {errorMessage}
+            </div>
+          )}
+
           {/* Username Field */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-zinc-300">

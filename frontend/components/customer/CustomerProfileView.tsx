@@ -18,9 +18,12 @@ import {
   ChevronRight,
   LogOut,
   Globe,
+  Send,
+  CheckCircle2,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LocationModal } from "./LocationModal";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 interface CustomerProfileViewProps {
   name?: string;
@@ -33,20 +36,69 @@ interface CustomerProfileViewProps {
 }
 
 export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
-  name = "Elena Rostova",
-  phone = "+1 (555) 382-9012",
-  email = "elena.rostova@example.com",
-  avatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuAiE9xKCdnv_bglgxg_2LERQbUBlAt1FErmCjJlM_VLK5dW_V-8xiETqMbrDniEM2ZCbQDo_2QKUNG1OinMh1B4XXpwt9n7cccMS_56WCxtMvDwQxsI8pYloDdLducI9tPkTmY9k1J9DgWvY0tNX2DVDPQwP05xPeK0_ZTRvRRrm17jeMPPglgidJwtV3vvobKKha1REpz9pb_kGucgUkNYqPL8qWHCW-ebONnap7f-tdnyxqvtE7Q9",
+  name: propName,
+  phone: propPhone,
+  email: propEmail,
+  avatarUrl: propAvatarUrl,
   points = 340,
   maxPoints = 500,
   tierName = "Firebrand Patron",
 }) => {
   const router = useRouter();
+  const {
+    userId: authUserId,
+    name: authName,
+    phone: authPhone,
+    email: authEmail,
+    avatarUrl: authAvatarUrl,
+    isTelegramLinked,
+    clearSession,
+    setTelegramLink,
+  } = useAuthStore();
+
+  const name = authName || propName || "Customer";
+  const phone = authPhone || propPhone || "No phone linked";
+  const email = authEmail || propEmail || "customer@example.com";
+  const avatarUrl =
+    authAvatarUrl ||
+    propAvatarUrl ||
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80";
+
   const [smsAlerts, setSmsAlerts] = useState(true);
   const [currentAddress, setCurrentAddress] = useState(
     "244 Oak Street, Apt 4B",
   );
   const [isLocationOpen, setIsLocationOpen] = useState(false);
+
+  const botUsername =
+    process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "bunheng1dev_bot";
+
+  let startParam = "";
+  if (authUserId) {
+    startParam = `usr_${authUserId}`;
+  } else if (authPhone) {
+    startParam = authPhone.replace(/[^0-9]/g, "");
+  } else if (authEmail) {
+    startParam = authEmail.replace(/@/g, "_at_").replace(/\./g, "_dot_").replace(/[^a-zA-Z0-9_]/g, "");
+  } else if (authName) {
+    startParam = authName.replace(/[^a-zA-Z0-9_]/g, "_");
+  }
+
+  const telegramBotUrl = startParam
+    ? `https://t.me/${botUsername}?start=${startParam}`
+    : `https://t.me/${botUsername}`;
+
+  const handleOpenTelegram = () => {
+    setTelegramLink("@" + botUsername, botUsername);
+    if (typeof window !== "undefined") {
+      window.open(telegramBotUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    router.push("/login");
+  };
 
   const progressPercent = Math.min(100, Math.round((points / maxPoints) * 100));
   const pointsRemaining = maxPoints - points;
@@ -309,6 +361,39 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
               </button>
             </div>
 
+            {/* Telegram Bot Link Row */}
+            <button
+              type="button"
+              onClick={handleOpenTelegram}
+              className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
+            >
+              <div className="flex items-center gap-space-sm min-w-0">
+                <div className="w-10 h-10 rounded-full bg-[#24A1DE]/15 flex items-center justify-center text-[#24A1DE] flex-shrink-0">
+                  <Send className="w-5 h-5 -translate-x-0.5 translate-y-0.5" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-xs text-on-surface">
+                      Telegram Bot Alerts
+                    </span>
+                    {isTelegramLinked ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Linked
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 font-bold text-[10px]">
+                        Connect Bot
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-on-surface-variant truncate">
+                    Receive live kitchen &amp; delivery notifications
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
+            </button>
+
             {/* Help & Bistro Support */}
             <button
               type="button"
@@ -361,8 +446,8 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
         <div className="flex flex-col items-center gap-space-sm pt-space-xs">
           <button
             type="button"
-            onClick={() => alert("Logged out successfully")}
-            className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-error-container text-on-error-container font-bold text-xs hover:brightness-95 active:scale-[0.99] transition-all shadow-sm"
+            onClick={handleLogout}
+            className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-error-container text-on-error-container font-bold text-xs hover:brightness-95 active:scale-[0.99] transition-all shadow-sm cursor-pointer"
           >
             <LogOut className="w-5 h-5" />
             <span>Log Out</span>

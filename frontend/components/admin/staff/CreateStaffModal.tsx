@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { StaffRecord } from "@/types/staff";
 
+import { Api } from "@/lib/api";
+
 interface CreateStaffModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,8 +31,11 @@ export const CreateStaffModal: React.FC<CreateStaffModalProps> = ({
   const [code, setCode] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("driver123");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -49,53 +54,75 @@ export const CreateStaffModal: React.FC<CreateStaffModalProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
 
     if (!name.trim() || !phone.trim()) {
-      alert("Please fill in all required fields (Name and Phone).");
+      setErrorMsg("Please fill in required fields (Name and Phone).");
       return;
     }
 
-    const generatedCode =
-      code.trim() ||
-      `DRV-${Math.floor(100 + Math.random() * 900)}`;
+    setIsSubmitting(true);
 
-    const defaultAvatar = `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80`;
+    try {
+      // Call backend API to create delivery driver
+      const res = await Api.post("/auth.php?action=add-delivery", {
+        name: name.trim(),
+        phone: phone.trim(),
+        password: password || "driver123",
+        email: email.trim(),
+        role: "delivery",
+      });
 
-    const newStaff: StaffRecord = {
-      id: `staff-${Date.now()}`,
-      code: generatedCode,
-      name: name.trim(),
-      phone: phone.trim(),
-      email: email.trim() || undefined,
-      avatarUrl: avatarUrl || defaultAvatar,
-      role: "delivery",
-      roleLabel: "Delivery Driver",
-      status: "available",
-      statusLabel: "ONLINE (AVAILABLE)",
-      vehicleType: "motorbike",
-      vehicleLabel: "Honda Click (Motorbike)",
-      deliveriesToday: 0,
-      codCashCollected: 0,
-      tipsToday: 0,
-      rating: 5.0,
-      joinedDate: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-    };
+      if (res.success && res.data) {
+        const generatedCode =
+          code.trim() ||
+          `DRV-${res.data.id || Math.floor(100 + Math.random() * 900)}`;
+        const defaultAvatar = `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80`;
 
-    onAddStaff(newStaff);
+        const newStaff: StaffRecord = {
+          id: `staff-${res.data.id || Date.now()}`,
+          code: generatedCode,
+          name: res.data.name || name.trim(),
+          phone: res.data.phone || phone.trim(),
+          email: res.data.email || undefined,
+          avatarUrl: avatarUrl || defaultAvatar,
+          role: "delivery",
+          roleLabel: "Delivery Driver",
+          status: "available",
+          statusLabel: "ONLINE (AVAILABLE)",
+          vehicleType: "motorbike",
+          vehicleLabel: "Honda Click (Motorbike)",
+          deliveriesToday: 0,
+          codCashCollected: 0,
+          tipsToday: 0,
+          rating: 5.0,
+          joinedDate: new Date().toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+        };
 
-    // Reset form
-    setName("");
-    setCode("");
-    setPhone("");
-    setEmail("");
-    setAvatarUrl("");
-    onClose();
+        onAddStaff(newStaff);
+
+        // Reset form
+        setName("");
+        setCode("");
+        setPhone("");
+        setEmail("");
+        setPassword("driver123");
+        setAvatarUrl("");
+        onClose();
+      } else {
+        setErrorMsg(res.error || "Failed to create delivery driver account.");
+      }
+    } catch (err: any) {
+      setErrorMsg("Network error: Unable to contact backend server.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return createPortal(
@@ -132,6 +159,12 @@ export const CreateStaffModal: React.FC<CreateStaffModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {errorMsg && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-300 text-xs font-semibold text-center animate-fadeIn">
+              ⚠️ {errorMsg}
+            </div>
+          )}
+
           {/* Profile Photo Upload */}
           <div className="flex flex-col items-center justify-center space-y-1.5 pb-2">
             <label className="relative group cursor-pointer flex flex-col items-center">

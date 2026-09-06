@@ -21,22 +21,50 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+import { Api } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+
 export default function AdminLoginPage() {
   const router = useRouter();
+  const setSession = useAuthStore((state) => state.setSession);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberSession, setRememberSession] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await Api.post("/auth.php?action=login", {
+        identifier: email,
+        password: password,
+        required_role: "admin",
+      });
+
+      if (res.success && res.data) {
+        setSession({
+          token: res.data.token,
+          userId: res.data.userId,
+          name: res.data.name,
+          phone: res.data.phone,
+          role: "admin",
+        });
+        router.push("/admin");
+      } else {
+        setErrorMessage(
+          res.error || "Access denied. Admin credentials required.",
+        );
+      }
+    } catch (err: any) {
+      setErrorMessage("Network error: Unable to connect to auth server.");
+    } finally {
       setIsLoading(false);
-      router.push("/admin");
-    }, 1200);
+    }
   };
 
   return (
@@ -146,6 +174,12 @@ export default function AdminLoginPage() {
 
           {/* Form */}
           <form onSubmit={handleAdminLogin} className="space-y-5">
+            {errorMessage && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-300 text-xs font-semibold text-center animate-fadeIn">
+                ⚠️ {errorMessage}
+              </div>
+            )}
+
             {/* Email Field */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-on-surface">
