@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { CartItem, FulfillmentType, Food } from '@/types';
+import { indexedDBStorage } from './indexedDBStorage';
 
 export interface CartState {
   items: CartItem[];
@@ -41,7 +42,8 @@ export const useCartStore = create<CartState>()(
 
       addItem: (food, quantity = 1) => {
         const currentItems = get().items;
-        const existingIndex = currentItems.findIndex((i) => i.food_id === food.id);
+        const foodId = Number(food.id);
+        const existingIndex = currentItems.findIndex((i) => Number(i.food_id) === foodId);
 
         if (existingIndex > -1) {
           const updated = [...currentItems];
@@ -52,11 +54,14 @@ export const useCartStore = create<CartState>()(
             items: [
               ...currentItems,
               {
-                food_id: food.id,
+                food_id: foodId,
                 name: food.name,
-                price: typeof food.price === 'string' ? parseFloat(food.price) : food.price,
+                price: typeof food.price === 'string' ? parseFloat(food.price) : Number(food.price || 0),
                 quantity,
-                food,
+                food: {
+                  ...food,
+                  image_url: food.image_url || (food as any).imageUrl || '',
+                },
               },
             ],
           });
@@ -64,7 +69,7 @@ export const useCartStore = create<CartState>()(
       },
 
       removeItem: (foodId) => {
-        set({ items: get().items.filter((i) => i.food_id !== foodId) });
+        set({ items: get().items.filter((i) => Number(i.food_id) !== Number(foodId)) });
       },
 
       updateQuantity: (foodId, quantity) => {
@@ -74,7 +79,7 @@ export const useCartStore = create<CartState>()(
         }
         set({
           items: get().items.map((i) =>
-            i.food_id === foodId ? { ...i, quantity } : i
+            Number(i.food_id) === Number(foodId) ? { ...i, quantity } : i
           ),
         });
       },
@@ -87,7 +92,7 @@ export const useCartStore = create<CartState>()(
 
       getFoodSubtotal: () => {
         return get().items.reduce(
-          (sum, item) => sum + (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity,
+          (sum, item) => sum + (typeof item.price === 'string' ? parseFloat(item.price) : Number(item.price || 0)) * item.quantity,
           0
         );
       },
@@ -105,8 +110,8 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'sarana_cart_storage', // Key in LocalStorage
-      storage: createJSONStorage(() => (typeof window !== 'undefined' ? localStorage : ({} as any))),
+      name: 'sarana_cart_storage_idb',
+      storage: createJSONStorage(() => indexedDBStorage),
     }
   )
 );

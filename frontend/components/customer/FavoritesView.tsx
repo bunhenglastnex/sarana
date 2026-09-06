@@ -1,95 +1,185 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Heart,
   Search,
   Star,
-  Clock,
   Plus,
   Check,
-  ShoppingBag,
   Flame,
   Utensils,
-  ChevronRight,
-  SlidersHorizontal,
   X,
+  Loader2,
 } from "lucide-react";
 import { FoodItem } from "./FoodCard";
-
-const MOCK_FAVORITES: FoodItem[] = [
-  {
-    id: "fav-1",
-    slug: "smoked-bacon-truffle-burger",
-    name: "Smoked Bacon Truffle Burger",
-    category: "burgers",
-    price: 14.5,
-    description:
-      "Brioche bun, smoked bacon, black truffle aioli, aged white cheddar, crisp wild arugula.",
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAls_8yd9WMO6M-1b39ScZJ3_O2nl_fNajJJlFCyeHNRbU-muCFVAlmqK3486SZJ2YfsJEvjvOztm389AsKdx6NG6YNEKVNFbRcfbLVppFLxUne_bqDsRpSK3l2AMI0JQBo_C17szpKlAQjRDrm3nnTIGqP6KGSssq7YCwimEAyJLy0CFe1OAhtWRFTSOzsLM8aFGH81iIHgYrOGDJZJmekiXCquwKA7kAm9YwaaSHLWJy2kCNMaDAi",
-    badge: { text: "Chef's Pick", type: "chef" },
-  },
-  {
-    id: "fav-2",
-    slug: "wood-fired-burrata-prosciutto-pizza",
-    name: "Wood-fired Burrata Prosciutto Pizza",
-    category: "pizza",
-    price: 18.0,
-    description:
-      "San Marzano tomatoes, fresh creamy burrata, 24-mo prosciutto di Parma, fresh basil.",
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFN2QU32fKv_PeY6OJ6-_mQhNxcdfWBPa62PtLNx6iXX7JDMAzDMZ-d0CMe0nIG8jQKnqT0u3l7VOE3p0nJFZ9h8a_Y3Tc2gdgc-a3zrvN4vV2oCSbu2WoBg7ZxZFmOGlvDbSPFm1Y42TsacD8aQ5amuGIBaPXZdI8rgBYTDf2xx4tLL8ZMEp8byjuZTOEedY7Bi1oqUZIl4RV44g-yyLr-CoRm1FAFnkdStuZbGidFWj7VOnUaidt",
-    badge: { text: "Wood-fired", type: "fire" },
-  },
-  {
-    id: "fav-3",
-    slug: "warm-valrhona-chocolate-lava-cake",
-    name: "Warm Valrhona Chocolate Lava Cake",
-    category: "dessert",
-    price: 8.5,
-    description:
-      "Decadent 70% Valrhona dark chocolate cake with a molten warm core & vanilla bean gelato.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80",
-    badge: { text: "Chef Special", type: "chef" },
-  },
-];
+import { useAuthStore, useFavoritesStore, useCartStore } from "@/lib/store";
+import { useApi, Api } from "@/lib/api";
 
 export const FavoritesView: React.FC = () => {
   const router = useRouter();
-  const [favorites, setFavorites] = useState<FoodItem[]>(MOCK_FAVORITES);
+  const { userId, phone } = useAuthStore();
+  const addItemToCart = useCartStore((state) => state.addItem);
+
+  const localFavoriteIds = useFavoritesStore((state) => state.localFavoriteIds);
+  const toggleLocalFavorite = useFavoritesStore((state) => state.toggleLocalFavorite);
+  const syncFavoritesToDatabase = useFavoritesStore((state) => state.syncFavoritesToDatabase);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({});
+  const [guestFoods, setGuestFoods] = useState<FoodItem[]>([]);
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
 
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) => prev.filter((item) => item.id !== id));
+  // Auto-sync guest IndexedDB favorites to backend DB if logged in
+  useEffect(() => {
+    if (userId || phone) {
+      syncFavoritesToDatabase(userId, phone);
+    }
+  }, [userId, phone, syncFavoritesToDatabase]);
+
+  // Fetch live categories from customer menu API
+  const { data: menuRes } = useApi<any>("/customer-menu.php");
+  const rawCategories = menuRes?.data?.categories || menuRes?.categories;
+
+  // Build dynamic categories list starting with "All Items"
+  const categories = useMemo(() => {
+    const list = Array.isArray(rawCategories)
+      ? rawCategories.map((c: any) => ({
+          id: c.slug || String(c.id),
+          label: c.name,
+        }))
+      : [
+          { id: "burgers", label: "Burgers" },
+          { id: "pizza", label: "Pizza" },
+          { id: "chicken", label: "Chicken" },
+          { id: "drinks", label: "Drinks" },
+          { id: "dessert", label: "Desserts" },
+        ];
+
+    return [{ id: "all", label: "All Items" }, ...list];
+  }, [rawCategories]);
+
+  // Fetch logged-in user favorites from API
+  const endpoint = userId || phone ? "/favorites.php" : null;
+  const { data: rawFavoritesResponse, loading: isLoadingFavs, refetch } = useApi<any>(
+    endpoint,
+    { phone, user_id: userId }
+  );
+
+  // Fetch guest favorites from IndexedDB IDs if not logged in
+  useEffect(() => {
+    if (!userId && !phone && localFavoriteIds.length > 0) {
+      setIsGuestLoading(true);
+      Api.get("/customer-menu.php?all=1")
+        .then((res) => {
+          const resData = res.data?.data || res.data || {};
+          const allFoods = Array.isArray(resData.foods) ? resData.foods : [];
+          const localSet = new Set(localFavoriteIds);
+
+          const matched = allFoods
+            .filter((item: any) => localSet.has(String(item.id)))
+            .map((item: any) => ({
+              id: String(item.id),
+              slug: item.slug || String(item.id),
+              name: item.name || "Saved Item",
+              category: item.category_slug || item.category || "mains",
+              price: Number(item.price || 0),
+              description: item.description || "",
+              imageUrl:
+                item.image_url ||
+                item.imageUrl ||
+                "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+              badge: item.badge_text
+                ? { text: item.badge_text, type: item.badge_type || "chef" }
+                : undefined,
+            }));
+
+          setGuestFoods(matched);
+        })
+        .catch(() => {})
+        .finally(() => setIsGuestLoading(false));
+    } else if (!userId && !phone && localFavoriteIds.length === 0) {
+      setGuestFoods([]);
+    }
+  }, [userId, phone, localFavoriteIds]);
+
+  const rawFavorites = rawFavoritesResponse?.data || rawFavoritesResponse;
+
+  // Format favorites strictly from API or guest IndexedDB
+  const favorites: FoodItem[] = useMemo(() => {
+    if (userId || phone) {
+      if (!Array.isArray(rawFavorites)) return [];
+      return rawFavorites.map((item: any) => ({
+        id: String(item.food_id || item.id),
+        slug: item.slug || String(item.food_id || item.id),
+        name: item.name || "Saved Item",
+        category: item.category_slug || item.category || "mains",
+        price: Number(item.price || 0),
+        description: item.description || "",
+        imageUrl:
+          item.image_url ||
+          item.imageUrl ||
+          "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+        badge: item.badge_text
+          ? { text: item.badge_text, type: item.badge_type || "chef" }
+          : undefined,
+      }));
+    } else {
+      return guestFoods;
+    }
+  }, [userId, phone, rawFavorites, guestFoods]);
+
+  const toggleFavorite = async (id: string) => {
+    if (userId || phone) {
+      try {
+        await Api.post("/favorites.php", { food_id: Number(id), phone, user_id: userId });
+        refetch();
+      } catch (err) {
+        console.error("Failed to toggle favorite:", err);
+      }
+    } else {
+      toggleLocalFavorite(id);
+    }
   };
 
-  const handleQuickAdd = (id: string) => {
-    setAddedIds((prev) => ({ ...prev, [id]: true }));
+  const handleQuickAdd = (item: FoodItem) => {
+    addItemToCart(
+      {
+        id: Number(item.id),
+        name: item.name,
+        price: item.price,
+        image_url: item.imageUrl,
+        category: item.category,
+        description: item.description,
+        is_available: true,
+      } as any,
+      1
+    );
+
+    setAddedIds((prev) => ({ ...prev, [item.id]: true }));
     setTimeout(() => {
-      setAddedIds((prev) => ({ ...prev, [id]: false }));
-    }, 1500);
+      setAddedIds((prev) => ({ ...prev, [item.id]: false }));
+    }, 1200);
   };
 
-  const categories = [
-    { id: "all", label: "All Items" },
-    { id: "burgers", label: "Burgers" },
-    { id: "pizza", label: "Pizza" },
-    { id: "dessert", label: "Desserts" },
-  ];
+  const filteredFavorites = useMemo(() => {
+    return favorites.filter((item) => {
+      const matchesSearch =
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const itemCat = (item.category || "").toLowerCase();
+      const selCat = selectedCategory.toLowerCase();
+      const matchesCategory =
+        selectedCategory === "all" ||
+        itemCat === selCat ||
+        itemCat.includes(selCat);
+      return matchesSearch && matchesCategory;
+    });
+  }, [favorites, searchQuery, selectedCategory]);
 
-  const filteredFavorites = favorites.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "all" || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const isLoading = isLoadingFavs || isGuestLoading;
 
   return (
     <main className="flex flex-col relative w-full max-w-md px-screen-edge-padding pt-4 pb-28 bg-surface min-h-screen">
@@ -135,7 +225,7 @@ export const FavoritesView: React.FC = () => {
         </div>
       </div>
 
-      {/* Category Pills */}
+      {/* Category Pills Bar */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-space-md">
         {categories.map((cat) => (
           <button
@@ -153,8 +243,13 @@ export const FavoritesView: React.FC = () => {
         ))}
       </div>
 
-      {/* Favorites List */}
-      {filteredFavorites.length > 0 ? (
+      {/* Favorites Feed / Loading / Empty */}
+      {isLoading ? (
+        <div className="py-16 flex flex-col items-center justify-center gap-2 text-on-surface-variant">
+          <Loader2 className="w-6 h-6 text-primary animate-spin" />
+          <span className="font-label-md text-xs font-bold">Loading favorites...</span>
+        </div>
+      ) : filteredFavorites.length > 0 ? (
         <div className="flex flex-col gap-space-md">
           {filteredFavorites.map((item) => {
             const isAdded = addedIds[item.id];
@@ -222,17 +317,12 @@ export const FavoritesView: React.FC = () => {
                         <span className="font-extrabold text-sm text-primary">
                           ${item.price.toFixed(2)}
                         </span>
-                        <span className="text-tertiary text-xs">•</span>
-                        <div className="flex items-center gap-0.5 text-on-surface font-semibold text-[11px]">
-                          <Star className="w-3 h-3 text-secondary fill-secondary" />
-                          <span>4.9</span>
-                        </div>
                       </div>
 
                       {/* Quick Add Button */}
                       <button
                         type="button"
-                        onClick={() => handleQuickAdd(item.id)}
+                        onClick={() => handleQuickAdd(item)}
                         className={`px-3 py-1.5 rounded-full font-label-sm text-label-sm font-bold flex items-center gap-1 transition-all active:scale-95 shadow-xs ${
                           isAdded
                             ? "bg-emerald-600 text-white"

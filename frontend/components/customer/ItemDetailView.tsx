@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -14,123 +14,13 @@ import {
   Plus,
   ShoppingBag,
   Check,
-  ChevronRight,
   ShieldCheck,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { FoodItem } from './FoodCard';
-
-const MOCK_ITEMS_MAP: Record<string, FoodItem> = {
-  'smoked-bacon-truffle-burger': {
-    id: 'food-1',
-    name: 'Smoked Bacon Truffle Burger',
-    category: 'burgers',
-    price: 14.5,
-    description:
-      'Crafted with an 8oz prime black angus beef patty grilled over oak embers, topped with thick-cut smoked applewood bacon, black truffle aioli, 18-month aged sharp white cheddar, and crisp wild arugula on a toasted artisanal brioche bun.',
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAls_8yd9WMO6M-1b39ScZJ3_O2nl_fNajJJlFCyeHNRbU-muCFVAlmqK3486SZJ2YfsJEvjvOztm389AsKdx6NG6YNEKVNFbRcfbLVppFLxUne_bqDsRpSK3l2AMI0JQBo_C17szpKlAQjRDrm3nnTIGqP6KGSssq7YCwimEAyJLy0CFe1OAhtWRFTSOzsLM8aFGH81iIHgYrOGDJZJmekiXCquwKA7kAm9YwaaSHLWJy2kCNMaDAi',
-    badge: { text: "Chef's Pick", type: 'chef' },
-    options: [
-      {
-        name: 'Choice of Bun',
-        choices: [
-          { label: 'Artisanal Brioche Bun', priceExtra: 0 },
-          { label: 'Gluten-Free Seeded Bun', priceExtra: 1.5 },
-          { label: 'Sesame Potato Bun', priceExtra: 0 },
-        ],
-      },
-      {
-        name: 'Cheese Selection',
-        choices: [
-          { label: 'Aged White Cheddar (Default)', priceExtra: 0 },
-          { label: 'Double Melted Swiss', priceExtra: 1.0 },
-          { label: 'Smoked Gouda', priceExtra: 1.25 },
-        ],
-      },
-      {
-        name: 'Extra Toppings',
-        required: false,
-        choices: [
-          { label: 'Caramelized Balsamic Onions', priceExtra: 1.0 },
-          { label: 'Fried Free-Range Egg', priceExtra: 1.5 },
-          { label: 'Extra Applewood Bacon', priceExtra: 2.5 },
-        ],
-      },
-    ],
-  },
-  'wood-fired-burrata-prosciutto-pizza': {
-    id: 'food-2',
-    name: 'Wood-fired Burrata Prosciutto Pizza',
-    category: 'pizza',
-    price: 18.0,
-    description:
-      'Hand-stretched Neapolitan dough baked in our 900°F oak-fired stone oven. Topped with DOP San Marzano tomatoes, fresh creamy Puglia burrata, 24-month Prosciutto di Parma added post-bake, fresh organic basil, and extra virgin olive oil drizzle.',
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBFN2QU32fKv_PeY6OJ6-_mQhNxcdfWBPa62PtLNx6iXX7JDMAzDMZ-d0CMe0nIG8jQKnqT0u3l7VOE3p0nJFZ9h8a_Y3Tc2gdgc-a3zrvN4vV2oCSbu2WoBg7ZxZFmOGlvDbSPFm1Y42TsacD8aQ5amuGIBaPXZdI8rgBYTDf2xx4tLL8ZMEp8byjuZTOEedY7Bi1oqUZIl4RV44g-yyLr-CoRm1FAFnkdStuZbGidFWj7VOnUaidt',
-    badge: { text: 'Wood-fired', type: 'fire' },
-    options: [
-      {
-        name: 'Crust Style',
-        choices: [
-          { label: 'Traditional Neapolitan', priceExtra: 0 },
-          { label: 'Roasted Garlic Infused Crust', priceExtra: 1.0 },
-          { label: 'Gluten-Friendly Crust', priceExtra: 2.5 },
-        ],
-      },
-    ],
-  },
-  'buttermilk-crispy-chicken-tenders': {
-    id: 'food-3',
-    name: 'Buttermilk Crispy Chicken Tenders',
-    category: 'chicken',
-    price: 12.99,
-    description:
-      '24-hour buttermilk marinated free-range chicken tenders, double hand-dredged in artisan spiced flour and fried to golden crisp perfection. Served with signature house honey mustard, house pickles, and seasoned hearth fries.',
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDpHYxdathMDXR-8YTjm7xrvZUohMnaz-i6GUBxpFNy4Vhcm_HGqnI1mRA-aTkHiWeI9npx4BY9DZ3GarKa0b7xiZ2lOmCa_y_3JW8lioG4Bw-LjsM15ACl0eey0c62Tx9pkAseso-6lA6QXqPXWlqG72P2dYo2u5cHk_RD-KeICBArZQR8Z4uUqiFaYDfKVCdOa04wuoYam1PFtmYPk7W3E8IBBszsbMUKqonaUWuUhZUJwwmSEOlt',
-    badge: { text: 'House Dip', type: 'award' },
-    options: [
-      {
-        name: 'Signature Dipping Sauce',
-        choices: [
-          { label: 'Artisan Honey Mustard', priceExtra: 0 },
-          { label: 'Smoked Black Garlic Aioli', priceExtra: 0.5 },
-          { label: 'Firebird Spicy Habanero', priceExtra: 0.5 },
-        ],
-      },
-    ],
-  },
-  'craft-artisanal-mint-lemonade': {
-    id: 'food-4',
-    name: 'Craft Artisanal Mint Lemonade',
-    category: 'drinks',
-    price: 4.5,
-    description:
-      'Cold pressed California Meyer lemons, organic raw cane sugar syrup, and muddled wild garden mint leaves served over crushed ice.',
-    imageUrl:
-      'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80',
-    options: [
-      {
-        name: 'Ice Level',
-        choices: [
-          { label: 'Regular Ice', priceExtra: 0 },
-          { label: 'Less Ice', priceExtra: 0 },
-          { label: 'No Ice', priceExtra: 0 },
-        ],
-      },
-    ],
-  },
-  'warm-valrhona-chocolate-lava-cake': {
-    id: 'food-5',
-    name: 'Warm Valrhona Chocolate Lava Cake',
-    category: 'dessert',
-    price: 8.5,
-    description: 'Decadent 70% Valrhona dark chocolate cake with a molten warm chocolate core, served with fresh raspberry reduction and Madagascar vanilla bean gelato.',
-    imageUrl:
-      'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80',
-    badge: { text: 'Chef Special', type: 'chef' },
-  },
-};
+import Api, { useApi } from '@/lib/api';
+import { useCartStore, useAuthStore, useFavoritesStore } from '@/lib/store';
 
 interface ItemDetailViewProps {
   slug: string;
@@ -138,12 +28,54 @@ interface ItemDetailViewProps {
 
 export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
   const router = useRouter();
+  const addItemToCart = useCartStore((state) => state.addItem);
+  const { userId, phone } = useAuthStore();
+  const isLocalFavorite = useFavoritesStore((state) => state.isLocalFavorite);
+  const toggleLocalFavorite = useFavoritesStore((state) => state.toggleLocalFavorite);
 
-  // Retrieve item by slug or fallback to default burger item
-  const itemKey = slug.toLowerCase();
-  const item: FoodItem =
-    MOCK_ITEMS_MAP[itemKey] ||
-    MOCK_ITEMS_MAP['smoked-bacon-truffle-burger'];
+  // Fetch live food detail by slug or ID from backend API
+  const { data: apiResponse, loading, error } = useApi<any>('/foods.php', {
+    slug,
+    id: slug,
+  });
+
+  const rawItem = apiResponse?.data || apiResponse;
+
+  // Format single food detail item
+  const item: FoodItem | null = useMemo(() => {
+    if (!rawItem || typeof rawItem !== 'object' || !rawItem.name) {
+      return null;
+    }
+
+    let parsedOptions = [];
+    try {
+      if (typeof rawItem.options === 'string' && rawItem.options.trim()) {
+        parsedOptions = JSON.parse(rawItem.options);
+      } else if (Array.isArray(rawItem.options)) {
+        parsedOptions = rawItem.options;
+      }
+    } catch {
+      parsedOptions = [];
+    }
+
+    return {
+      id: String(rawItem.id),
+      slug: rawItem.slug || String(rawItem.id),
+      name: rawItem.name,
+      category: rawItem.category_slug || rawItem.category || 'general',
+      price: Number(rawItem.price || 0),
+      description: rawItem.description || '',
+      imageUrl:
+        rawItem.imageUrl ||
+        rawItem.image_url ||
+        'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
+      badge: rawItem.badge || (rawItem.badge_text ? { text: rawItem.badge_text, type: rawItem.badge_type || 'fire' } : undefined),
+      options: parsedOptions,
+      stockQuantity: rawItem.stockQuantity ?? rawItem.stock_quantity ?? 50,
+      prepTimeMinutes: rawItem.prepTimeMinutes ?? rawItem.prep_time_minutes ?? 15,
+      is_available: rawItem.is_available ?? rawItem.isAvailable ?? true,
+    };
+  }, [rawItem]);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
@@ -151,13 +83,48 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [added, setAdded] = useState(false);
 
+  // Check initial favorite status (DB if logged in, IndexedDB if guest)
+  useEffect(() => {
+    if (!item?.id) return;
+    if (userId || phone) {
+      Api.get('/favorites.php', { phone, user_id: userId })
+        .then((res) => {
+          const favs = res.data?.data || res.data || [];
+          if (Array.isArray(favs)) {
+            const isFav = favs.some((f: any) => String(f.food_id || f.id) === String(item.id));
+            setIsFavorite(isFav);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setIsFavorite(isLocalFavorite(item.id));
+    }
+  }, [item?.id, userId, phone, isLocalFavorite]);
+
+  const toggleFavorite = async () => {
+    if (!item?.id) return;
+    const newFavState = !isFavorite;
+    setIsFavorite(newFavState);
+
+    if (userId || phone) {
+      try {
+        await Api.post('/favorites.php', { food_id: Number(item.id), phone, user_id: userId });
+      } catch {
+        setIsFavorite(!newFavState);
+      }
+    } else {
+      toggleLocalFavorite(item.id);
+    }
+  };
+
   const calculateTotal = () => {
+    if (!item) return 0;
     let extra = 0;
     if (item.options) {
       item.options.forEach((group) => {
         const chosen = selectedOptions[group.name];
         if (chosen) {
-          const match = group.choices.find((c) => c.label === chosen);
+          const match = group.choices?.find((c) => c.label === chosen);
           if (match) extra += match.priceExtra;
         }
       });
@@ -184,14 +151,63 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
   };
 
   const handleAddToCart = () => {
+    if (!item) return;
+    
+    // Add item to Zustand Cart Store
+    addItemToCart(
+      {
+        id: Number(item.id),
+        name: item.name,
+        price: item.price,
+        image_url: item.imageUrl,
+        category: item.category,
+        description: item.description,
+        is_available: true,
+      } as any,
+      quantity
+    );
+
     setAdded(true);
     setTimeout(() => {
       setAdded(false);
-      router.push('/');
-    }, 1200);
+      router.push('/cart');
+    }, 1000);
   };
 
+  // Loading Spinner View
+  if (loading) {
+    return (
+      <div className="bg-surface text-on-surface min-h-screen flex flex-col items-center justify-center p-6">
+        <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
+        <p className="font-bold text-sm text-on-surface-variant">Loading item details...</p>
+      </div>
+    );
+  }
+
+  // Not Found / Error View
+  if (!item || error) {
+    return (
+      <div className="bg-surface text-on-surface min-h-screen flex flex-col items-center justify-center p-6 max-w-md mx-auto text-center">
+        <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4">
+          <AlertCircle className="w-7 h-7" />
+        </div>
+        <h2 className="font-extrabold text-lg text-on-surface">Item Not Found</h2>
+        <p className="text-xs text-on-surface-variant mt-1 mb-6">
+          The requested menu item could not be found or is currently unavailable.
+        </p>
+        <button
+          type="button"
+          onClick={() => router.push('/')}
+          className="py-3 px-6 rounded-full bg-primary text-on-primary font-bold text-xs shadow-md active:scale-95 transition-all"
+        >
+          Return to Menu
+        </button>
+      </div>
+    );
+  }
+
   const totalPrice = calculateTotal();
+  const maxStock = item.stockQuantity ?? 50;
 
   return (
     <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col items-center selection:bg-primary/20 selection:text-primary pb-32">
@@ -209,7 +225,14 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
         <div className="flex items-center gap-2 pointer-events-auto">
           <button
             type="button"
-            onClick={() => alert('Item link copied!')}
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({ title: item.name, url: window.location.href });
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+              }
+            }}
             aria-label="Share item"
             className="w-10 h-10 rounded-full bg-surface-bright/80 backdrop-blur-md text-on-surface flex items-center justify-center shadow-md hover:bg-white active:scale-90 transition-all border border-surface-container"
           >
@@ -218,7 +241,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
 
           <button
             type="button"
-            onClick={() => setIsFavorite(!isFavorite)}
+            onClick={toggleFavorite}
             aria-label="Toggle favorite"
             className={`w-10 h-10 rounded-full bg-surface-bright/80 backdrop-blur-md flex items-center justify-center shadow-md active:scale-90 transition-all border border-surface-container ${
               isFavorite ? 'text-red-500 fill-red-500' : 'text-on-surface-variant'
@@ -274,31 +297,33 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
             <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-surface-container text-xs text-on-surface-variant">
               <div className="flex items-center gap-1 font-semibold">
                 <Clock className="w-4 h-4 text-primary" />
-                <span>15-20 mins</span>
+                <span>{item.prepTimeMinutes || 15} mins</span>
               </div>
               <div className="w-1 h-1 rounded-full bg-outline-variant" />
               
               {/* Stock Inventory Pill */}
-              {(item.stockQuantity ?? 18) <= 0 ? (
+              {maxStock <= 0 ? (
                 <div className="flex items-center gap-1 font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
                   <span>❌ Sold Out</span>
                 </div>
-              ) : (item.stockQuantity ?? 18) <= 5 ? (
+              ) : maxStock <= 5 ? (
                 <div className="flex items-center gap-1 font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 animate-pulse">
-                  <span>⚠️ Only {item.stockQuantity ?? 18} left in stock!</span>
+                  <span>⚠️ Only {maxStock} left in stock!</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                   <ShieldCheck className="w-4 h-4" />
-                  <span>{(item.stockQuantity ?? 18)} in stock</span>
+                  <span>{maxStock} in stock</span>
                 </div>
               )}
             </div>
 
             {/* Detailed Culinary Description */}
-            <p className="text-xs text-on-surface-variant mt-3 leading-relaxed">
-              {item.description}
-            </p>
+            {item.description && (
+              <p className="text-xs text-on-surface-variant mt-3 leading-relaxed">
+                {item.description}
+              </p>
+            )}
           </div>
 
           {/* Customization Options */}
@@ -307,9 +332,9 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
               {item.options.map((optGroup) => {
                 const isRequired =
                   optGroup.required ??
-                  (!optGroup.name.toLowerCase().includes("extra") &&
-                    !optGroup.name.toLowerCase().includes("topping") &&
-                    !optGroup.name.toLowerCase().includes("optional"));
+                  (!optGroup.name.toLowerCase().includes('extra') &&
+                    !optGroup.name.toLowerCase().includes('topping') &&
+                    !optGroup.name.toLowerCase().includes('optional'));
 
                 return (
                   <div
@@ -332,7 +357,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
                     </div>
 
                     <div className="grid grid-cols-1 gap-2">
-                      {optGroup.choices.map((choice) => {
+                      {optGroup.choices?.map((choice) => {
                         const isSelected =
                           selectedOptions[optGroup.name] === choice.label;
                         return (
@@ -348,16 +373,16 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
                             }
                             className={`flex items-center justify-between p-3.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.99] ${
                               isSelected
-                                ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
-                                : "border-surface-container-high bg-surface-container-lowest text-on-surface hover:border-outline"
+                                ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary'
+                                : 'border-surface-container-high bg-surface-container-lowest text-on-surface hover:border-outline'
                             }`}
                           >
                             <div className="flex items-center gap-2.5">
                               <div
                                 className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                                   isSelected
-                                    ? "border-primary bg-primary text-white"
-                                    : "border-outline"
+                                    ? 'border-primary bg-primary text-white'
+                                    : 'border-outline'
                                 }`}
                               >
                                 {isSelected && (
@@ -390,7 +415,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
               rows={2}
               value={specialInstructions}
               onChange={(e) => setSpecialInstructions(e.target.value)}
-              placeholder="e.g. Extra truffle aioli on side, light salt..."
+              placeholder="e.g. Extra sauce on side, light salt..."
               className="w-full p-3 rounded-xl bg-surface-container-low border border-surface-container-high text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </div>
@@ -404,7 +429,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
           <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-surface-container-highest flex-shrink-0">
             <button
               type="button"
-              disabled={(item.stockQuantity ?? 18) <= 0}
+              disabled={maxStock <= 0}
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
               aria-label="Decrease quantity"
               className="w-9 h-9 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all disabled:opacity-40"
@@ -416,8 +441,8 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
             </span>
             <button
               type="button"
-              disabled={(item.stockQuantity ?? 18) <= 0 || quantity >= (item.stockQuantity ?? 18)}
-              onClick={() => setQuantity(Math.min(item.stockQuantity ?? 18, quantity + 1))}
+              disabled={maxStock <= 0 || quantity >= maxStock}
+              onClick={() => setQuantity(Math.min(maxStock, quantity + 1))}
               aria-label="Increase quantity"
               className="w-9 h-9 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all disabled:opacity-40"
             >
@@ -428,10 +453,10 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
           {/* Add to Cart Button */}
           <button
             type="button"
-            disabled={(item.stockQuantity ?? 18) <= 0}
+            disabled={maxStock <= 0}
             onClick={handleAddToCart}
             className={`flex-1 py-3 px-4 rounded-full font-extrabold text-sm flex items-center justify-between shadow-md active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-              (item.stockQuantity ?? 18) <= 0
+              maxStock <= 0
                 ? 'bg-surface-container-highest text-on-surface-variant'
                 : added
                 ? 'bg-secondary text-on-secondary'
@@ -439,7 +464,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
             }`}
           >
             <div className="flex items-center gap-2">
-              {(item.stockQuantity ?? 18) <= 0 ? (
+              {maxStock <= 0 ? (
                 <span>Out of Stock</span>
               ) : added ? (
                 <>
@@ -453,7 +478,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
                 </>
               )}
             </div>
-            {(item.stockQuantity ?? 18) > 0 && <span>${totalPrice.toFixed(2)}</span>}
+            {maxStock > 0 && <span>${totalPrice.toFixed(2)}</span>}
           </button>
         </div>
       </aside>

@@ -1,8 +1,13 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BistroInfoCard } from "@/components/customer/BistroInfoCard";
 import { SearchBar } from "@/components/customer/SearchBar";
 import { PromoBanner } from "@/components/customer/PromoBanner";
 import { CategoryScroll } from "@/components/customer/CategoryScroll";
@@ -11,135 +16,232 @@ import { AddProductPopup } from "@/components/customer/AddProductPopup";
 import { FloatingCartBar } from "@/components/customer/FloatingCartBar";
 import { LocationModal } from "@/components/customer/LocationModal";
 import { TelegramBotModal } from "@/components/customer/TelegramBotModal";
-import { useAuthStore } from "@/lib/store/useAuthStore";
-import { Flame, ChevronRight } from "lucide-react";
-
-const MOCK_FOOD_ITEMS: FoodItem[] = [
-  {
-    id: "food-1",
-    slug: "smoked-bacon-truffle-burger",
-    name: "Smoked Bacon Truffle Burger",
-    category: "burgers",
-    price: 14.5,
-    description:
-      "Brioche bun, smoked bacon, black truffle aioli, aged cheddar, crisp wild arugula",
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAls_8yd9WMO6M-1b39ScZJ3_O2nl_fNajJJlFCyeHNRbU-muCFVAlmqK3486SZJ2YfsJEvjvOztm389AsKdx6NG6YNEKVNFbRcfbLVppFLxUne_bqDsRpSK3l2AMI0JQBo_C17szpKlAQjRDrm3nnTIGqP6KGSssq7YCwimEAyJLy0CFe1OAhtWRFTSOzsLM8aFGH81iIHgYrOGDJZJmekiXCquwKA7kAm9YwaaSHLWJy2kCNMaDAi",
-    badge: { text: "Chef's Pick", type: "chef" },
-    options: [
-      {
-        name: "Choice of Bun",
-        choices: [
-          { label: "Artisanal Brioche Bun", priceExtra: 0 },
-          { label: "Gluten-Free Bun", priceExtra: 1.5 },
-        ],
-      },
-      {
-        name: "Extra Cheese",
-        choices: [
-          { label: "No Extra Cheese", priceExtra: 0 },
-          { label: "Double Aged Cheddar", priceExtra: 1.0 },
-          { label: "Melted Swiss", priceExtra: 1.0 },
-        ],
-      },
-    ],
-  },
-  {
-    id: "food-2",
-    slug: "wood-fired-burrata-prosciutto-pizza",
-    name: "Wood-fired Burrata Prosciutto Pizza",
-    category: "pizza",
-    price: 18.0,
-    description:
-      "San Marzano tomatoes, fresh creamy burrata, 24-mo prosciutto di Parma, basil",
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBFN2QU32fKv_PeY6OJ6-_mQhNxcdfWBPa62PtLNx6iXX7JDMAzDMZ-d0CMe0nIG8jQKnqT0u3l7VOE3p0nJFZ9h8a_Y3Tc2gdgc-a3zrvN4vV2oCSbu2WoBg7ZxZFmOGlvDbSPFm1Y42TsacD8aQ5amuGIBaPXZdI8rgBYTDf2xx4tLL8ZMEp8byjuZTOEedY7Bi1oqUZIl4RV44g-yyLr-CoRm1FAFnkdStuZbGidFWj7VOnUaidt",
-    badge: { text: "Wood-fired", type: "fire" },
-    options: [
-      {
-        name: "Crust Type",
-        choices: [
-          { label: "Traditional Neapolitan (Classic)", priceExtra: 0 },
-          { label: "Garlic Crust Infusion", priceExtra: 1.0 },
-        ],
-      },
-    ],
-  },
-  {
-    id: "food-3",
-    slug: "buttermilk-crispy-chicken-tenders",
-    name: "Buttermilk Crispy Chicken Tenders",
-    category: "chicken",
-    price: 12.99,
-    description:
-      "Golden spiced tenders, artisan house honey mustard dipping sauce, seasoned fries",
-    imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDpHYxdathMDXR-8YTjm7xrvZUohMnaz-i6GUBxpFNy4Vhcm_HGqnI1mRA-aTkHiWeI9npx4BY9DZ3GarKa0b7xiZ2lOmCa_y_3JW8lioG4Bw-LjsM15ACl0eey0c62Tx9pkAseso-6lA6QXqPXWlqG72P2dYo2u5cHk_RD-KeICBArZQR8Z4uUqiFaYDfKVCdOa04wuoYam1PFtmYPk7W3E8IBBszsbMUKqonaUWuUhZUJwwmSEOlt",
-    badge: { text: "House Dip", type: "award" },
-    options: [
-      {
-        name: "Dipping Sauce",
-        choices: [
-          { label: "Artisan Honey Mustard", priceExtra: 0 },
-          { label: "Smoked Garlic Aioli", priceExtra: 0 },
-          { label: "Spicy Firebird Sauce", priceExtra: 0.5 },
-        ],
-      },
-    ],
-  },
-  {
-    id: "food-4",
-    slug: "craft-artisanal-mint-lemonade",
-    name: "Craft Artisanal Mint Lemonade",
-    category: "drinks",
-    price: 4.5,
-    description:
-      "Fresh pressed Meyer lemons, organic cane sugar, crushed wild mint leaves",
-    imageUrl:
-      "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80",
-    options: [
-      {
-        name: "Ice Level",
-        choices: [
-          { label: "Regular Ice", priceExtra: 0 },
-          { label: "Less Ice", priceExtra: 0 },
-          { label: "No Ice", priceExtra: 0 },
-        ],
-      },
-    ],
-  },
-  {
-    id: "food-5",
-    slug: "warm-valrhona-chocolate-lava-cake",
-    name: "Warm Valrhona Chocolate Lava Cake",
-    category: "dessert",
-    price: 8.5,
-    description:
-      "Molten dark chocolate core, served with Madagascar vanilla bean gelato",
-    imageUrl:
-      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80",
-    badge: { text: "Chef Special", type: "chef" },
-  },
-];
-
-interface CartLineItem {
-  id: string;
-  item: FoodItem;
-  quantity: number;
-  selectedOptions: Record<string, string>;
-  specialInstructions: string;
-  totalPrice: number;
-}
+import { useAuthStore, useFavoritesStore, useCartStore } from "@/lib/store";
+import Api from "@/lib/api";
+import { Flame, ChevronRight, Loader2 } from "lucide-react";
 
 export default function CustomerPageLayout() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const customerName = useAuthStore((state) => state.name);
+  const { name: customerName, userId, phone } = useAuthStore();
   const [currentAddress, setCurrentAddress] = useState(
     "244 Oak Street, Apt 4B",
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+
+  // Cart store integration (Persisted in IndexedDB)
+  const addFoodToCart = useCartStore((state) => state.addItem);
+  const getItemCount = useCartStore((state) => state.getItemCount);
+  const getFoodSubtotal = useCartStore((state) => state.getFoodSubtotal);
+
+  // Pagination & infinite scroll states (12 limit per page)
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFoodsLoading, setIsFoodsLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [rawFoods, setRawFoods] = useState<any[]>([]);
+  const [rawCategories, setRawCategories] = useState<any[]>([]);
+  const [totalItemsCount, setTotalItemsCount] = useState(0);
+
+  // Favorites state (Database + IndexedDB fallback for guests)
+  const [userFavoriteIds, setUserFavoriteIds] = useState<Set<string>>(new Set());
+  const localFavoriteIds = useFavoritesStore((state) => state.localFavoriteIds);
+  const toggleLocalFavorite = useFavoritesStore((state) => state.toggleLocalFavorite);
+  const syncFavoritesToDatabase = useFavoritesStore((state) => state.syncFavoritesToDatabase);
+
+  const observerTargetRef = useRef<HTMLDivElement>(null);
+
+  // Auto-sync guest IndexedDB favorites to MySQL database if logged in
+  useEffect(() => {
+    if (userId || phone) {
+      syncFavoritesToDatabase(userId, phone).then(() => {
+        Api.get("/favorites.php", { phone, user_id: userId })
+          .then((res) => {
+            const favs = res.data?.data || res.data || [];
+            if (Array.isArray(favs)) {
+              const ids = new Set<string>(favs.map((f: any) => String(f.food_id || f.id)));
+              setUserFavoriteIds(ids);
+            }
+          })
+          .catch(() => {});
+      });
+    }
+  }, [phone, userId, syncFavoritesToDatabase]);
+
+  // Combined active favorites (Database + Local IndexedDB)
+  const activeFavoriteIds = useMemo(() => {
+    const set = new Set<string>(userFavoriteIds);
+    localFavoriteIds.forEach((id) => set.add(id));
+    return set;
+  }, [userFavoriteIds, localFavoriteIds]);
+
+  // Toggle favorite status (DB if logged in, IndexedDB if guest)
+  const handleToggleFavorite = async (foodId: string) => {
+    const numId = Number(foodId);
+    if (!numId) return;
+
+    if (userId || phone) {
+      setUserFavoriteIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(foodId)) {
+          next.delete(foodId);
+        } else {
+          next.add(foodId);
+        }
+        return next;
+      });
+
+      try {
+        await Api.post("/favorites.php", { food_id: numId, phone, user_id: userId });
+      } catch (err) {
+        console.error("Failed to toggle favorite:", err);
+      }
+    } else {
+      // Store in IndexedDB for guests
+      toggleLocalFavorite(foodId);
+    }
+  };
+
+  // Fetch paginated public menu from backend API (12 items per batch)
+  const fetchMenuPage = useCallback(
+    async (pageNum: number, isInitial = false) => {
+      if (isInitial) {
+        setIsFoodsLoading(true);
+      } else {
+        setIsFetchingMore(true);
+      }
+
+      try {
+        const params: Record<string, any> = {
+          page: pageNum,
+          limit: 12,
+        };
+        if (selectedCategory && selectedCategory !== "all") {
+          params.category = selectedCategory;
+        }
+        if (searchQuery.trim()) {
+          params.search = searchQuery.trim();
+        }
+
+        const res = await Api.get("/customer-menu.php", params);
+        const resData = res.data?.data || res.data || {};
+        const newFoods = Array.isArray(resData.foods) ? resData.foods : [];
+        const cats = Array.isArray(resData.categories)
+          ? resData.categories
+          : [];
+
+        if (isInitial) {
+          setRawFoods(newFoods);
+          if (cats.length > 0) setRawCategories(cats);
+        } else {
+          setRawFoods((prev) => {
+            const existingIds = new Set(prev.map((item) => String(item.id)));
+            const filteredNew = newFoods.filter(
+              (item: any) => !existingIds.has(String(item.id)),
+            );
+            return [...prev, ...filteredNew];
+          });
+        }
+
+        setHasMore(Boolean(resData.has_more));
+        if (resData.total !== undefined) {
+          setTotalItemsCount(Number(resData.total));
+        }
+      } catch (err) {
+        console.error("Failed to fetch customer menu page:", err);
+      } finally {
+        setIsFoodsLoading(false);
+        setIsFetchingMore(false);
+      }
+    },
+    [selectedCategory, searchQuery],
+  );
+
+  // Initial fetch or filter change reset
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    fetchMenuPage(1, true);
+  }, [selectedCategory, searchQuery, fetchMenuPage]);
+
+  // Load next page function
+  const loadNextPage = useCallback(() => {
+    if (!hasMore || isFoodsLoading || isFetchingMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchMenuPage(nextPage, false);
+  }, [hasMore, isFoodsLoading, isFetchingMore, page, fetchMenuPage]);
+
+  // IntersectionObserver for smooth bottom-of-page infinite scroll trigger
+  useEffect(() => {
+    const target = observerTargetRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasMore &&
+          !isFoodsLoading &&
+          !isFetchingMore
+        ) {
+          loadNextPage();
+        }
+      },
+      { threshold: 0.1, rootMargin: "120px" },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMore, isFoodsLoading, isFetchingMore, loadNextPage]);
+
+  // Format categories list
+  const categoriesList = useMemo(() => {
+    const list = Array.isArray(rawCategories)
+      ? rawCategories.map((c: any) => ({
+          id: c.slug || String(c.id),
+          name: c.name,
+          icon: c.icon || undefined,
+        }))
+      : [];
+    return [{ id: "all", name: "All" }, ...list];
+  }, [rawCategories]);
+
+  // Format food items list strictly from live API
+  const foodItems: FoodItem[] = useMemo(() => {
+    if (!Array.isArray(rawFoods)) return [];
+    return rawFoods
+      .filter((item: any) => item.name && item.name.trim() !== "")
+      .map((item: any) => {
+        let parsedOptions = [];
+        try {
+          if (typeof item.options === "string" && item.options.trim()) {
+            parsedOptions = JSON.parse(item.options);
+          } else if (Array.isArray(item.options)) {
+            parsedOptions = item.options;
+          }
+        } catch {
+          parsedOptions = [];
+        }
+
+        return {
+          id: String(item.id),
+          slug: item.slug || String(item.id),
+          name: item.name,
+          category: item.category_slug || item.category || "all",
+          price: Number(item.price || 0),
+          description: item.description || "",
+          imageUrl:
+            item.image_url ||
+            "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+          badge: item.badge_text
+            ? { text: item.badge_text, type: item.badge_type || "fire" }
+            : undefined,
+          options: parsedOptions,
+        };
+      });
+  }, [rawFoods]);
 
   // Modals state
   const [selectedItemForPopup, setSelectedItemForPopup] =
@@ -153,49 +255,7 @@ export default function CustomerPageLayout() {
     }
   }, [searchParams]);
 
-  // Cart state
-  const [cartItems, setCartItems] = useState<CartLineItem[]>([
-    {
-      id: "initial-1",
-      item: MOCK_FOOD_ITEMS[0],
-      quantity: 1,
-      selectedOptions: {},
-      specialInstructions: "",
-      totalPrice: 14.5,
-    },
-    {
-      id: "initial-2",
-      item: MOCK_FOOD_ITEMS[1],
-      quantity: 1,
-      selectedOptions: {},
-      specialInstructions: "",
-      totalPrice: 18.0,
-    },
-  ]);
-
-  // Derived cart calculations
-  const totalCartCount = useMemo(
-    () => cartItems.reduce((acc, curr) => acc + curr.quantity, 0),
-    [cartItems],
-  );
-
-  const totalCartPrice = useMemo(
-    () => cartItems.reduce((acc, curr) => acc + curr.totalPrice, 0),
-    [cartItems],
-  );
-
-  // Filter food items based on search and category
-  const filteredFoodItems = useMemo(() => {
-    return MOCK_FOOD_ITEMS.filter((item) => {
-      const matchesCategory =
-        selectedCategory === "all" || item.category === selectedCategory;
-      const matchesSearch =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [selectedCategory, searchQuery]);
-
+  // Add product handlers to Zustand store
   const handleAddToCart = (newItem: {
     item: FoodItem;
     quantity: number;
@@ -203,39 +263,49 @@ export default function CustomerPageLayout() {
     specialInstructions: string;
     totalPrice: number;
   }) => {
-    const lineItem: CartLineItem = {
-      id: `cart-${Date.now()}`,
-      ...newItem,
-    };
-    setCartItems((prev) => [...prev, lineItem]);
+    addFoodToCart(
+      {
+        id: Number(newItem.item.id),
+        name: newItem.item.name,
+        price: newItem.item.price,
+        image_url: newItem.item.imageUrl,
+        category: newItem.item.category,
+        description: newItem.item.description,
+        is_available: true,
+      } as any,
+      newItem.quantity
+    );
   };
 
   const handleQuickAdd = (foodItem: FoodItem) => {
-    const lineItem: CartLineItem = {
-      id: `cart-quick-${Date.now()}`,
-      item: foodItem,
-      quantity: 1,
-      selectedOptions: {},
-      specialInstructions: "",
-      totalPrice: foodItem.price,
-    };
-    setCartItems((prev) => [...prev, lineItem]);
+    addFoodToCart(
+      {
+        id: Number(foodItem.id),
+        name: foodItem.name,
+        price: foodItem.price,
+        image_url: foodItem.imageUrl,
+        category: foodItem.category,
+        description: foodItem.description,
+        is_available: true,
+      } as any,
+      1
+    );
   };
+
+  const totalCartCount = getItemCount();
+  const totalCartPrice = getFoodSubtotal();
 
   return (
     <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 pb-28 bg-surface min-h-screen">
       <div className="flex flex-col w-full">
-        {/* Restaurant Bistro Micro-Info Card */}
-        <BistroInfoCard />
-
         {/* Search & Quick Filter Bar */}
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
-        {/* Promotional Hero Banner */}
         <PromoBanner />
 
         {/* Horizontal Scroll Categories */}
         <CategoryScroll
+          categories={categoriesList}
           activeCategoryId={selectedCategory}
           onSelectCategory={setSelectedCategory}
         />
@@ -258,18 +328,55 @@ export default function CustomerPageLayout() {
 
         {/* Food Item Cards Feed */}
         <section className="flex flex-col gap-space-md mb-space-xl">
-          {filteredFoodItems.length > 0 ? (
-            filteredFoodItems.map((food) => (
-              <FoodCard
-                key={food.id}
-                item={food}
-                onSelect={(item) => {
-                  const itemSlug = item.slug || item.id;
-                  router.push(`/items-detail/${itemSlug}`);
-                }}
-                onQuickAdd={(item) => handleQuickAdd(item)}
-              />
-            ))
+          {isFoodsLoading && page === 1 ? (
+            <div className="py-12 flex flex-col items-center justify-center gap-2 text-on-surface-variant">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              <span className="font-label-md text-xs font-bold">
+                Loading menu...
+              </span>
+            </div>
+          ) : foodItems.length > 0 ? (
+            <>
+              {foodItems.map((food) => (
+                <FoodCard
+                  key={food.id}
+                  item={food}
+                  isFavorite={activeFavoriteIds.has(food.id)}
+                  onToggleFavorite={(id) => handleToggleFavorite(id)}
+                  onSelect={(item) => {
+                    const itemSlug = item.slug || item.id;
+                    router.push(`/items-detail/${itemSlug}`);
+                  }}
+                  onQuickAdd={(item) => handleQuickAdd(item)}
+                />
+              ))}
+
+              {/* Infinite Scroll Sentinel / Bottom Feed Load More Indicator */}
+              <div
+                ref={observerTargetRef}
+                className="pt-4 pb-2 flex flex-col items-center justify-center min-h-[60px]"
+              >
+                {isFetchingMore ? (
+                  <div className="flex items-center gap-2 text-xs font-bold text-primary animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Loading more items (Limit 12)...</span>
+                  </div>
+                ) : hasMore ? (
+                  <button
+                    type="button"
+                    onClick={loadNextPage}
+                    className="text-xs font-bold text-primary hover:underline py-2 px-4 rounded-full bg-primary/10 transition-colors"
+                  >
+                    Load More Items
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-on-surface-variant font-medium">
+                    Showing all {foodItems.length} of{" "}
+                    {totalItemsCount || foodItems.length} items
+                  </span>
+                )}
+              </div>
+            </>
           ) : (
             <div className="text-center py-12 bg-surface-container-lowest rounded-xl p-6 border border-surface-container">
               <p className="font-bold text-on-surface text-base">

@@ -21,6 +21,7 @@ export interface FoodItem {
     choices: { label: string; priceExtra: number }[];
   }[];
   stockQuantity?: number;
+  prepTimeMinutes?: number;
 }
 
 interface FoodCardProps {

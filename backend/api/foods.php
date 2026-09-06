@@ -21,6 +21,17 @@ if ($method === 'GET') {
 
         // 1. Fetch Single Food Detail by ID or Slug
         if (!empty($targetId) || !empty($targetSlug)) {
+            $extractedId = null;
+            $queryVal = !empty($targetId) ? $targetId : $targetSlug;
+
+            if (is_numeric($queryVal)) {
+                $extractedId = (int)$queryVal;
+            } elseif (preg_match('/^(?:item|food)-(\d+)/i', $queryVal, $matches)) {
+                $extractedId = (int)$matches[1];
+            } elseif (preg_match('/(\d+)/', $queryVal, $matches)) {
+                $extractedId = (int)$matches[1];
+            }
+
             $detailSql = "
                 SELECT f.id, f.category_id, c.name as category_name, c.slug as category_slug, 
                        f.name, f.slug, f.price, f.description, f.image_url, 
@@ -34,16 +45,17 @@ if ($method === 'GET') {
                        f.status
                 FROM foods f
                 LEFT JOIN categories c ON f.category_id = c.id
-                WHERE " . (!empty($targetId) ? "f.id = ?" : "(f.slug = ? OR f.id = ?)") . "
+                WHERE f.id = ? OR f.slug = ? OR (f.id = ? AND ? > 0)
                 LIMIT 1
             ";
 
             $stmt = $pdo->prepare($detailSql);
-            if (!empty($targetId)) {
-                $stmt->execute([(int)$targetId]);
-            } else {
-                $stmt->execute([$targetSlug, $targetSlug]);
-            }
+            $stmt->execute([
+                $extractedId ?: 0,
+                $queryVal,
+                $extractedId ?: 0,
+                $extractedId ?: 0
+            ]);
 
             $food = $stmt->fetch();
             if (!$food) {
@@ -101,7 +113,7 @@ if ($method === 'GET') {
             $whereConditions[] = "f.status = ?";
             $params[] = $statusParam;
         } elseif (!$includeAll) {
-            $whereConditions[] = "f.status = 'public'";
+            $whereConditions[] = "f.status = 'public' AND f.is_available = 1";
         }
 
         // 2. Category Filter
