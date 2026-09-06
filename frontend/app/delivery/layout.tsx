@@ -12,13 +12,19 @@ export default function DeliveryLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const currentPath = pathname || "";
+
+  const isDeliveryLogin = currentPath.startsWith("/delivery/login");
+  if (isDeliveryLogin) {
+    return <>{children}</>;
+  }
 
   // Check if current route is a delivery order detail page e.g. /delivery/1024
   const isDetailPage =
-    pathname.startsWith("/delivery/") &&
-    pathname !== "/delivery/my-deliveries" &&
-    pathname !== "/delivery/history" &&
-    pathname !== "/delivery/profile";
+    currentPath.startsWith("/delivery/") &&
+    currentPath !== "/delivery/my-deliveries" &&
+    currentPath !== "/delivery/history" &&
+    currentPath !== "/delivery/profile";
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-surface font-sans text-body-md text-on-surface antialiased relative">

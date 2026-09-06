@@ -23,8 +23,8 @@ import { Badge } from "@/components/ui/badge";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@bistro.com");
-  const [password, setPassword] = useState("••••••••••••");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberSession, setRememberSession] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +76,10 @@ export default function AdminLoginPage() {
         {/* Bottom Banner Content & System Telemetry */}
         <div className="relative z-10 space-y-6 max-w-lg">
           <div className="space-y-3">
-            <Badge variant="outline" className="text-[11px] font-bold border-amber-500/40 text-amber-300 bg-amber-500/10">
+            <Badge
+              variant="outline"
+              className="text-[11px] font-bold border-amber-500/40 text-amber-300 bg-amber-500/10"
+            >
               <Sparkles className="w-3 h-3 text-amber-400 mr-1" />
               RESTRICTED AUTHORIZED PERSONNEL ONLY
             </Badge>
@@ -86,7 +89,9 @@ export default function AdminLoginPage() {
             </h2>
 
             <p className="text-xs text-zinc-300 leading-relaxed">
-              Monitor live customer orders, manage delivery geofencing, broadcast Telegram notifications, and handle staff roster settlements in real time.
+              Monitor live customer orders, manage delivery geofencing,
+              broadcast Telegram notifications, and handle staff roster
+              settlements in real time.
             </p>
           </div>
 
@@ -134,7 +139,8 @@ export default function AdminLoginPage() {
               Sign In to Admin Portal
             </h1>
             <p className="text-xs text-on-surface-variant">
-              Enter your credentials to access the central administration terminal.
+              Enter your credentials to access the central administration
+              terminal.
             </p>
           </div>
 
@@ -168,7 +174,9 @@ export default function AdminLoginPage() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    alert("Admin security recovery key sent to registered system administrator email!");
+                    alert(
+                      "Admin security recovery key sent to registered system administrator email!",
+                    );
                   }}
                   className="text-[11px] font-bold text-primary hover:underline"
                 >
@@ -212,10 +220,6 @@ export default function AdminLoginPage() {
                   Remember Session (4h Timeout)
                 </span>
               </label>
-
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                🔒 256-Bit SSL
-              </span>
             </div>
 
             {/* Submit Button */}

@@ -18,13 +18,29 @@ export const CustomerLayout: React.FC<{ children: React.ReactNode }> = ({
     "244 Oak Street, Apt 4B",
   );
 
+  const currentPath = pathname || "";
+
+  // Determine which routes should show the global header and bottom navigation
+  const isCustomerRoute =
+    currentPath !== "" &&
+    !currentPath.startsWith("/admin") &&
+    !currentPath.startsWith("/delivery") &&
+    !currentPath.startsWith("/login") &&
+    !currentPath.startsWith("/checkout") &&
+    !currentPath.startsWith("/khqr-payment");
+
+  // Non-customer routes bypass CustomerLayout entirely
+  if (!isCustomerRoute) {
+    return <>{children}</>;
+  }
+
   // Automatically determine active tab based on current pathname
   const getActiveTab = (): NavTab => {
-    if (pathname === "/favorites" || pathname === "/favorite")
+    if (currentPath === "/favorites" || currentPath === "/favorite")
       return "favorites";
-    if (pathname === "/cart") return "cart";
-    if (pathname === "/orders" || pathname === "/order") return "orders";
-    if (pathname === "/customer-profile" || pathname === "/profile")
+    if (currentPath === "/cart") return "cart";
+    if (currentPath === "/orders" || currentPath === "/order") return "orders";
+    if (currentPath === "/customer-profile" || currentPath === "/profile")
       return "profile";
     return "home";
   };
@@ -39,22 +55,12 @@ export const CustomerLayout: React.FC<{ children: React.ReactNode }> = ({
     else if (tab === "profile") router.push("/customer-profile");
   };
 
-  // Determine which routes should show the global header and bottom navigation
-  const isCustomerRoute =
-    !pathname.startsWith("/admin") &&
-    !pathname.startsWith("/delivery") &&
-    !pathname.startsWith("/login") &&
-    !pathname.startsWith("/checkout") &&
-    !pathname.startsWith("/khqr-payment");
-
-  const showBottomNav =
-    isCustomerRoute && !pathname.startsWith("/items-detail");
+  const showBottomNav = !currentPath.startsWith("/items-detail");
 
   const showCustomerHeader =
-    isCustomerRoute &&
-    !pathname.startsWith("/items-detail") &&
-    !pathname.startsWith("/order-success") &&
-    !pathname.startsWith("/customer-profile");
+    !currentPath.startsWith("/items-detail") &&
+    !currentPath.startsWith("/order-success") &&
+    !currentPath.startsWith("/customer-profile");
 
   return (
     <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col items-center selection:bg-primary/20 selection:text-primary w-full">

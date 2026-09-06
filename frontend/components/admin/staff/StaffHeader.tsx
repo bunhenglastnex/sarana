@@ -8,6 +8,7 @@ import {
   Banknote,
   Bike,
   HeartHandshake,
+  Plus,
 } from "lucide-react";
 
 interface StaffHeaderProps {
@@ -16,6 +17,7 @@ interface StaffHeaderProps {
   availableCount: number;
   totalCodCollected: number;
   totalTipsToday: number;
+  onOpenCreateStaff?: () => void;
 }
 
 export const StaffHeader: React.FC<StaffHeaderProps> = ({
@@ -24,6 +26,7 @@ export const StaffHeader: React.FC<StaffHeaderProps> = ({
   availableCount,
   totalCodCollected,
   totalTipsToday,
+  onOpenCreateStaff,
 }) => {
   return (
     <div className="bg-surface-container-lowest p-4 md:p-space-lg rounded-2xl shadow-sm border border-border/40 space-y-space-md">
@@ -42,7 +45,7 @@ export const StaffHeader: React.FC<StaffHeaderProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
           <div className="flex items-center gap-1.5 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 text-xs font-bold text-emerald-800">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -50,6 +53,17 @@ export const StaffHeader: React.FC<StaffHeaderProps> = ({
             </span>
             <span>Fleet Active ({onDeliveryCount} On Road)</span>
           </div>
+
+          {onOpenCreateStaff && (
+            <button
+              type="button"
+              onClick={onOpenCreateStaff}
+              className="flex items-center gap-1.5 bg-primary hover:bg-primary-container text-on-primary font-bold text-xs px-3.5 py-2 rounded-xl shadow-md transition-all active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Staff</span>
+            </button>
+          )}
         </div>
       </div>
 

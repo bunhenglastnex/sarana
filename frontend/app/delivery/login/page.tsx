@@ -5,24 +5,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Truck,
-  Phone,
+  User,
   Lock,
-  ArrowRight,
-  ShieldCheck,
+  Eye,
+  EyeOff,
   Navigation,
-  KeyRound,
-  Sparkles,
-  UserCheck,
-  Building2,
   UtensilsCrossed,
+  Building2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function DeliveryDriverLoginPage() {
   const router = useRouter();
-  const [driverId, setDriverId] = useState("");
+  const [username, setUsername] = useState("");
   const [pinCode, setPinCode] = useState("");
+  const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDriverLogin = (e: React.FormEvent) => {
@@ -31,7 +29,7 @@ export default function DeliveryDriverLoginPage() {
 
     setTimeout(() => {
       setIsLoading(false);
-      router.push("/admin/staff");
+      router.push("/delivery");
     }, 1200);
   };
 
@@ -46,7 +44,7 @@ export default function DeliveryDriverLoginPage() {
       />
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/75 to-zinc-950/40 backdrop-blur-[2px]" />
 
-      {/* Main Delivery Driver HUD Login Card */}
+      {/* Main Delivery Driver Login Card */}
       <div className="relative z-10 w-full max-w-md bg-zinc-900/90 backdrop-blur-xl border border-sky-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-fadeIn">
         {/* Driver Terminal Header */}
         <div className="text-center space-y-2">
@@ -66,38 +64,52 @@ export default function DeliveryDriverLoginPage() {
 
         {/* Driver Login Form */}
         <form onSubmit={handleDriverLogin} className="space-y-4">
+          {/* Username Field */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-zinc-300">
-              Driver ID or Phone Number
+              Username / Driver ID
             </label>
             <div className="relative">
-              <UserCheck className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400" />
+              <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400" />
               <Input
                 type="text"
                 required
-                value={driverId}
-                onChange={(e) => setDriverId(e.target.value)}
-                placeholder="e.g. DRV-804 or +855 12 888 999"
-                className="pl-10 h-11 bg-zinc-800/80 border-zinc-700/80 text-white placeholder:text-zinc-500 text-xs rounded-xl focus:border-sky-500 font-mono"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username or Driver ID"
+                className="pl-10 h-11 bg-zinc-800/80 border-zinc-700/80 text-white placeholder:text-zinc-500 text-xs rounded-xl focus:border-sky-500"
               />
             </div>
           </div>
 
+          {/* Security PIN / Password Field */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-zinc-300">
-              4-Digit Driver Security PIN
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-zinc-300">
+                Security PIN
+              </label>
+            </div>
             <div className="relative">
-              <KeyRound className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400" />
+              <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-sky-400" />
               <Input
-                type="password"
+                type={showPin ? "text" : "password"}
                 required
-                maxLength={6}
                 value={pinCode}
                 onChange={(e) => setPinCode(e.target.value)}
-                placeholder="••••"
-                className="pl-10 h-11 bg-zinc-800/80 border-zinc-700/80 text-white placeholder:text-zinc-500 text-xs rounded-xl focus:border-sky-500 font-mono tracking-widest text-center"
+                placeholder="Enter your PIN"
+                className="pl-10 pr-10 h-11 bg-zinc-800/80 border-zinc-700/80 text-white placeholder:text-zinc-500 text-xs rounded-xl focus:border-sky-500"
               />
+              <button
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+              >
+                {showPin ? (
+                  <EyeOff className="w-4 h-4 text-sky-400" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </div>
 

@@ -7,12 +7,14 @@ import { StaffHeader } from "@/components/admin/staff/StaffHeader";
 import { StaffFilterBar } from "@/components/admin/staff/StaffFilterBar";
 import { StaffMemberCard } from "@/components/admin/staff/StaffMemberCard";
 import { StaffDetailModal } from "@/components/admin/staff/StaffDetailModal";
+import { CreateStaffModal } from "@/components/admin/staff/CreateStaffModal";
 
 export default function StaffPage() {
   const [staffList, setStaffList] = useState<StaffRecord[]>(mockStaffMembers);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StaffStatus>("all");
   const [selectedStaff, setSelectedStaff] = useState<StaffRecord | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Compute Drivers KPI Statistics
   const totalDriverCount = staffList.length;
@@ -50,9 +52,14 @@ export default function StaffPage() {
     return true;
   });
 
+  const handleAddStaff = (newStaff: StaffRecord) => {
+    setStaffList((prev) => [newStaff, ...prev]);
+  };
+
   const handleCallStaff = (name: string, phone: string) => {
     alert(`Initiating phone call to driver ${name} (${phone})...`);
   };
+
   const handleReconcileCash = (staffId: string) => {
     setStaffList((prev) =>
       prev.map((staff) => {
@@ -83,6 +90,7 @@ export default function StaffPage() {
         availableCount={availableCount}
         totalCodCollected={totalCodCollected}
         totalTipsToday={totalTipsToday}
+        onOpenCreateStaff={() => setIsCreateModalOpen(true)}
       />
 
       {/* Filter Bar & Search */}
@@ -123,6 +131,13 @@ export default function StaffPage() {
         isOpen={Boolean(selectedStaff)}
         onClose={() => setSelectedStaff(null)}
         onReconcileCash={handleReconcileCash}
+      />
+
+      {/* Create New Staff Modal */}
+      <CreateStaffModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onAddStaff={handleAddStaff}
       />
     </div>
   );
