@@ -40,7 +40,7 @@ export const HearthStatusStrip: React.FC<HearthStatusStripProps> = ({
           </span>
         </div>
         <h1 className="font-headline-xl text-2xl md:text-3xl text-on-surface tracking-tight font-bold mt-0.5">
-          Good morning, Bistro Manager
+          Hello, Bistro Manager
         </h1>
         <p className="font-body-sm text-sm text-on-surface-variant">
           Live operations, service dispatch queue, and culinary sales rhythm for

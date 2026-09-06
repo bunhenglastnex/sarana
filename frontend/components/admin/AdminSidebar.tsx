@@ -21,8 +21,16 @@ import {
   ScrollText,
 } from "lucide-react";
 
+import { useApi } from "@/lib/api";
+
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
+
+  const { data } = useApi<any>("/orders.php", { limit: 50 });
+  const rawOrders = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+  const activeCount = rawOrders.filter(
+    (o: any) => !["completed", "delivered", "picked_up", "cancelled"].includes(String(o.status || "").toLowerCase())
+  ).length;
 
   const isNavActive = (href: string) => {
     if (href === "/admin") {
@@ -105,7 +113,7 @@ export const AdminSidebar: React.FC = () => {
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              6 Live
+              {activeCount} Live
             </span>
           </Link>
 
