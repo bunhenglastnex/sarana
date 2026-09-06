@@ -34,49 +34,61 @@ export const AdminNotificationPopover: React.FC = () => {
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   // Fetch recent orders for live notification data
-  const { data } = useApi<any>("/orders.php", { limit: 6 });
-  const rawOrders = Array.isArray(data?.data)
+  const { data } = useApi<any>("/orders.php", { limit: 8 });
+  
+  const ordersList: any[] = Array.isArray(data?.data?.orders)
+    ? data.data.orders
+    : Array.isArray(data?.orders)
+    ? data.orders
+    : Array.isArray(data?.data)
     ? data.data
     : Array.isArray(data)
     ? data
     : [];
 
   // Generate dynamic notification items from live API data
-  const liveOrderNotifications: NotificationItem[] = rawOrders.map(
+  const liveOrderNotifications: NotificationItem[] = ordersList.map(
     (order: any) => {
-      const isDelivery = order.fulfillment_type === "delivery";
-      const isCompleted = ["completed", "delivered"].includes(
-        String(order.status).toLowerCase()
-      );
-      const isPreparing = order.status === "preparing";
+      const orderNum = order.id || (order.order_number ? `#${order.order_number}` : `#${order.dbId}`);
+      const isDelivery = order.channel === "delivery" || order.fulfillment_type === "delivery";
+      const status = String(order.status || "").toLowerCase();
+      const isCompleted = ["completed", "delivered", "picked_up"].includes(status);
+      const isPreparing = status === "preparing";
+      const isInTransit = status === "in_transit" || status === "on_the_way";
 
       let type: "order" | "delivery" | "system" = "order";
-      if (isDelivery && !isCompleted) type = "delivery";
+      if (isDelivery) type = "delivery";
 
-      const title = isPreparing
-        ? `Kitchen Preparing Order #${order.order_number}`
-        : isCompleted
-        ? `Order #${order.order_number} Completed`
-        : `New Order #${order.order_number}`;
+      let title = `New Order ${orderNum}`;
+      if (isPreparing) {
+        title = `Kitchen Preparing ${orderNum}`;
+      } else if (isInTransit) {
+        title = `Out for Delivery ${orderNum}`;
+      } else if (isCompleted) {
+        title = `Completed Order ${orderNum}`;
+      }
 
-      const message = `${order.customer_name || "Customer"} · $${Number(
-        order.total_amount || 0
-      ).toFixed(2)} (${(order.payment_method || "COD").toUpperCase()})`;
+      const customer = order.customerName || order.customer_name || "Guest Customer";
+      const amount = Number(order.totalPrice ?? order.total_amount ?? 0).toFixed(2);
+      const badge = order.paymentBadgeLabel || order.payment_method || "COD";
+      const message = `${customer} · $${amount} (${badge})`;
 
-      const timeAgo = order.created_at
+      const timeAgo = order.timeAgoLabel || (order.created_at
         ? new Date(order.created_at).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })
-        : "Just now";
+        : "Just now");
+
+      const notificationId = `order-${order.dbId || order.id}`;
 
       return {
-        id: `order-${order.id}`,
+        id: notificationId,
         type,
         title,
         message,
         time: timeAgo,
-        isUnread: !readIds.has(`order-${order.id}`),
+        isUnread: !readIds.has(notificationId),
         link: "/admin/orders",
       };
     }
