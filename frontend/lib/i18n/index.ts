@@ -10,16 +10,8 @@ const resources = {
   km: { translation: kmLocale },
 };
 
-// Get stored language preference from localStorage/Cookie safely
+// Get initial language preference safely (defaults to Khmer for SSR & initial hydration consistency)
 const getInitialLanguage = (): string => {
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem('sarana_app_language');
-      if (saved && (saved === 'en' || saved === 'km')) return saved;
-    } catch {
-      // Fallback
-    }
-  }
   return 'km'; // Default to Khmer
 };
 

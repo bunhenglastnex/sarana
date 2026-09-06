@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BistroInfoCard } from "@/components/customer/BistroInfoCard";
 import { SearchBar } from "@/components/customer/SearchBar";
 import { PromoBanner } from "@/components/customer/PromoBanner";
@@ -10,6 +10,8 @@ import { FoodCard, FoodItem } from "@/components/customer/FoodCard";
 import { AddProductPopup } from "@/components/customer/AddProductPopup";
 import { FloatingCartBar } from "@/components/customer/FloatingCartBar";
 import { LocationModal } from "@/components/customer/LocationModal";
+import { TelegramBotModal } from "@/components/customer/TelegramBotModal";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import { Flame, ChevronRight } from "lucide-react";
 
 const MOCK_FOOD_ITEMS: FoodItem[] = [
@@ -131,6 +133,8 @@ interface CartLineItem {
 
 export default function CustomerPageLayout() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const customerName = useAuthStore((state) => state.name);
   const [currentAddress, setCurrentAddress] = useState(
     "244 Oak Street, Apt 4B",
   );
@@ -141,6 +145,13 @@ export default function CustomerPageLayout() {
   const [selectedItemForPopup, setSelectedItemForPopup] =
     useState<FoodItem | null>(null);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("telegram_prompt") === "1") {
+      setIsTelegramModalOpen(true);
+    }
+  }, [searchParams]);
 
   // Cart state
   const [cartItems, setCartItems] = useState<CartLineItem[]>([
@@ -301,6 +312,17 @@ export default function CustomerPageLayout() {
         onClose={() => setIsLocationOpen(false)}
         currentAddress={currentAddress}
         onSelectAddress={setCurrentAddress}
+      />
+
+      {/* Telegram Bot Link Prompt Modal */}
+      <TelegramBotModal
+        isOpen={isTelegramModalOpen}
+        userName={customerName || "Valued Customer"}
+        onClose={() => {
+          setIsTelegramModalOpen(false);
+          // Clean query params from address bar
+          router.replace("/", { scroll: false });
+        }}
       />
     </main>
   );

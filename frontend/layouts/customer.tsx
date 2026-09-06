@@ -43,6 +43,7 @@ export const CustomerLayout: React.FC<{ children: React.ReactNode }> = ({
   const isCustomerRoute =
     !pathname.startsWith("/admin") &&
     !pathname.startsWith("/delivery") &&
+    !pathname.startsWith("/login") &&
     !pathname.startsWith("/checkout") &&
     !pathname.startsWith("/khqr-payment");
 
