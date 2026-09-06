@@ -1,14 +1,22 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { Search, Timer, Bell, SlidersHorizontal, User, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Search,
+  Timer,
+  Bell,
+  SlidersHorizontal,
+  User,
+  LogOut,
+} from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { AdminNotificationPopover } from "./AdminNotificationPopover";
+import { LogoutConfirmModal } from "./LogoutConfirmModal";
 
 export const AdminHeader: React.FC = () => {
-  const router = useRouter();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const { name, role, clearSession } = useAuthStore();
+  const { name, role } = useAuthStore();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   // Focus search input on pressing '/'
   useEffect(() => {
@@ -25,11 +33,6 @@ export const AdminHeader: React.FC = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  const handleLogout = () => {
-    clearSession();
-    router.push("/admin/login");
-  };
 
   return (
     <header className="fixed top-0 left-64 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-border/40 z-40 px-space-lg flex items-center justify-between gap-space-md">
@@ -59,21 +62,7 @@ export const AdminHeader: React.FC = () => {
 
         {/* Action Controls */}
         <div className="flex items-center gap-space-xs">
-          <button
-            onClick={() => alert("Notifications: System operational.")}
-            aria-label="Notifications"
-            className="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span>
-          </button>
-          <button
-            onClick={() => alert("Station display configuration")}
-            aria-label="Station Settings"
-            className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-          </button>
+          <AdminNotificationPopover />
         </div>
 
         {/* Divider */}
@@ -93,7 +82,7 @@ export const AdminHeader: React.FC = () => {
             </span>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={() => setIsLogoutModalOpen(true)}
             title="Sign out of Admin Console"
             className="p-1.5 ml-1 rounded-lg text-error/80 hover:bg-error-container/20 hover:text-error transition-colors"
           >
@@ -101,6 +90,12 @@ export const AdminHeader: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+      />
     </header>
   );
 };

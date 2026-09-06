@@ -21,10 +21,18 @@ import {
   ScrollText,
 } from "lucide-react";
 
+import { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { LogoutConfirmModal } from "./LogoutConfirmModal";
 
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const { name, role } = useAuthStore();
+
+  const displayName = name || "Elena Rostova";
+  const displayRole = role === "admin" ? "General Manager" : role || "General Manager";
 
   const { data } = useApi<any>("/orders.php", { limit: 50 });
   const rawOrders = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
@@ -51,12 +59,16 @@ export const AdminSidebar: React.FC = () => {
       <div className="flex flex-col h-full overflow-hidden">
         {/* Brand Header */}
         <div className="h-16 px-space-lg flex items-center gap-space-sm bg-surface-container-low shrink-0 border-b border-border/30">
-          <div className="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
-            <Flame className="w-5 h-5 fill-current" />
+          <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center shadow-sm overflow-hidden border border-primary/20 shrink-0">
+            <img
+              src="/logo.jpg"
+              alt="Amber & Ember Logo"
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="flex flex-col">
             <span className="font-headline-sm text-headline-sm text-on-surface leading-tight tracking-tight font-bold">
-              Amber & Ember
+              Amber &amp; Ember
             </span>
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">
               Bistro Admin
@@ -204,29 +216,35 @@ export const AdminSidebar: React.FC = () => {
         {/* Manager User Footer */}
         <div className="p-space-sm bg-surface-container shrink-0 border-t border-border/40">
           <div className="flex items-center justify-between p-space-xs rounded-lg bg-surface-container-lowest shadow-[0_1px_4px_rgba(0,0,0,0.03)] border border-border/40">
-            <div className="flex items-center gap-space-xs">
-              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0 text-on-primary">
-                <User className="w-4 h-4" />
+            <div className="flex items-center gap-space-xs min-w-0 pr-1">
+              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shrink-0 text-on-primary font-bold text-xs">
+                {displayName.charAt(0).toUpperCase()}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="font-label-md text-label-md text-on-surface truncate font-semibold">
-                  Elena Rostova
+                  {displayName}
                 </span>
                 <span className="font-body-sm text-body-sm text-on-surface-variant truncate text-xs">
-                  General Manager
+                  {displayRole}
                 </span>
               </div>
             </div>
             <button
-              onClick={() => alert("Logging out of admin session...")}
-              title="Logout"
-              className="text-on-surface-variant hover:text-error p-1.5 rounded-md hover:bg-error-container/20 transition-colors"
+              onClick={() => setIsLogoutModalOpen(true)}
+              title="Logout of Admin Console"
+              className="text-on-surface-variant hover:text-error p-1.5 rounded-md hover:bg-error-container/20 transition-colors shrink-0"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+      />
     </aside>
   );
 };
