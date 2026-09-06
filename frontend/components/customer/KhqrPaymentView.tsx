@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   Clock,
@@ -26,12 +26,21 @@ interface KhqrPaymentViewProps {
 }
 
 export const KhqrPaymentView: React.FC<KhqrPaymentViewProps> = ({
-  orderBillId = '#8942-AE',
-  totalUsd = 37.7,
-  totalKhr = 154500,
+  orderBillId,
+  totalUsd,
+  totalKhr,
   merchantId = 'AMBER_EMBER_BISTRO_01',
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const queryOrderBillId = searchParams?.get('order_id') || searchParams?.get('orderBillId');
+  const queryAmountStr = searchParams?.get('amount') || searchParams?.get('totalUsd');
+  const queryAmount = queryAmountStr ? parseFloat(queryAmountStr) : null;
+
+  const displayBillId = orderBillId || queryOrderBillId || '#ORD-8942';
+  const displayUsd = totalUsd !== undefined ? totalUsd : (queryAmount !== null && !isNaN(queryAmount) ? queryAmount : 37.70);
+  const displayKhr = totalKhr !== undefined ? totalKhr : Math.round(displayUsd * 4100);
 
   // Countdown Timer state (starts at 9 mins 48s = 588 seconds)
   const [timeLeft, setTimeLeft] = useState(588);
@@ -140,7 +149,7 @@ export const KhqrPaymentView: React.FC<KhqrPaymentViewProps> = ({
 
             <div className="flex items-baseline gap-1 mt-1">
               <span className="font-extrabold text-3xl text-primary tracking-tight">
-                ${totalUsd.toFixed(2)}
+                ${displayUsd.toFixed(2)}
               </span>
               <span className="font-bold text-sm text-tertiary">USD</span>
             </div>
@@ -148,7 +157,7 @@ export const KhqrPaymentView: React.FC<KhqrPaymentViewProps> = ({
             <div className="flex items-center gap-1.5 text-on-surface-variant font-semibold text-xs">
               <span>Equivalent to</span>
               <span className="font-bold text-sm text-on-surface">
-                ៛ {totalKhr.toLocaleString()}
+                ៛ {displayKhr.toLocaleString()}
               </span>
               <span>KHR</span>
             </div>
@@ -270,7 +279,7 @@ export const KhqrPaymentView: React.FC<KhqrPaymentViewProps> = ({
 
               {/* Bill & Transaction Footer */}
               <div className="flex items-center justify-between w-full mt-2.5 pt-1 text-on-surface-variant font-semibold text-[11px]">
-                <span>Order Bill: {orderBillId}</span>
+                <span>Order Bill: {displayBillId}</span>
                 <span className="font-mono text-tertiary">TXN: TXN-984210</span>
               </div>
             </div>
@@ -330,7 +339,7 @@ export const KhqrPaymentView: React.FC<KhqrPaymentViewProps> = ({
               </div>
               <p className="text-xs text-on-surface-variant">
                 Confirm the exact payment of{' '}
-                <span className="text-primary font-bold">${totalUsd.toFixed(2)}</span>
+                <span className="text-primary font-bold">${displayUsd.toFixed(2)}</span>
               </p>
             </div>
           </div>

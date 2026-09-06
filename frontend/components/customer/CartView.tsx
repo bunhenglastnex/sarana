@@ -13,13 +13,16 @@ import {
   ArrowRight,
   Sparkles,
   ShoppingBag,
+  User,
+  LogIn,
+  X,
 } from "lucide-react";
 import { useCartStore, useAuthStore } from "@/lib/store";
 import { useApi } from "@/lib/api";
 
 export const CartView: React.FC = () => {
   const router = useRouter();
-  const { name: customerName, userId, phone } = useAuthStore();
+  const { name: customerName, userId, token, phone } = useAuthStore();
   const {
     items: cartItems,
     updateQuantity,
@@ -31,6 +34,7 @@ export const CartView: React.FC = () => {
   const [includeCutlery, setIncludeCutlery] = useState(true);
   const [promoApplied, setPromoApplied] = useState(false);
   const [addedUpsells, setAddedUpsells] = useState<Record<string, boolean>>({});
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Fetch live top seller food items for upsell recommendations
   const { data: menuRes } = useApi<any>("/customer-menu.php?limit=6");
@@ -69,6 +73,15 @@ export const CartView: React.FC = () => {
     if (addedUpsells[upsellItem.id]) return;
     setAddedUpsells((prev) => ({ ...prev, [upsellItem.id]: true }));
     addItem(upsellItem.rawFood, 1);
+  };
+
+  const handleProceedToCheckout = () => {
+    const isAuth = Boolean(token || userId);
+    if (isAuth) {
+      router.push("/checkout");
+    } else {
+      setShowAuthModal(true);
+    }
   };
 
   // Financial calculations from store items
@@ -439,7 +452,7 @@ export const CartView: React.FC = () => {
           <div className="sticky bottom-20 z-30 pt-2 pointer-events-auto">
             <button
               type="button"
-              onClick={() => router.push("/checkout")}
+              onClick={handleProceedToCheckout}
               className="w-full h-[52px] bg-primary text-on-primary rounded-xl shadow-xl flex items-center justify-between px-space-md hover:bg-primary-container transition-transform active:scale-[0.98]"
             >
               <div className="flex items-center gap-2">
@@ -456,6 +469,62 @@ export const CartView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Guest Checkout Auth Choice Modal */}
+      {showAuthModal && (
+        <div
+          className="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setShowAuthModal(false)}
+        >
+          <div
+            className="bg-surface-container-lowest w-full max-w-sm rounded-2xl p-6 shadow-2xl flex flex-col items-center text-center animate-in slide-in-from-bottom-4 duration-300 border border-surface-container/80 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-container transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
+              <User className="w-7 h-7 text-primary" />
+            </div>
+
+            <h3 className="font-extrabold text-lg text-on-surface">
+              Account Required?
+            </h3>
+            <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+              Sign in to earn rewards, save delivery addresses, and track live order status. Or continue as guest.
+            </p>
+
+            <div className="w-full flex flex-col gap-2.5 mt-5">
+              <button
+                type="button"
+                onClick={() => router.push("/login?redirect=/checkout")}
+                className="w-full py-3 px-4 bg-primary text-on-primary rounded-xl font-bold text-xs shadow-md hover:bg-primary-container transition-all flex items-center justify-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Log In / Register</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAuthModal(false);
+                  router.push("/checkout");
+                }}
+                className="w-full py-3 px-4 bg-surface-container-low border border-surface-container-high text-on-surface rounded-xl font-bold text-xs hover:bg-surface-container transition-all flex items-center justify-center gap-2"
+              >
+                <User className="w-4 h-4 text-on-surface-variant" />
+                <span>Continue as Guest</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
+
