@@ -18,6 +18,9 @@ import {
   Clock,
   Eye,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
 } from "lucide-react";
 import {
   Select,
@@ -31,6 +34,30 @@ import Link from "next/link";
 
 interface MenuGridProps {
   items: MenuItemRecord[];
+  loading?: boolean;
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasMore: boolean;
+  } | null;
+  counts?: {
+    all: number;
+    topSellers: number;
+    inStock: number;
+    soldOut: number;
+  } | null;
+  categoriesList?: Array<{ id: number; name: string; icon: string; slug: string }>;
+  selectedCategory?: string;
+  onCategoryChange?: (cat: string) => void;
+  statusFilter?: "all" | "topseller" | "available" | "soldout";
+  onStatusFilterChange?: (status: "all" | "topseller" | "available" | "soldout") => void;
+  searchQuery?: string;
+  onSearchQueryChange?: (q: string) => void;
+  sentinelRef?: React.RefObject<HTMLDivElement>;
+  onLoadMore?: () => void;
+  onPageChange?: (page: number) => void;
   onOpenAddModal: () => void;
   onOpenEditModal: (item: MenuItemRecord) => void;
   onOpenDeleteModal: (item: MenuItemRecord) => void;
@@ -39,42 +66,31 @@ interface MenuGridProps {
 
 export const MenuGrid: React.FC<MenuGridProps> = ({
   items,
+  loading = false,
+  pagination,
+  counts,
+  categoriesList,
+  selectedCategory = "all",
+  onCategoryChange,
+  statusFilter = "all",
+  onStatusFilterChange,
+  searchQuery = "",
+  onSearchQueryChange,
+  sentinelRef,
+  onLoadMore,
+  onPageChange,
   onOpenAddModal,
   onOpenEditModal,
   onOpenDeleteModal,
   onToggleAvailable,
 }) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "topseller" | "available" | "soldout">("all");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
 
-  const filteredItems = items.filter((item) => {
-    // Category filter
-    if (selectedCategory !== "all" && item.category !== selectedCategory) {
-      return false;
-    }
-    // Status filter
-    if (statusFilter === "topseller" && !item.isTopSeller && item.badge?.type !== "chef") {
-      return false;
-    }
-    if (statusFilter === "available" && (!item.isAvailable || item.stockQuantity <= 0)) return false;
-    if (statusFilter === "soldout" && (item.isAvailable && item.stockQuantity > 0)) return false;
+  const totalAvailable = counts?.inStock ?? items.filter((i) => i.isAvailable && i.stockQuantity > 0).length;
+  const totalTopSellers = counts?.topSellers ?? items.filter((i) => i.isTopSeller || i.badge?.type === "chef").length;
+  const totalSoldOut = counts?.soldOut ?? items.filter((i) => !i.isAvailable || i.stockQuantity <= 0).length;
+  const totalAllCount = counts?.all ?? pagination?.total ?? items.length;
 
-    // Search query
-    if (searchQuery.trim() !== "") {
-      const q = searchQuery.toLowerCase();
-      return (
-        item.name.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
-
-  const totalAvailable = items.filter((i) => i.isAvailable && i.stockQuantity > 0).length;
-  const totalTopSellers = items.filter((i) => i.isTopSeller || i.badge?.type === "chef").length;
   const totalOptionsGroups = items.reduce(
     (sum, i) => sum + (i.options?.length || 0),
     0
@@ -96,6 +112,14 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
     }
   };
 
+  const categoryDropdownOptions = categoriesList && categoriesList.length > 0
+    ? categoriesList.map((c) => ({
+        value: c.slug || c.name.toLowerCase().replace(/\s+/g, "-"),
+        label: c.name,
+        icon: c.icon || "🍔",
+      }))
+    : CATEGORY_OPTIONS;
+
   return (
     <div className="flex flex-col gap-space-lg">
       {/* Menu Catalog Sub-Header Bar */}
@@ -111,7 +135,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
               Menu Items Management
             </h1>
             <span className="inline-flex items-center px-space-xs py-0.5 rounded-full font-label-sm text-xs bg-primary-fixed text-on-primary-fixed font-bold">
-              {items.length} Dishes
+              {totalAllCount} Dishes Total
             </span>
           </div>
         </div>
@@ -127,7 +151,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
                 In Stock Availability
               </div>
               <div className="font-headline-sm text-sm text-on-surface font-bold">
-                {totalAvailable} Active / {items.length} Total
+                {totalAvailable} Active / {totalAllCount} Total
               </div>
             </div>
           </div>
@@ -180,7 +204,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => onSearchQueryChange && onSearchQueryChange(e.target.value)}
               placeholder="Search dish title, ingredient, category..."
               className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-xs outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary border border-transparent focus:border-border/40 transition-all"
             />
@@ -192,7 +216,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
           {/* Category Dropdown (Shadcn UI Select) */}
           <Select
             value={selectedCategory}
-            onValueChange={(val) => setSelectedCategory(val)}
+            onValueChange={(val) => onCategoryChange && onCategoryChange(val)}
           >
             <SelectTrigger className="w-[180px] h-8 rounded-lg bg-surface-container text-on-surface font-label-sm text-xs border border-border/30 font-medium">
               <SelectValue placeholder="All Categories" />
@@ -201,7 +225,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
               <SelectItem value="all" className="text-xs font-medium cursor-pointer">
                 ✨ All Categories
               </SelectItem>
-              {CATEGORY_OPTIONS.map((cat) => (
+              {categoryDropdownOptions.map((cat) => (
                 <SelectItem
                   key={cat.value}
                   value={cat.value}
@@ -219,17 +243,17 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
           {/* Stock & Top Seller Filter Pills */}
           <div className="flex items-center bg-surface-container p-1 rounded-lg border border-border/30">
             <button
-              onClick={() => setStatusFilter("all")}
+              onClick={() => onStatusFilterChange && onStatusFilterChange("all")}
               className={`px-space-sm py-1 rounded-md font-label-sm text-xs transition-colors ${
                 statusFilter === "all"
                   ? "bg-inverse-surface text-inverse-on-surface font-bold shadow-xs"
                   : "text-on-surface-variant hover:text-on-surface font-medium"
               }`}
             >
-              All ({items.length})
+              All ({totalAllCount})
             </button>
             <button
-              onClick={() => setStatusFilter("topseller")}
+              onClick={() => onStatusFilterChange && onStatusFilterChange("topseller")}
               className={`px-space-sm py-1 rounded-md font-label-sm text-xs transition-colors flex items-center gap-1 ${
                 statusFilter === "topseller"
                   ? "bg-amber-500 text-white font-bold shadow-xs"
@@ -240,7 +264,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
               <span>Top Sellers ({totalTopSellers})</span>
             </button>
             <button
-              onClick={() => setStatusFilter("available")}
+              onClick={() => onStatusFilterChange && onStatusFilterChange("available")}
               className={`px-space-sm py-1 rounded-md font-label-sm text-xs transition-colors ${
                 statusFilter === "available"
                   ? "bg-inverse-surface text-inverse-on-surface font-bold shadow-xs"
@@ -250,14 +274,14 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
               In Stock ({totalAvailable})
             </button>
             <button
-              onClick={() => setStatusFilter("soldout")}
+              onClick={() => onStatusFilterChange && onStatusFilterChange("soldout")}
               className={`px-space-sm py-1 rounded-md font-label-sm text-xs transition-colors ${
                 statusFilter === "soldout"
                   ? "bg-inverse-surface text-inverse-on-surface font-bold shadow-xs"
                   : "text-on-surface-variant hover:text-on-surface font-medium"
               }`}
             >
-              Sold Out ({items.length - totalAvailable})
+              Sold Out ({totalSoldOut})
             </button>
           </div>
 
@@ -294,7 +318,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
       {/* Grid View Rendering */}
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-space-md items-stretch">
-          {filteredItems.map((item) => (
+          {items.map((item) => (
             <div
               key={item.id}
               className={`bg-surface-container-lowest rounded-2xl shadow-xs border transition-all flex flex-col justify-between overflow-hidden group ${
@@ -454,7 +478,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/20">
-                {filteredItems.map((item) => (
+                {items.map((item) => (
                   <tr
                     key={item.id}
                     className="hover:bg-surface-container-low/70 transition-colors"
@@ -564,6 +588,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
           </div>
         </div>
       )}
+
     </div>
   );
 };

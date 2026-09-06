@@ -5,76 +5,19 @@ import { CategoryRecord } from "@/types/categories";
 import { CategoryGrid } from "@/components/admin/categories/CategoryGrid";
 import { CategoryFormDialog } from "@/components/admin/categories/CategoryFormDialog";
 import { CategoryDeleteDialog } from "@/components/admin/categories/CategoryDeleteDialog";
-
-const initialCategories: CategoryRecord[] = [
-  {
-    id: "cat-1",
-    name: "Starters & Appetizers",
-    icon: "🍔",
-    itemCount: 8,
-    displayOrder: 1,
-    isActive: true,
-  },
-  {
-    id: "cat-2",
-    name: "Smoked Mains & Steaks",
-    icon: "🥩",
-    itemCount: 12,
-    displayOrder: 2,
-    isActive: true,
-  },
-  {
-    id: "cat-3",
-    name: "Woodfired Sourdough Pizza",
-    icon: "🍕",
-    itemCount: 10,
-    displayOrder: 3,
-    isActive: true,
-  },
-  {
-    id: "cat-4",
-    name: "Cold Larder & Salads",
-    icon: "🥗",
-    itemCount: 6,
-    displayOrder: 4,
-    isActive: true,
-  },
-  {
-    id: "cat-5",
-    name: "Craft Desserts",
-    icon: "🍨",
-    itemCount: 4,
-    displayOrder: 5,
-    isActive: true,
-  },
-  {
-    id: "cat-6",
-    name: "Wine & Cellar Selection",
-    icon: "🍷",
-    itemCount: 5,
-    displayOrder: 6,
-    isActive: true,
-  },
-  {
-    id: "cat-7",
-    name: "Cold Drinks & Mocktails",
-    icon: "🍹",
-    itemCount: 7,
-    displayOrder: 7,
-    isActive: true,
-  },
-  {
-    id: "cat-8",
-    name: "Sides & Dip Sauces",
-    icon: "🍟",
-    itemCount: 6,
-    displayOrder: 8,
-    isActive: false,
-  },
-];
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { InfiniteScrollSentinel } from "@/components/ui/InfiniteScrollSentinel";
+import { Api } from "@/lib/api";
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<CategoryRecord[]>(initialCategories);
+  const {
+    items: categories,
+    setItems: setCategories,
+    loading,
+    pagination,
+    sentinelRef,
+    refresh,
+  } = useInfiniteScroll<CategoryRecord>("/categories.php", { limit: 12 });
 
   // Dialog States
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -98,38 +41,60 @@ export default function CategoriesPage() {
     setIsDeleteOpen(true);
   };
 
-  const handleToggleActive = (categoryId: string) => {
-    setCategories((prev) =>
-      prev.map((c) => (c.id === categoryId ? { ...c, isActive: !c.isActive } : c))
-    );
-  };
+  const handleToggleActive = async (categoryId: string) => {
+    const target = categories.find((c) => String(c.id) === String(categoryId));
+    if (!target) return;
 
-  const handleSaveCategory = (categoryData: Partial<CategoryRecord>) => {
-    if (categoryData.id) {
-      // Edit Existing
-      setCategories((prev) =>
-        prev.map((c) =>
-          c.id === categoryData.id
-            ? ({ ...c, ...categoryData } as CategoryRecord)
-            : c
-        )
-      );
-    } else {
-      // Add New Category
-      const newCategory: CategoryRecord = {
-        id: `cat-${Date.now()}`,
-        name: categoryData.name || "New Category",
-        icon: categoryData.icon || "🍔",
-        itemCount: 0,
-        displayOrder: categoryData.displayOrder || categories.length + 1,
-        isActive: categoryData.isActive ?? true,
-      };
-      setCategories((prev) => [...prev, newCategory]);
+    // Optimistic UI Update
+    setCategories((prev) =>
+      prev.map((c) => (String(c.id) === String(categoryId) ? { ...c, isActive: !c.isActive } : c))
+    );
+
+    try {
+      await Api.put(`/categories.php?id=${categoryId}`, {
+        id: categoryId,
+        name: target.name,
+        icon: target.icon,
+        image_url: target.image_url || target.imageUrl,
+        description: target.description,
+        displayOrder: target.displayOrder,
+      });
+    } catch (err) {
+      console.error("Failed to toggle category active status", err);
+      refresh();
     }
   };
 
-  const handleConfirmDelete = (categoryId: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== categoryId));
+  const handleSaveCategory = async (categoryData: Partial<CategoryRecord>) => {
+    try {
+      if (categoryData.id) {
+        // Edit Existing Category
+        const res = await Api.put(`/categories.php?id=${categoryData.id}`, categoryData);
+        if (res.success) {
+          refresh();
+        }
+      } else {
+        // Add New Category
+        const res = await Api.post("/categories.php", categoryData);
+        if (res.success) {
+          refresh();
+        }
+      }
+    } catch (err) {
+      console.error("Failed to save category", err);
+    }
+  };
+
+  const handleConfirmDelete = async (categoryId: string) => {
+    try {
+      const res = await Api.delete(`/categories.php?id=${categoryId}`);
+      if (res.success) {
+        setCategories((prev) => prev.filter((c) => String(c.id) !== String(categoryId)));
+      }
+    } catch (err) {
+      console.error("Failed to delete category", err);
+      refresh();
+    }
   };
 
   return (
@@ -141,6 +106,15 @@ export default function CategoriesPage() {
         onOpenEditModal={handleOpenEditModal}
         onOpenDeleteModal={handleOpenDeleteModal}
         onToggleActive={handleToggleActive}
+      />
+
+      {/* Infinite Scroll Observer & Progress Bar */}
+      <InfiniteScrollSentinel
+        sentinelRef={sentinelRef}
+        loading={loading}
+        pagination={pagination}
+        itemsCount={categories.length}
+        unitLabel="categories"
       />
 
       {/* Shadcn UI Add / Edit Category Dialog Component */}

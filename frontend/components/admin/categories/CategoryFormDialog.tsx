@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { CategoryRecord } from "@/types/categories";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Image as ImageIcon, UploadCloud, Upload, X } from "lucide-react";
 
 interface CategoryFormDialogProps {
   isOpen: boolean;
@@ -27,8 +27,11 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
   categoryToEdit,
   onSave,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("🍔");
+  const [imageUrl, setImageUrl] = useState("");
+  const [description, setDescription] = useState("");
   const [displayOrder, setDisplayOrder] = useState(1);
   const [isActive, setIsActive] = useState(true);
 
@@ -36,15 +39,39 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
     if (categoryToEdit) {
       setName(categoryToEdit.name);
       setIcon(categoryToEdit.icon || "🍔");
+      const img = categoryToEdit.image_url || categoryToEdit.imageUrl || "";
+      // If relative image path from backend (e.g. /uploads/categories/img_xxx.jpg), prepend backend server host if needed for preview
+      if (img && img.startsWith("/")) {
+        const backendHost = process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, "") : "http://localhost:8000";
+        setImageUrl(`${backendHost}${img}`);
+      } else {
+        setImageUrl(img);
+      }
+      setDescription(categoryToEdit.description || "");
       setDisplayOrder(categoryToEdit.displayOrder || 1);
       setIsActive(categoryToEdit.isActive);
     } else {
       setName("");
       setIcon("🍔");
+      setImageUrl("");
+      setDescription("");
       setDisplayOrder(1);
       setIsActive(true);
     }
   }, [categoryToEdit, isOpen]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setImageUrl(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +81,9 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
       id: categoryToEdit ? categoryToEdit.id : undefined,
       name,
       icon,
+      image_url: imageUrl || null,
+      imageUrl: imageUrl || null,
+      description,
       displayOrder: Number(displayOrder),
       isActive,
     });
@@ -62,7 +92,7 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-surface-container-lowest border-border/40 p-space-lg rounded-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-md bg-surface-container-lowest border-border/40 p-space-lg rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader className="space-y-1 text-left">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
@@ -74,16 +104,103 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
           </div>
           <DialogDescription className="font-body-sm text-xs text-on-surface-variant">
             {categoryToEdit
-              ? "Update category details, badge icon, and display sequence."
+              ? "Update category details, category banner image, badge icon, and display sequence."
               : "Add a new culinary category to organize your menu items for customer ordering."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-space-md py-2">
+          {/* Category Banner Image Upload */}
+          <div className="p-3 bg-surface-container-low/70 rounded-xl border border-border/30 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="font-label-sm text-xs font-bold text-on-surface flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-primary" />
+                <span>Category Image (image_url)</span>
+              </label>
+              {imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setImageUrl("")}
+                  className="text-[11px] font-bold text-error hover:underline flex items-center gap-1"
+                >
+                  <X className="w-3 h-3" />
+                  <span>Remove Image</span>
+                </button>
+              )}
+            </div>
+
+            {/* Live Banner Image Preview */}
+            <div className="relative w-full h-32 rounded-xl overflow-hidden bg-surface-container border border-border/40 group shadow-xs">
+              {imageUrl ? (
+                <>
+                  <img
+                    src={imageUrl}
+                    alt="Category Preview"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end justify-between p-2.5 text-white">
+                    <div>
+                      <div className="font-label-sm text-[10px] text-amber-300 font-bold uppercase tracking-wider">
+                        Active Category Banner
+                      </div>
+                      <div className="font-headline-sm text-xs font-bold truncate max-w-[200px]">
+                        {name || "Category Image"}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-2 py-1 rounded bg-primary hover:bg-primary-container text-on-primary text-[10px] font-bold shadow-xs flex items-center gap-1 transition-all active:scale-95"
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>Change</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-on-surface-variant gap-1 p-3 text-center">
+                  <ImageIcon className="w-6 h-6 opacity-40 text-primary" />
+                  <span className="text-xs font-bold text-on-surface">No Image Uploaded</span>
+                  <span className="text-[10px] text-on-surface-variant">Upload an image file or fallback to emoji icon</span>
+                </div>
+              )}
+            </div>
+
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+
+            {/* Click to Upload Button */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="p-3 bg-surface-container-lowest rounded-xl border border-dashed border-primary/40 hover:border-primary flex items-center justify-center gap-2.5 cursor-pointer transition-all hover:bg-surface-container-low group shadow-xs"
+            >
+              <div className="w-8 h-8 rounded-lg bg-primary-fixed flex items-center justify-center text-primary group-hover:scale-110 transition-transform shrink-0">
+                <UploadCloud className="w-4 h-4" />
+              </div>
+              <div className="flex-1">
+                <div className="font-label-sm text-xs font-bold text-on-surface">
+                  Upload Category Image File
+                </div>
+                <div className="font-body-sm text-[10px] text-on-surface-variant">
+                  Select PNG, JPG, WEBP from computer
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Category Icon Picker */}
           <div>
             <label className="font-label-sm text-xs font-bold text-on-surface mb-1.5 block">
-              Category Badge Icon / Emoji
+              Fallback Badge Icon / Emoji
             </label>
             <div className="flex flex-wrap gap-1.5 p-2 bg-surface-container-low rounded-xl border border-border/30">
               {iconOptions.map((emoji) => (
@@ -115,7 +232,7 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Woodfired Pizza"
-                className="w-full px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-xs outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary border border-border/20 transition-all"
+                className="w-full px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-xs outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary border border-border/20 transition-all font-semibold"
               />
             </div>
 
@@ -131,6 +248,20 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
                 className="w-full px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-xs outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary border border-border/20 transition-all font-bold"
               />
             </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="font-label-sm text-xs font-bold text-on-surface mb-1 block">
+              Category Description (Optional)
+            </label>
+            <textarea
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. Refreshing iced teas, freshly squeezed lemonades, sodas..."
+              className="w-full p-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-xs outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary border border-border/20 leading-relaxed"
+            />
           </div>
 
           {/* Status Toggle Switch */}
@@ -181,3 +312,4 @@ export const CategoryFormDialog: React.FC<CategoryFormDialogProps> = ({
     </Dialog>
   );
 };
+
