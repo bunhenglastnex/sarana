@@ -138,9 +138,9 @@ export const DeliveryZoneSettingsTab: React.FC<
               </label>
               <Input
                 type="text"
-                value={formData.storeLatitude ?? "11.5564"}
+                value={formData.storeLatitude ?? "13.352270"}
                 onChange={(e) => onChange("storeLatitude", e.target.value)}
-                placeholder="e.g. 11.5564"
+                placeholder="e.g. 13.352270"
                 className="text-xs font-mono border-border"
               />
               <p className="text-[11px] text-on-surface-variant">
@@ -155,9 +155,9 @@ export const DeliveryZoneSettingsTab: React.FC<
               </label>
               <Input
                 type="text"
-                value={formData.storeLongitude ?? "104.9282"}
+                value={formData.storeLongitude ?? "103.955116"}
                 onChange={(e) => onChange("storeLongitude", e.target.value)}
-                placeholder="e.g. 104.9282"
+                placeholder="e.g. 103.955116"
                 className="text-xs font-mono border-border"
               />
               <p className="text-[11px] text-on-surface-variant">

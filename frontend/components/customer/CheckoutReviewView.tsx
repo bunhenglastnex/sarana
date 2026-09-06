@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -27,22 +27,64 @@ import {
   Clock,
   Heart,
   User,
+  ShieldAlert,
+  Navigation,
+  ExternalLink,
 } from 'lucide-react';
 import { useCartStore } from '@/lib/store/useCartStore';
 import { useAuthStore } from '@/lib/store/useAuthStore';
-import { Api } from '@/lib/api';
+import { Api, useApi } from '@/lib/api';
 import { LocationModal } from './LocationModal';
+import { CheckoutDeliveryMap } from './CheckoutDeliveryMap';
+
+// Haversine formula to compute exact distance in kilometers
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export const CheckoutReviewView: React.FC = () => {
   const router = useRouter();
+
+  // Fetch admin settings for delivery zone configuration
+  const { data: settingsRes } = useApi<any>('/settings.php');
+  const settings = settingsRes?.data || settingsRes || {};
+
+  const storeLat = parseFloat(settings.store_latitude || '13.352270');
+  const storeLng = parseFloat(settings.store_longitude || '103.955116');
+  const restaurantName = settings.store_name || 'Bistro Kitchen HQ';
+  const restaurantAddress = settings.store_address || '520 N Michigan Ave, Suite 14F, Siem Reap';
+  const restaurantPhone = settings.store_phone || '+855 23 888 999';
+  const openingTime = settings.opening_time || '10:00 AM';
+  const closingTime = settings.closing_time || '10:00 PM';
+
+  const maxRadiusKm = parseFloat(settings.max_delivery_radius_km || '7.5');
+  const enableZoneBlocker = settings.enable_zone_blocker !== false && settings.enable_zone_blocker !== 'false';
+  const outOfZoneMessage =
+    settings.out_of_zone_message ||
+    `Sorry! Your delivery address is outside our maximum delivery radius of ${maxRadiusKm} km. Pickup is still available!`;
+
+  const baseDeliveryFee = parseFloat(settings.base_delivery_fee || '1.50');
+  const baseIncludedKm = parseFloat(settings.base_included_km || '3.0');
+  const extraFeePerKm = parseFloat(settings.extra_fee_per_km || '0.50');
+  const freeDeliveryMinSubtotal = parseFloat(settings.free_delivery_min_subtotal || '25.00');
 
   // Stores
   const {
     items,
     fulfillmentType,
     setFulfillmentType,
-    customerPhone: storePhone,
-    deliveryAddress: storeAddress,
+    customerPhone: cartPhone,
+    deliveryAddress: cartAddress,
     notes: storeNotes,
     setCustomerInfo,
     getFoodSubtotal,
@@ -61,10 +103,14 @@ export const CheckoutReviewView: React.FC = () => {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState<any>(null);
 
-  // Address & Notes State
+  // Address, Coordinates & Notes State
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [deliveryAddress, setDeliveryAddress] = useState<string>(storeAddress || '244 Oak Street, Apt 4B');
-  const [customerPhone, setCustomerPhone] = useState<string>(authPhone || storePhone || '+1 (555) 382-9012');
+  const [deliveryAddress, setDeliveryAddress] = useState<string>(cartAddress || '');
+  const [customerCoords, setCustomerCoords] = useState<{ lat: number; lng: number }>({
+    lat: storeLat,
+    lng: storeLng,
+  });
+  const [customerPhone, setCustomerPhone] = useState<string>(authPhone || cartPhone || '+1 (555) 382-9012');
   const [customerName, setCustomerName] = useState<string>(authName || 'Guest Customer');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notes, setNotes] = useState<string>(storeNotes || 'Leave at front door, ring bell twice please.');
@@ -73,10 +119,63 @@ export const CheckoutReviewView: React.FC = () => {
     setFulfillmentType(fulfillmentMode);
   }, [fulfillmentMode, setFulfillmentType]);
 
+  // Auto-acquire browser real GPS location on mount if address is not set
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.geolocation && !cartAddress) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          setCustomerCoords({ lat: latitude, lng: longitude });
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            );
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.display_name) {
+                const parts = data.display_name.split(',');
+                const concise = parts.slice(0, 3).join(',').trim();
+                setDeliveryAddress(concise);
+                setCustomerInfo({ deliveryAddress: concise });
+              }
+            }
+          } catch {
+            // Geocoding network fallback
+          }
+        },
+        (err) => {
+          console.log('Checkout initial GPS fetch skipped:', err);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+  }, [cartAddress, setCustomerInfo]);
+
+  // Compute distance from store center
+  const distanceKm = useMemo(() => {
+    return calculateDistanceKm(customerCoords.lat, customerCoords.lng, storeLat, storeLng);
+  }, [customerCoords, storeLat, storeLng]);
+
+  // Out of delivery zone restriction check
+  const isOutOfZone = useMemo(() => {
+    return (
+      fulfillmentMode === 'delivery' &&
+      enableZoneBlocker &&
+      maxRadiusKm < 999 &&
+      distanceKm > maxRadiusKm
+    );
+  }, [fulfillmentMode, enableZoneBlocker, maxRadiusKm, distanceKm]);
+
   // Price Calculations
   const subtotal = getFoodSubtotal();
   const packagingAndTax = subtotal > 0 ? 1.20 : 0.00;
-  const deliveryFee = fulfillmentMode === 'delivery' ? 2.00 : 0.00;
+  
+  const rawFee = distanceKm <= baseIncludedKm
+    ? baseDeliveryFee
+    : baseDeliveryFee + (distanceKm - baseIncludedKm) * extraFeePerKm;
+  const isFreeDelivery = subtotal >= freeDeliveryMinSubtotal;
+  const deliveryFee = fulfillmentMode === 'delivery' ? (isFreeDelivery ? 0.00 : rawFee) : 0.00;
+
   const effectiveTip = fulfillmentMode === 'delivery' ? tipAmount : 0.00;
   const totalAmount = subtotal > 0 ? subtotal + packagingAndTax + deliveryFee + effectiveTip : 0.00;
 
@@ -87,9 +186,12 @@ export const CheckoutReviewView: React.FC = () => {
     setPaymentMethod(method);
   };
 
-  const handleSelectAddress = (newAddr: string) => {
+  const handleSelectAddress = (newAddr: string, newLat?: number, newLng?: number) => {
     setDeliveryAddress(newAddr);
     setCustomerInfo({ deliveryAddress: newAddr });
+    if (newLat !== undefined && newLng !== undefined) {
+      setCustomerCoords({ lat: newLat, lng: newLng });
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -329,7 +431,7 @@ export const CheckoutReviewView: React.FC = () => {
                         DELIVERY DESTINATION
                       </span>
                       <span className="text-xs text-secondary font-medium">
-                        • 1.4 miles away
+                        • {distanceKm.toFixed(1)} km from store
                       </span>
                     </div>
                     <p className="font-bold text-sm text-on-surface mt-1 truncate">
@@ -341,26 +443,37 @@ export const CheckoutReviewView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Mini Map Visual Anchor */}
-                <div
-                  className="w-full h-28 rounded-xl bg-cover bg-center shadow-inner relative overflow-hidden border border-surface-container/60 cursor-pointer"
-                  onClick={() => setIsLocationModalOpen(true)}
-                  style={{
-                    backgroundImage:
-                      "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDPpH_RpSN287-cVRY0sqvBUTAYq1cr9OtlGDZIxN8JHBALJH8XtEwlZDF5sr4FZDfIDuLdCOZ-7ajYlDSqWuKEuokpsArXXyy0X2KAaETacGNud7x9yMR_oVhgU6hhPrRILbWBCEdBCUWc9hvXj7Fe0RQVSoWHbT5qSx7Ngy9ZqyEFwnWH61opW-50gJc02OUmLy8udtX6BZci9TA2NbP7aMxX7A-PShp3PAbFxmx_kadNCTNIyv91')",
-                  }}
-                >
-                  <div className="absolute inset-0 bg-primary/10 mix-blend-multiply" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg transform -translate-y-1">
-                      <UtensilsCrossed className="w-4 h-4" />
+                {/* Out-of-Zone Delivery Restriction Alert Card */}
+                {isOutOfZone && (
+                  <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-red-600 font-bold text-xs animate-in fade-in">
+                    <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-600" />
+                    <div className="flex-1">
+                      <p className="font-extrabold text-sm text-red-700">
+                        Out of Delivery Area ({distanceKm.toFixed(1)} km away)
+                      </p>
+                      <p className="text-xs text-red-600 font-normal mt-0.5 leading-relaxed">
+                        {outOfZoneMessage}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setFulfillmentMode('pickup')}
+                        className="mt-2.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <span>Switch to Store Pickup</span>
+                      </button>
                     </div>
                   </div>
-                  <div className="absolute bottom-2 right-2 bg-surface-container-lowest/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-on-surface text-[11px] font-bold flex items-center gap-1 shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                    Live dispatch active
-                  </div>
-                </div>
+                )}
+
+                {/* Interactive Leaflet GPS Map */}
+                <CheckoutDeliveryMap
+                  currentAddress={deliveryAddress}
+                  onAddressChange={handleSelectAddress}
+                  storeLat={storeLat}
+                  storeLng={storeLng}
+                  maxRadiusKm={maxRadiusKm}
+                />
 
                 {/* Phone Verified & Courier Instruction Row */}
                 <div className="grid grid-cols-1 gap-2">
@@ -423,26 +536,81 @@ export const CheckoutReviewView: React.FC = () => {
                 </div>
               </div>
             ) : (
-              /* Pickup Info Fallback */
-              <div className="mt-2 flex flex-col gap-2">
-                <div className="p-3.5 bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container/80 flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center flex-shrink-0">
-                    <Store className="w-5 h-5" />
+              /* Pickup Store Info & Interactive Map */
+              <div className="mt-2 flex flex-col gap-3 transition-all duration-300">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm text-on-surface">
+                    Store Pickup Location
+                  </span>
+                  <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-emerald-600" />
+                    <span>Ready in 15-20 Min</span>
+                  </span>
+                </div>
+
+                {/* Store Info Card */}
+                <div className="bg-surface-container-lowest rounded-xl p-3.5 shadow-sm border border-surface-container/80 flex flex-col gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Store className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] bg-secondary-fixed/50 text-on-secondary-fixed-variant px-2 py-0.5 rounded font-bold uppercase">
+                          STORE COUNTER
+                        </span>
+                        <span className="text-xs text-secondary font-medium">
+                          • {distanceKm.toFixed(1)} km away
+                        </span>
+                      </div>
+                      <p className="font-bold text-sm text-on-surface mt-1 truncate">
+                        {restaurantName}
+                      </p>
+                      <p className="text-xs text-on-surface-variant font-medium mt-0.5">
+                        {restaurantAddress}
+                      </p>
+                      <p className="text-[11px] text-on-surface-variant/80 mt-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-primary" />
+                        <span>Open Hours: {openingTime} – {closingTime}</span>
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[10px] bg-secondary-fixed/50 text-on-secondary-fixed-variant px-2 py-0.5 rounded font-bold uppercase">
-                      READY IN 15-20 MIN
-                    </span>
-                    <p className="font-bold text-sm text-on-surface mt-1">
-                      Amber & Ember Kitchen Counter
-                    </p>
-                    <p className="text-xs text-on-surface-variant">
-                      742 Evergreen Terrace, Culinary Row
-                    </p>
-                    <p className="text-xs text-secondary mt-1 font-semibold">
-                      Please have your order code ready upon arrival.
-                    </p>
+
+                  {/* Action Buttons: Directions & Call */}
+                  <div className="flex items-center gap-2 pt-2 border-t border-surface-container/60">
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${storeLat},${storeLng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-xs flex items-center justify-center gap-1.5 transition-all border border-surface-container-high"
+                    >
+                      <Navigation className="w-3.5 h-3.5 text-primary fill-primary" />
+                      <span>Get Directions</span>
+                      <ExternalLink className="w-3 h-3 text-on-surface-variant" />
+                    </a>
+
+                    <a
+                      href={`tel:${restaurantPhone}`}
+                      className="py-2 px-3 rounded-lg border border-outline hover:bg-surface-container text-on-surface font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-primary" />
+                      <span>Call Store</span>
+                    </a>
                   </div>
+                </div>
+
+                {/* Interactive Map showing Store Location */}
+                <div className="space-y-1 mt-1">
+                  <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
+                    Store GPS Map Location
+                  </span>
+                  <CheckoutDeliveryMap
+                    currentAddress={restaurantAddress}
+                    onAddressChange={() => {}}
+                    storeLat={storeLat}
+                    storeLng={storeLng}
+                    maxRadiusKm={maxRadiusKm}
+                  />
                 </div>
               </div>
             )}
@@ -791,17 +959,25 @@ export const CheckoutReviewView: React.FC = () => {
             <button
               type="button"
               onClick={handlePlaceOrder}
-              disabled={isSubmitting}
-              className="w-full h-13 py-3.5 bg-primary hover:bg-primary-container active:scale-[0.98] transition-all text-on-primary rounded-xl flex items-center justify-between px-space-lg shadow-lg font-bold text-sm disabled:opacity-50"
+              disabled={isSubmitting || isOutOfZone}
+              className={`w-full h-13 py-3.5 transition-all rounded-xl flex items-center justify-between px-space-lg shadow-lg font-bold text-sm ${
+                isOutOfZone
+                  ? 'bg-surface-container-highest text-on-surface-variant cursor-not-allowed opacity-80'
+                  : 'bg-primary hover:bg-primary-container text-on-primary active:scale-[0.98]'
+              }`}
             >
               <div className="flex items-center gap-2">
                 {isSubmitting ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
+                ) : isOutOfZone ? (
+                  <ShieldAlert className="w-5 h-5 text-red-500" />
                 ) : (
                   <Shield className="w-5 h-5" />
                 )}
                 <span>
-                  {paymentMethod === 'khqr'
+                  {isOutOfZone
+                    ? 'Delivery Unavailable (Out of Zone)'
+                    : paymentMethod === 'khqr'
                     ? 'Proceed with KHQR'
                     : 'Place Order'}
                 </span>

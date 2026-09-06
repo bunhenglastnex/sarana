@@ -20,8 +20,7 @@ class SettingsController {
         $method = $_SERVER['REQUEST_METHOD'];
 
         if ($method === 'GET') {
-            // Require Admin role for admin settings retrieval
-            $adminUser = AuthMiddleware::authenticate($this->pdo, ['admin']);
+            // Allow public read of settings for customer pages (delivery zone, general info)
             $group = $_GET['group'] ?? null;
             $data = $this->settingsService->getSettings($group);
             jsonResponse(1, 'Settings retrieved successfully', $data, 200);

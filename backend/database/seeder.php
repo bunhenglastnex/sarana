@@ -86,6 +86,12 @@ function seedDatabase(PDO $pdo): void {
         (111, 1019, 2, 'Hearth-Smoked Angus Ribs', 32.00, 1, 32.00),
         (112, 1019, 4, 'Truffle Parmesan Fries', 6.50, 1, 6.50)");
 
+    // Seed User Saved Addresses
+    $pdo->exec("INSERT IGNORE INTO user_addresses (id, user_id, label, address, lat, lng, tag, is_default) VALUES
+        (1, 101, 'Home', '520 N Michigan Ave, Apt 14F', 13.354000, 103.956000, 'Default', 1),
+        (2, 101, 'Work', '742 Evergreen Terrace, Suite 100', 13.358000, 103.960000, 'Office', 0),
+        (3, 101, 'Partner\'s Place', '120 Broadway Ave, Apt 12', 13.349000, 103.951000, 'Home', 0)");
+
     // Seed Settings (General, Audio, Security, Telegram, Delivery)
     $pdo->exec("INSERT IGNORE INTO settings (setting_key, setting_value, setting_group) VALUES
         ('store_name', 'Bistro Kitchen HQ', 'general'),
