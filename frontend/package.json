@@ -32,6 +32,7 @@
     "react-i18next": "^17.0.13",
     "react-leaflet": "^4.2.1",
     "recharts": "^3.10.1",
+    "restaurant-online-ordering": "file:..",
     "swiper": "^14.2.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
