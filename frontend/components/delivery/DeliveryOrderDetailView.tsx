@@ -165,10 +165,15 @@ export const DeliveryOrderDetailView: React.FC<DeliveryOrderDetailViewProps> = (
         {/* Order Header & Live Timer Pill Banner */}
         <div className="px-screen-edge-padding pt-space-xs pb-space-sm flex flex-col gap-space-xs">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-space-xs">
+            <div className="flex items-center gap-space-xs flex-wrap">
               <span className="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">
                 Order {order.orderNumber}
               </span>
+              {order.timeAgo && (
+                <span className="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-primary-container/20 text-primary font-bold">
+                  Placed {order.timeAgo}
+                </span>
+              )}
             </div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container/20 text-on-secondary-container font-label-sm text-label-sm uppercase tracking-wider font-bold">
               <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
@@ -359,7 +364,11 @@ export const DeliveryOrderDetailView: React.FC<DeliveryOrderDetailViewProps> = (
 
               {/* Open Navigation CTA Button */}
               <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(order.address)}`}
+                href={
+                  order.deliveryLat && order.deliveryLng
+                    ? `https://www.google.com/maps?q=${order.deliveryLat},${order.deliveryLng}`
+                    : `https://maps.google.com/?q=${encodeURIComponent(order.address)}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full h-12 mt-1 rounded-xl bg-on-surface text-surface flex items-center justify-center gap-2 font-label-lg text-label-lg font-bold shadow-md hover:bg-inverse-surface active:scale-[0.99] transition-transform"

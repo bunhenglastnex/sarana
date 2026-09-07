@@ -16,6 +16,8 @@ export interface DeliveryOrder {
   orderNumber: string;
   customerName: string;
   customerPhone?: string;
+  createdAt?: string;
+  timeAgo?: string;
   prepStatus: string;
   prepStatusType: "urgent" | "warning" | "ready";
   totalPrice: number;
@@ -71,10 +73,74 @@ interface DeliveryState {
   getOrderById: (id: string) => DeliveryOrder | undefined;
 }
 
+function calculateDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function getTimeAgo(dateStr?: string): string {
+  if (!dateStr) return "";
+  const formatted = dateStr.includes("T") ? dateStr : dateStr.replace(" ", "T");
+  const created = new Date(formatted).getTime();
+  if (isNaN(created)) return "";
+  const now = Date.now();
+  const diffMinutes = Math.floor((now - created) / 60000);
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  const hours = Math.floor(diffMinutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function getDistanceAndEta(
+  storeLat?: number,
+  storeLng?: number,
+  deliveryLat?: number,
+  deliveryLng?: number
+): { distance: string; eta: string } {
+  if (storeLat && storeLng && deliveryLat && deliveryLng) {
+    const distKm = calculateDistanceKm(storeLat, storeLng, deliveryLat, deliveryLng);
+    const distMiles = distKm * 0.621371;
+    const estMinutes = Math.max(5, Math.round((distKm / 20) * 60 + 5));
+    return {
+      distance: `${distMiles.toFixed(1)} mi`,
+      eta: `${estMinutes} min drive`,
+    };
+  }
+  return {
+    distance: "1.8 mi",
+    eta: "10 min drive",
+  };
+}
+
 export function mapRawOrderToDeliveryOrder(o: any): DeliveryOrder {
   const isCod = o.payment_method === "cod" || o.payment_method === "cash_on_delivery";
   const isCompleted = o.status === "completed" || o.status === "delivered";
   const isOnWay = o.status === "on_the_way";
+
+  const storeLat = o.store?.lat ? Number(o.store.lat) : undefined;
+  const storeLng = o.store?.lng ? Number(o.store.lng) : undefined;
+  const deliveryLat = o.delivery_lat ? Number(o.delivery_lat) : undefined;
+  const deliveryLng = o.delivery_lng ? Number(o.delivery_lng) : undefined;
+
+  const { distance, eta } = getDistanceAndEta(storeLat, storeLng, deliveryLat, deliveryLng);
+  const createdAt = o.created_at ? String(o.created_at) : undefined;
+  const timeAgo = getTimeAgo(o.created_at);
 
   const itemsList: DeliveryItemDetail[] = Array.isArray(o.items)
     ? o.items.map((i: any) => ({
@@ -103,6 +169,8 @@ export function mapRawOrderToDeliveryOrder(o: any): DeliveryOrder {
       : `#${o.id}`,
     customerName: o.customer_name || "Customer",
     customerPhone: o.customer_phone || "+855 12 345 678",
+    createdAt,
+    timeAgo,
     prepStatus: isOnWay
       ? "Out for Delivery"
       : isCompleted
@@ -111,8 +179,8 @@ export function mapRawOrderToDeliveryOrder(o: any): DeliveryOrder {
     prepStatusType: isOnWay ? "urgent" : isCompleted ? "ready" : "ready",
     totalPrice: Number(o.total_amount || 0),
     itemCount: itemsList.length > 0 ? itemsList.length : 1,
-    distance: "1.8 mi",
-    eta: "10 min",
+    distance,
+    eta,
     address: o.delivery_address || "Customer Delivery Address",
     dropOffInstruction: o.notes || "Ring bell upon arrival.",
     itemsSummary,
@@ -127,12 +195,12 @@ export function mapRawOrderToDeliveryOrder(o: any): DeliveryOrder {
       : isOnWay
       ? "picked_up"
       : "accepted",
-    storeLat: o.store?.lat ? Number(o.store.lat) : undefined,
-    storeLng: o.store?.lng ? Number(o.store.lng) : undefined,
+    storeLat,
+    storeLng,
     storeName: o.store?.name || undefined,
     storeAddress: o.store?.address || undefined,
-    deliveryLat: o.delivery_lat ? Number(o.delivery_lat) : undefined,
-    deliveryLng: o.delivery_lng ? Number(o.delivery_lng) : undefined,
+    deliveryLat,
+    deliveryLng,
     driverLat: o.driver_lat ? Number(o.driver_lat) : undefined,
     driverLng: o.driver_lng ? Number(o.driver_lng) : undefined,
     driverSpeed: o.driver_speed ? Number(o.driver_speed) : undefined,
@@ -252,13 +320,15 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
   fetchLiveOrders: async () => {
     set({ isLoading: true });
     try {
-      const [resAvailable, resMyDeliveries] = await Promise.all([
+      const [resAvailable, resMyDeliveries, resHistory] = await Promise.all([
         Api.get("/delivery-available.php", undefined, { forceRefresh: true }),
         Api.get("/delivery-my-deliveries.php", undefined, { forceRefresh: true }),
+        Api.get("/delivery-history.php", { period: "all" }, { forceRefresh: true }),
       ]);
 
       let availableOrders: DeliveryOrder[] = [];
       let myDeliveries: DeliveryOrder[] = [];
+      let completedHistory: DeliveryOrder[] = [];
 
       if (resAvailable.success && resAvailable.data) {
         const rawAvail = Array.isArray(resAvailable.data.orders)
@@ -281,9 +351,17 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
         myDeliveries = rawMy.map(mapRawOrderToDeliveryOrder);
       }
 
+      if (resHistory.success && resHistory.data) {
+        const rawHist = Array.isArray(resHistory.data.orders)
+          ? resHistory.data.orders
+          : [];
+        completedHistory = rawHist.map(mapRawOrderToDeliveryOrder);
+      }
+
       set({
         availableOrders,
         myDeliveries,
+        completedHistory,
         isLoading: false,
       });
     } catch (err) {
@@ -296,79 +374,7 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
     try {
       const res = await Api.get(`/delivery.php`, { order_id: id }, { forceRefresh: true });
       if (res.success && res.data) {
-        const o = res.data;
-        const isCod =
-          o.payment_method === "cod" ||
-          o.payment_method === "cash_on_delivery";
-        const isCompleted =
-          o.status === "completed" || o.status === "delivered";
-        const isOnWay = o.status === "on_the_way";
-
-        const itemsList: DeliveryItemDetail[] = Array.isArray(o.items)
-          ? o.items.map((i: any) => ({
-              id: String(i.id || i.food_id),
-              name: i.food_name || "Menu Item",
-              quantity: Number(i.quantity || 1),
-              optionsNote: i.notes || undefined,
-              image:
-                i.image_url ||
-                "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80",
-              isVerified: true,
-            }))
-          : [];
-
-        const itemsSummary =
-          itemsList.length > 0
-            ? itemsList.map((i) => `${i.quantity}x ${i.name}`).join(", ")
-            : "Delivery Order Ticket";
-
-        const order: DeliveryOrder = {
-          id: String(o.id),
-          orderNumber: o.order_number
-            ? o.order_number.startsWith("#")
-              ? o.order_number
-              : `#${o.order_number}`
-            : `#${o.id}`,
-          customerName: o.customer_name || "Customer",
-          customerPhone: o.customer_phone || "+855 12 345 678",
-          prepStatus: isOnWay
-            ? "Out for Delivery"
-            : isCompleted
-            ? "Delivered & Completed"
-            : "Ready for Pickup",
-          prepStatusType: isOnWay
-            ? "urgent"
-            : isCompleted
-            ? "ready"
-            : "ready",
-          totalPrice: Number(o.total_amount || 0),
-          itemCount: itemsList.length > 0 ? itemsList.length : 1,
-          distance: "1.8 mi",
-          eta: "10 min",
-          address: o.delivery_address || "Customer Delivery Address",
-          dropOffInstruction: o.notes || "Ring bell upon arrival.",
-          itemsSummary: itemsSummary,
-          itemImage:
-            itemsList[0]?.image ||
-            "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80",
-          itemsList: itemsList,
-          paymentType: isCod ? "cod" : "khqr",
-          codAmount: isCod ? Number(o.total_amount || 0) : undefined,
-          deliveryStage: isCompleted
-            ? "completed"
-            : isOnWay
-            ? "picked_up"
-            : "accepted",
-          storeLat: o.store?.lat ? Number(o.store.lat) : undefined,
-          storeLng: o.store?.lng ? Number(o.store.lng) : undefined,
-          storeName: o.store?.name || undefined,
-          storeAddress: o.store?.address || undefined,
-          deliveryLat: o.delivery_lat ? Number(o.delivery_lat) : undefined,
-          deliveryLng: o.delivery_lng ? Number(o.delivery_lng) : undefined,
-          driverLat: o.driver_lat ? Number(o.driver_lat) : undefined,
-          driverLng: o.driver_lng ? Number(o.driver_lng) : undefined,
-          driverSpeed: o.driver_speed ? Number(o.driver_speed) : undefined,
-        };
+        const order = mapRawOrderToDeliveryOrder(res.data);
 
         // Cache into myDeliveries state
         set((state) => {

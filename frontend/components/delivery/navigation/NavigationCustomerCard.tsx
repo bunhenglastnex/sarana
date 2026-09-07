@@ -30,10 +30,11 @@ export const NavigationCustomerCard: React.FC<NavigationCustomerCardProps> = ({
   };
 
   const handleOpenWazeOrMaps = () => {
-    window.open(
-      `https://maps.google.com/?q=${encodeURIComponent(order.address)}`,
-      "_blank"
-    );
+    const mapsUrl =
+      order.deliveryLat && order.deliveryLng
+        ? `https://www.google.com/maps?q=${order.deliveryLat},${order.deliveryLng}`
+        : `https://maps.google.com/?q=${encodeURIComponent(order.address)}`;
+    window.open(mapsUrl, "_blank");
   };
 
   return (

@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
+  Camera,
 } from "lucide-react";
 import { OrderRecord } from "@/types/orders";
 import { PaginationMeta } from "@/hooks/useInfiniteScroll";
@@ -349,7 +350,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
                         ${order.totalPrice.toFixed(2)}
                       </div>
                       <span
-                        className={`font-label-sm text-[10px] px-1.5 py-0.5 rounded uppercase font-bold inline-block mt-0.5 ${
+                        className={`font-label-sm text-[10px] px-1.5 py-0.5 rounded uppercase font-bold inline-flex items-center gap-1 mt-0.5 ${
                           order.paymentIsPaid
                             ? "bg-secondary-fixed text-on-secondary-fixed"
                             : order.paymentStatus === "pending_review" || order.proofImageUrl
@@ -357,6 +358,7 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
                             : "bg-surface-container-high text-on-surface-variant"
                         }`}
                       >
+                        {order.proofImageUrl && <Camera className="w-3 h-3 text-amber-700 shrink-0" />}
                         {order.paymentStatus === "pending_review"
                           ? "SLIP UPLOADED"
                           : order.paymentBadgeLabel}

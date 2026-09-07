@@ -12,11 +12,13 @@ if (!function_exists('jsonResponse')) {
      * @param int $httpStatus HTTP status code (default 200)
      */
     function jsonResponse(int $code = 1, string $msg = "Success", $data = null, int $httpStatus = 200): void {
-        http_response_code($httpStatus);
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
-        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-        header("Content-Type: application/json; charset=UTF-8");
+        if (php_sapi_name() !== 'cli' && !headers_sent()) {
+            http_response_code($httpStatus);
+            header("Access-Control-Allow-Origin: *");
+            header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
+            header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+            header("Content-Type: application/json; charset=UTF-8");
+        }
 
         echo json_encode([
             'code' => $code,

@@ -1,6 +1,5 @@
-"use client";
-
-import React from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 
 export interface CompletedDeliveryItem {
   id: string;
@@ -37,12 +36,31 @@ interface CompletedDeliveryListProps {
 export const CompletedDeliveryList: React.FC<CompletedDeliveryListProps> = ({
   items = DEFAULT_COMPLETED_ITEMS,
 }) => {
+  const router = useRouter();
+
+  if (!items || items.length === 0) {
+    return (
+      <div className="bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/30 text-center flex flex-col items-center justify-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+          <CheckCircle2 className="w-6 h-6" />
+        </div>
+        <div>
+          <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">No Completed Deliveries</h3>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Completed delivery tickets will appear here.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col space-y-space-sm" id="completed-tab-content">
       {items.map((item) => (
         <div
           key={item.id}
-          className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-xs border border-outline-variant/20"
+          onClick={() => router.push(`/delivery/${item.id}`)}
+          className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-xs border border-outline-variant/20 cursor-pointer hover:shadow-md transition-all active:scale-[0.99]"
         >
           <div className="flex justify-between items-center">
             <span className="font-label-sm text-label-sm text-on-surface-variant">

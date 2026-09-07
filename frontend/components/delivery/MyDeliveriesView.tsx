@@ -14,21 +14,22 @@ import { Loader2, Bike } from "lucide-react";
 export const MyDeliveriesView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<DeliveryTabMode>("in-progress");
   const [sheetType, setSheetType] = useState<SheetType>(null);
-  const { myDeliveries, availableOrders, fetchLiveOrders, isLoading } = useDeliveryStore();
+  const { myDeliveries, availableOrders, completedHistory, fetchLiveOrders, isLoading } = useDeliveryStore();
 
   useEffect(() => {
     fetchLiveOrders();
   }, [fetchLiveOrders]);
 
   const activeTasks = myDeliveries.filter((o) => o.deliveryStage !== "completed");
-  const completedOrders = [...myDeliveries, ...availableOrders].filter(
-    (o) => o.deliveryStage === "completed"
-  );
+  const completedOrders =
+    completedHistory.length > 0
+      ? completedHistory
+      : [...myDeliveries, ...availableOrders].filter((o) => o.deliveryStage === "completed");
 
   const completedItems: CompletedDeliveryItem[] = completedOrders.map((o) => ({
     id: o.id,
     orderNumber: o.orderNumber,
-    deliveredTimeStr: "Delivered Today",
+    deliveredTimeStr: o.timeAgo ? `Delivered ${o.timeAgo}` : "Delivered Today",
     customerName: o.customerName,
     addressAndPaymentStr: `${o.address} • $${o.totalPrice.toFixed(2)} ${o.paymentType.toUpperCase()}`,
     tipStr: o.tipAmount ? `+$${o.tipAmount.toFixed(2)} Tip` : "Completed",
@@ -74,7 +75,7 @@ export const MyDeliveriesView: React.FC = () => {
                 customerName={primaryOrder.customerName}
                 customerPhone={primaryOrder.customerPhone || "5550192"}
                 targetEtaTime={primaryOrder.eta}
-                timeLeftStr="~10 mins left"
+                timeLeftStr={`~${primaryOrder.eta} left`}
                 address={primaryOrder.address}
                 deliveryNotes={primaryOrder.dropOffInstruction || "Ring bell upon arrival."}
                 routeInfo="Route optimized • Smooth traffic"

@@ -94,7 +94,15 @@ export const DeliveryCard: React.FC<DeliveryCardProps> = ({
           <Bike className="w-5 h-5 text-primary" />
         </div>
         <div className="flex flex-col min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {order.timeAgo && (
+              <>
+                <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-primary-container/20 text-primary font-bold">
+                  {order.timeAgo}
+                </span>
+                <span className="text-outline-variant">•</span>
+              </>
+            )}
             <span className="font-label-sm text-label-sm text-on-surface font-bold">
               {order.distance}
             </span>
@@ -109,7 +117,11 @@ export const DeliveryCard: React.FC<DeliveryCardProps> = ({
         </div>
         <a
           aria-label="Open Navigation"
-          href={`https://maps.google.com/?q=${encodeURIComponent(order.address)}`}
+          href={
+            order.deliveryLat && order.deliveryLng
+              ? `https://www.google.com/maps?q=${order.deliveryLat},${order.deliveryLng}`
+              : `https://maps.google.com/?q=${encodeURIComponent(order.address)}`
+          }
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
