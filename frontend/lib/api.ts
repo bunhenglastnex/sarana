@@ -98,104 +98,36 @@ function createCacheKey(
 }
 
 /**
- * Retrieve cached item from Memory or SessionStorage
+ * Retrieve cached item from Memory or SessionStorage (Caching disabled to prevent memory leaks)
  */
-function getFromCache<T>(cacheKey: string): T | null {
-  // 1. Check in-memory cache first (fastest)
-  const memEntry = memoryCache.get(cacheKey);
-  if (memEntry) {
-    if (Date.now() <= memEntry.expiresAt) {
-      return memEntry.data as T;
-    }
-    memoryCache.delete(cacheKey);
-  }
-
-  // 2. Check browser sessionStorage (survives tab reloads)
-  if (typeof window !== "undefined") {
-    try {
-      const stored = window.sessionStorage.getItem(
-        SESSION_CACHE_PREFIX + cacheKey,
-      );
-      if (stored) {
-        const entry: CacheEntry<T> = JSON.parse(stored);
-        if (Date.now() <= entry.expiresAt) {
-          // Sync back into memory cache
-          memoryCache.set(cacheKey, entry);
-          return entry.data;
-        }
-        window.sessionStorage.removeItem(SESSION_CACHE_PREFIX + cacheKey);
-      }
-    } catch {
-      // Ignore storage read errors
-    }
-  }
-
+function getFromCache<T>(_cacheKey: string): T | null {
   return null;
 }
 
 /**
- * Save item into Memory and SessionStorage cache
+ * Save item into Memory and SessionStorage cache (Caching disabled to prevent memory leaks)
  */
-function saveToCache<T>(cacheKey: string, data: T, ttlMs: number): void {
-  const entry: CacheEntry<T> = {
-    data,
-    timestamp: Date.now(),
-    expiresAt: Date.now() + ttlMs,
-  };
-
-  memoryCache.set(cacheKey, entry);
-
-  if (typeof window !== "undefined") {
-    try {
-      window.sessionStorage.setItem(
-        SESSION_CACHE_PREFIX + cacheKey,
-        JSON.stringify(entry),
-      );
-    } catch {
-      // Storage quota or private mode fallback
-    }
-  }
+function saveToCache<T>(_cacheKey: string, _data: T, _ttlMs: number): void {
+  // Disabled persistent caching to prevent V8 memory leaks during auto-polling
 }
 
 /**
  * Clear all cache or matching keys
  */
 export function clearApiCache(endpointPattern?: string | RegExp): void {
-  if (!endpointPattern) {
-    memoryCache.clear();
-    if (typeof window !== "undefined") {
-      try {
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < window.sessionStorage.length; i++) {
-          const key = window.sessionStorage.key(i);
-          if (key && key.startsWith(SESSION_CACHE_PREFIX)) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach((k) => window.sessionStorage.removeItem(k));
-      } catch {
-        // Ignore
-      }
-    }
-    return;
-  }
-
-  // Selective invalidation
-  for (const key of Array.from(memoryCache.keys())) {
-    const isMatch =
-      typeof endpointPattern === "string"
-        ? key.includes(endpointPattern)
-        : endpointPattern.test(key);
-
-    if (isMatch) {
-      memoryCache.delete(key);
-      if (typeof window !== "undefined") {
-        try {
-          window.sessionStorage.removeItem(SESSION_CACHE_PREFIX + key);
-        } catch {
-          // Ignore
+  memoryCache.clear();
+  if (typeof window !== "undefined") {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < window.sessionStorage.length; i++) {
+        const key = window.sessionStorage.key(i);
+        if (key && key.startsWith(SESSION_CACHE_PREFIX)) {
+          keysToRemove.push(key);
         }
       }
+      keysToRemove.forEach((k) => window.sessionStorage.removeItem(k));
+    } catch {
+      // Ignore
     }
   }
 }
