@@ -264,74 +264,54 @@ export const DeliveryZoneSettingsTab: React.FC<
         </CardContent>
       </Card>
 
-      {/* 3. DISTANCE-BASED DELIVERY FEE & MINIMUM ORDER RULES */}
+      {/* 3. DISTANCE-BASED DELIVERY FEE & PACKAGING TAX RULES */}
       <Card>
         <CardHeader className="border-b border-border/30 pb-3">
           <CardTitle className="text-base font-bold flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-emerald-600" />
-            <span>Distance Delivery Pricing &amp; Minimum Order Limits</span>
+            <span>Distance Delivery Pricing &amp; Packaging Tax Settings</span>
           </CardTitle>
           <CardDescription className="text-xs">
-            Configure base delivery charges, extra fee per kilometer, and free
-            delivery thresholds.
+            Configure pure distance delivery fee per kilometer, packaging &amp; tax rate percentage, and free delivery threshold.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Base Delivery Fee */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Delivery Fee Rate per KM */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-on-surface">
-                Base Delivery Fee ($)
-              </label>
-              <Input
-                type="number"
-                step="0.25"
-                value={formData.baseDeliveryFee ?? 1.5}
-                onChange={(e) =>
-                  onChange("baseDeliveryFee", parseFloat(e.target.value))
-                }
-                className="text-xs font-mono border-border"
-              />
-              <p className="text-[11px] text-on-surface-variant">
-                Applies to the base radius distance.
-              </p>
-            </div>
-
-            {/* Base Radius Limit */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-on-surface">
-                Base Fee Included KM
-              </label>
-              <Input
-                type="number"
-                step="0.5"
-                value={formData.baseIncludedKm ?? 3.0}
-                onChange={(e) =>
-                  onChange("baseIncludedKm", parseFloat(e.target.value))
-                }
-                className="text-xs font-mono border-border"
-              />
-              <p className="text-[11px] text-on-surface-variant">
-                Included in base fee before per-KM surcharge.
-              </p>
-            </div>
-
-            {/* Extra Fee Per Extra KM */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-on-surface">
-                Extra Fee per Additional KM ($)
+                Delivery Fee Rate per KM ($) <span className="text-red-500">*</span>
               </label>
               <Input
                 type="number"
                 step="0.10"
                 value={formData.extraFeePerKm ?? 0.5}
                 onChange={(e) =>
-                  onChange("extraFeePerKm", parseFloat(e.target.value))
+                  onChange("extraFeePerKm", parseFloat(e.target.value) || 0)
                 }
                 className="text-xs font-mono border-border"
               />
               <p className="text-[11px] text-on-surface-variant">
-                Charged for each KM beyond base limit.
+                Calculated strictly by distance (KM × rate per KM).
+              </p>
+            </div>
+
+            {/* Packaging & Tax Rate (%) */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-on-surface">
+                Packaging &amp; Tax Rate (%) <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.taxRate ?? 9.03}
+                onChange={(e) =>
+                  onChange("taxRate", parseFloat(e.target.value) || 0)
+                }
+                className="text-xs font-mono border-border"
+              />
+              <p className="text-[11px] text-on-surface-variant">
+                Applied to food subtotal (e.g. 9.03% tax &amp; packaging).
               </p>
             </div>
 
@@ -347,7 +327,7 @@ export const DeliveryZoneSettingsTab: React.FC<
                 onChange={(e) =>
                   onChange(
                     "freeDeliveryMinSubtotal",
-                    parseFloat(e.target.value),
+                    parseFloat(e.target.value) || 0,
                   )
                 }
                 className="text-xs font-mono border-border"

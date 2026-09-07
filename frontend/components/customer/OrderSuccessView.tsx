@@ -37,6 +37,11 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const targetOrderId =
+    searchParams.get("order_id") ||
+    searchParams.get("order_number") ||
+    orderRef;
+
   // Query param fallbacks
   const paymentParam =
     paymentMethod || (searchParams.get("payment") as "khqr" | "cod" | "counter") || "khqr";
@@ -54,15 +59,15 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
   if (modeParam === "pickup") {
     return (
       <PickupTrackerView
-        orderRef="#AE-82104"
+        orderRef={targetOrderId}
         paymentMethod={paymentParam === "khqr" ? "Paid via KHQR" : "Pay at Counter"}
       />
     );
   }
 
-  // If KHQR + Delivery, render LiveOrderTrackerView directly!
-  if (paymentParam === "khqr" && modeParam === "delivery") {
-    return <LiveOrderTrackerView orderRef={orderRef} />;
+  // Render LiveOrderTrackerView for live delivery tracking!
+  if (targetOrderId || (paymentParam === "khqr" && modeParam === "delivery")) {
+    return <LiveOrderTrackerView orderRef={targetOrderId} />;
   }
 
   // Pickup mode returns early above; any code reaching here is delivery mode

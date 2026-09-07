@@ -80,6 +80,37 @@ function notifyCustomerTelegram($chatId, string $text): array {
 }
 
 /**
+ * Sends order status update notification ONLY to the customer's Telegram chat ID.
+ * Automatically resolves customer chat ID from order record or user profile.
+ */
+function sendStatusUpdateToCustomer(PDO $pdo, array $order, string $newStatus, string $extraInfo = ''): array {
+    $chatId = $order['telegram_chat_id'] ?? null;
+
+    if (empty($chatId) && !empty($order['user_id'])) {
+        try {
+            $stmt = $pdo->prepare("SELECT telegram_chat_id FROM users WHERE id = ? AND telegram_chat_id IS NOT NULL AND telegram_chat_id != ''");
+            $stmt->execute([$order['user_id']]);
+            $chatId = $stmt->fetchColumn() ?: null;
+        } catch (\Throwable $e) {}
+    }
+
+    if (empty($chatId) && !empty($order['customer_phone'])) {
+        try {
+            $stmt = $pdo->prepare("SELECT telegram_chat_id FROM users WHERE phone = ? AND telegram_chat_id IS NOT NULL AND telegram_chat_id != '' LIMIT 1");
+            $stmt->execute([$order['customer_phone']]);
+            $chatId = $stmt->fetchColumn() ?: null;
+        } catch (\Throwable $e) {}
+    }
+
+    if (empty($chatId)) {
+        return ['success' => false, 'message' => 'Customer has no linked Telegram chat ID.'];
+    }
+
+    $msg = formatOrderStatusUpdateMessage($order, $newStatus, $extraInfo);
+    return notifyCustomerTelegram($chatId, $msg);
+}
+
+/**
  * Formats a rich HTML message for New Order alerts (Sent to Admin & Delivery Group).
  * @param array $order
  * @param array $items

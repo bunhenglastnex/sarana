@@ -29,8 +29,13 @@ export const PaymentUploadModal: React.FC<PaymentUploadModalProps> = ({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewImage(url);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setPreviewImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 

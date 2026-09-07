@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Truck,
@@ -30,15 +30,20 @@ import {
   ShieldAlert,
   Navigation,
   ExternalLink,
-} from 'lucide-react';
-import { useCartStore } from '@/lib/store/useCartStore';
-import { useAuthStore } from '@/lib/store/useAuthStore';
-import { Api, useApi } from '@/lib/api';
-import { LocationModal } from './LocationModal';
-import { CheckoutDeliveryMap } from './CheckoutDeliveryMap';
+} from "lucide-react";
+import { useCartStore } from "@/lib/store/useCartStore";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { Api, useApi } from "@/lib/api";
+import { LocationModal } from "./LocationModal";
+import { CheckoutDeliveryMap } from "./CheckoutDeliveryMap";
 
 // Haversine formula to compute exact distance in kilometers
-function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function calculateDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
   const R = 6371; // Earth radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -56,27 +61,33 @@ export const CheckoutReviewView: React.FC = () => {
   const router = useRouter();
 
   // Fetch admin settings for delivery zone configuration
-  const { data: settingsRes } = useApi<any>('/settings.php');
+  const { data: settingsRes } = useApi<any>("/settings.php");
   const settings = settingsRes?.data || settingsRes || {};
 
-  const storeLat = parseFloat(settings.store_latitude || '13.352270');
-  const storeLng = parseFloat(settings.store_longitude || '103.955116');
-  const restaurantName = settings.store_name || 'Bistro Kitchen HQ';
-  const restaurantAddress = settings.store_address || '520 N Michigan Ave, Suite 14F, Siem Reap';
-  const restaurantPhone = settings.store_phone || '+855 23 888 999';
-  const openingTime = settings.opening_time || '10:00 AM';
-  const closingTime = settings.closing_time || '10:00 PM';
+  const storeLat = parseFloat(settings.store_latitude || "13.352270");
+  const storeLng = parseFloat(settings.store_longitude || "103.955116");
+  const restaurantName = settings.store_name || "Bistro Kitchen HQ";
+  const restaurantAddress =
+    settings.store_address || "520 N Michigan Ave, Suite 14F, Siem Reap";
+  const restaurantPhone = settings.store_phone || "+855 23 888 999";
+  const openingTime = settings.opening_time || "10:00 AM";
+  const closingTime = settings.closing_time || "10:00 PM";
 
-  const maxRadiusKm = parseFloat(settings.max_delivery_radius_km || '7.5');
-  const enableZoneBlocker = settings.enable_zone_blocker !== false && settings.enable_zone_blocker !== 'false';
+  const maxRadiusKm = parseFloat(settings.max_delivery_radius_km || "7.5");
+  const enableZoneBlocker =
+    settings.enable_zone_blocker !== false &&
+    settings.enable_zone_blocker !== "false";
   const outOfZoneMessage =
     settings.out_of_zone_message ||
     `Sorry! Your delivery address is outside our maximum delivery radius of ${maxRadiusKm} km. Pickup is still available!`;
 
-  const baseDeliveryFee = parseFloat(settings.base_delivery_fee || '1.50');
-  const baseIncludedKm = parseFloat(settings.base_included_km || '3.0');
-  const extraFeePerKm = parseFloat(settings.extra_fee_per_km || '0.50');
-  const freeDeliveryMinSubtotal = parseFloat(settings.free_delivery_min_subtotal || '25.00');
+  const baseDeliveryFee = parseFloat(settings.base_delivery_fee || "1.50");
+  const baseIncludedKm = parseFloat(settings.base_included_km || "3.0");
+  const extraFeePerKm = parseFloat(settings.extra_fee_per_km || "0.50");
+  const freeDeliveryMinSubtotal = parseFloat(
+    settings.free_delivery_min_subtotal || "25.00",
+  );
+  const taxRate = parseFloat(settings.tax_rate ?? "9.03");
 
   // Stores
   const {
@@ -91,29 +102,47 @@ export const CheckoutReviewView: React.FC = () => {
     clearCart,
   } = useCartStore();
 
-  const { name: authName, phone: authPhone, userId, avatarUrl } = useAuthStore();
+  const {
+    name: authName,
+    phone: authPhone,
+    userId,
+    avatarUrl,
+  } = useAuthStore();
 
   // Local State
-  const [fulfillmentMode, setFulfillmentMode] = useState<'delivery' | 'pickup'>(fulfillmentType || 'delivery');
-  const [paymentMethod, setPaymentMethod] = useState<'khqr' | 'cod' | 'counter'>('khqr');
-  const [tipAmount, setTipAmount] = useState<number>(2.50);
+  const [fulfillmentMode, setFulfillmentMode] = useState<"delivery" | "pickup">(
+    fulfillmentType || "delivery",
+  );
+  const [paymentMethod, setPaymentMethod] = useState<
+    "khqr" | "cod" | "counter"
+  >("khqr");
+  const [tipAmount, setTipAmount] = useState<number>(2.5);
   const [isCustomTip, setIsCustomTip] = useState(false);
-  const [customTipInput, setCustomTipInput] = useState<string>('');
+  const [customTipInput, setCustomTipInput] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState<any>(null);
 
   // Address, Coordinates & Notes State
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [deliveryAddress, setDeliveryAddress] = useState<string>(cartAddress || '');
-  const [customerCoords, setCustomerCoords] = useState<{ lat: number; lng: number }>({
+  const [deliveryAddress, setDeliveryAddress] = useState<string>(
+    cartAddress || "",
+  );
+  const [customerCoords, setCustomerCoords] = useState<{
+    lat: number;
+    lng: number;
+  }>({
     lat: storeLat,
     lng: storeLng,
   });
-  const [customerPhone, setCustomerPhone] = useState<string>(authPhone || cartPhone || '+1 (555) 382-9012');
-  const [customerName, setCustomerName] = useState<string>(authName || 'Guest Customer');
+  const [customerPhone, setCustomerPhone] = useState<string>(
+    authPhone || cartPhone || "+1 (555) 382-9012",
+  );
+  const [customerName, setCustomerName] = useState<string>(
+    authName || "Guest Customer",
+  );
   const [isEditingNotes, setIsEditingNotes] = useState(false);
-  const [notes, setNotes] = useState<string>(storeNotes || 'Leave at front door, ring bell twice please.');
+  const [notes, setNotes] = useState<string>(storeNotes || "");
 
   useEffect(() => {
     setFulfillmentType(fulfillmentMode);
@@ -121,20 +150,24 @@ export const CheckoutReviewView: React.FC = () => {
 
   // Auto-acquire browser real GPS location on mount if address is not set
   useEffect(() => {
-    if (typeof window !== 'undefined' && navigator.geolocation && !cartAddress) {
+    if (
+      typeof window !== "undefined" &&
+      navigator.geolocation &&
+      !cartAddress
+    ) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
           setCustomerCoords({ lat: latitude, lng: longitude });
           try {
             const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
             );
             if (res.ok) {
               const data = await res.json();
               if (data && data.display_name) {
-                const parts = data.display_name.split(',');
-                const concise = parts.slice(0, 3).join(',').trim();
+                const parts = data.display_name.split(",");
+                const concise = parts.slice(0, 3).join(",").trim();
                 setDeliveryAddress(concise);
                 setCustomerInfo({ deliveryAddress: concise });
               }
@@ -144,22 +177,27 @@ export const CheckoutReviewView: React.FC = () => {
           }
         },
         (err) => {
-          console.log('Checkout initial GPS fetch skipped:', err);
+          console.log("Checkout initial GPS fetch skipped:", err);
         },
-        { enableHighAccuracy: true, timeout: 8000 }
+        { enableHighAccuracy: true, timeout: 8000 },
       );
     }
   }, [cartAddress, setCustomerInfo]);
 
   // Compute distance from store center
   const distanceKm = useMemo(() => {
-    return calculateDistanceKm(customerCoords.lat, customerCoords.lng, storeLat, storeLng);
+    return calculateDistanceKm(
+      customerCoords.lat,
+      customerCoords.lng,
+      storeLat,
+      storeLng,
+    );
   }, [customerCoords, storeLat, storeLng]);
 
   // Out of delivery zone restriction check
   const isOutOfZone = useMemo(() => {
     return (
-      fulfillmentMode === 'delivery' &&
+      fulfillmentMode === "delivery" &&
       enableZoneBlocker &&
       maxRadiusKm < 999 &&
       distanceKm > maxRadiusKm
@@ -168,25 +206,31 @@ export const CheckoutReviewView: React.FC = () => {
 
   // Price Calculations
   const subtotal = getFoodSubtotal();
-  const packagingAndTax = subtotal > 0 ? 1.20 : 0.00;
-  
-  const rawFee = distanceKm <= baseIncludedKm
-    ? baseDeliveryFee
-    : baseDeliveryFee + (distanceKm - baseIncludedKm) * extraFeePerKm;
+  const packagingAndTax = subtotal > 0 ? (subtotal * taxRate) / 100 : 0.0;
+
+  const rawFee = distanceKm * extraFeePerKm;
   const isFreeDelivery = subtotal >= freeDeliveryMinSubtotal;
-  const deliveryFee = fulfillmentMode === 'delivery' ? (isFreeDelivery ? 0.00 : rawFee) : 0.00;
+  const deliveryFee =
+    fulfillmentMode === "delivery" ? (isFreeDelivery ? 0.0 : rawFee) : 0.0;
 
-  const effectiveTip = fulfillmentMode === 'delivery' ? tipAmount : 0.00;
-  const totalAmount = subtotal > 0 ? subtotal + packagingAndTax + deliveryFee + effectiveTip : 0.00;
+  const effectiveTip = fulfillmentMode === "delivery" ? tipAmount : 0.0;
+  const totalAmount =
+    subtotal > 0
+      ? subtotal + packagingAndTax + deliveryFee + effectiveTip
+      : 0.0;
 
-  const handleSelectPayment = (method: 'khqr' | 'cod' | 'counter') => {
-    if (method === 'counter' && fulfillmentMode === 'delivery') {
+  const handleSelectPayment = (method: "khqr" | "cod" | "counter") => {
+    if (method === "counter" && fulfillmentMode === "delivery") {
       return; // Counter pay is pickup only
     }
     setPaymentMethod(method);
   };
 
-  const handleSelectAddress = (newAddr: string, newLat?: number, newLng?: number) => {
+  const handleSelectAddress = (
+    newAddr: string,
+    newLat?: number,
+    newLng?: number,
+  ) => {
     setDeliveryAddress(newAddr);
     setCustomerInfo({ deliveryAddress: newAddr });
     if (newLat !== undefined && newLng !== undefined) {
@@ -195,7 +239,12 @@ export const CheckoutReviewView: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (items.length === 0) return;
+    if (items.length === 0 || isOutOfZone) {
+      if (isOutOfZone) {
+        alert(outOfZoneMessage);
+      }
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -204,22 +253,32 @@ export const CheckoutReviewView: React.FC = () => {
         items: items.map((item) => ({
           food_id: item.food_id,
           food_name: item.name,
-          price: typeof item.price === 'string' ? parseFloat(item.price) : Number(item.price),
+          price:
+            typeof item.price === "string"
+              ? parseFloat(item.price)
+              : Number(item.price),
           quantity: item.quantity,
-          subtotal: (typeof item.price === 'string' ? parseFloat(item.price) : Number(item.price)) * item.quantity,
-          image_url: item.food?.image_url || '',
+          subtotal:
+            (typeof item.price === "string"
+              ? parseFloat(item.price)
+              : Number(item.price)) * item.quantity,
+          image_url: item.food?.image_url || "",
         })),
         customer_name: customerName,
         customer_phone: customerPhone,
         fulfillment_type: fulfillmentMode,
         delivery_address: deliveryAddress,
+        delivery_lat: customerCoords.lat,
+        delivery_lng: customerCoords.lng,
         payment_method: paymentMethod,
+        delivery_fee: deliveryFee,
+        tax_amount: packagingAndTax,
         tip: effectiveTip,
         notes: notes,
         user_id: userId || undefined,
       };
 
-      const res = await Api.post('/api/customer-orders.php', payload);
+      const res = await Api.post("/api/customer-orders.php", payload);
 
       if (res.success && res.data) {
         const orderId = res.data.order_id || res.data.order_number;
@@ -227,8 +286,10 @@ export const CheckoutReviewView: React.FC = () => {
 
         clearCart();
 
-        if (paymentMethod === 'khqr') {
-          router.push(`/khqr-payment?order_id=${encodeURIComponent(orderNum)}&amount=${totalAmount.toFixed(2)}&tip=${effectiveTip}`);
+        if (paymentMethod === "khqr") {
+          router.push(
+            `/khqr-payment?order_id=${encodeURIComponent(orderNum)}&amount=${totalAmount.toFixed(2)}&tip=${effectiveTip}`,
+          );
         } else {
           setConfirmedOrder({
             order_number: orderNum,
@@ -239,11 +300,11 @@ export const CheckoutReviewView: React.FC = () => {
           setIsConfirmationOpen(true);
         }
       } else {
-        alert(res.error || 'Failed to place order. Please try again.');
+        alert(res.error || "Failed to place order. Please try again.");
       }
     } catch (err: any) {
-      console.error('Failed to submit order:', err);
-      alert('Network error while placing order.');
+      console.error("Failed to submit order:", err);
+      alert("Network error while placing order.");
     } finally {
       setIsSubmitting(false);
     }
@@ -275,7 +336,7 @@ export const CheckoutReviewView: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => router.push('/customer-profile')}
+            onClick={() => router.push("/customer-profile")}
             aria-label="User Profile"
             className="w-10 h-10 flex items-center justify-center rounded-full p-0.5 hover:ring-2 hover:ring-primary/40 transition-all flex-shrink-0 overflow-hidden border border-outline-variant/50"
           >
@@ -302,13 +363,16 @@ export const CheckoutReviewView: React.FC = () => {
             <div className="w-20 h-20 rounded-full bg-primary/10 text-primary flex items-center justify-center">
               <ShoppingBag className="w-10 h-10" />
             </div>
-            <h2 className="font-extrabold text-xl text-on-surface">Your Cart is Empty</h2>
+            <h2 className="font-extrabold text-xl text-on-surface">
+              Your Cart is Empty
+            </h2>
             <p className="text-xs text-on-surface-variant max-w-xs">
-              Looks like you haven't added any items to your cart yet. Explore our delicious woodfired menu!
+              Looks like you haven't added any items to your cart yet. Explore
+              our delicious woodfired menu!
             </p>
             <button
               type="button"
-              onClick={() => router.push('/')}
+              onClick={() => router.push("/")}
               className="mt-2 px-6 py-3 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-md hover:bg-primary-container transition-all flex items-center gap-2"
             >
               <UtensilsCrossed className="w-4 h-4" />
@@ -339,7 +403,9 @@ export const CheckoutReviewView: React.FC = () => {
                 <h2 className="font-bold text-base text-on-surface">
                   Fulfillment Method
                 </h2>
-                <span className="text-xs text-primary font-bold">Step 1 of 2</span>
+                <span className="text-xs text-primary font-bold">
+                  Step 1 of 2
+                </span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -347,16 +413,16 @@ export const CheckoutReviewView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setFulfillmentMode('delivery');
-                    if (paymentMethod === 'counter') setPaymentMethod('khqr');
+                    setFulfillmentMode("delivery");
+                    if (paymentMethod === "counter") setPaymentMethod("khqr");
                   }}
                   className={`relative flex flex-col p-3 rounded-xl text-left transition-all duration-200 shadow-sm ${
-                    fulfillmentMode === 'delivery'
-                      ? 'bg-surface-container-lowest text-on-surface ring-2 ring-primary shadow-md'
-                      : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
+                    fulfillmentMode === "delivery"
+                      ? "bg-surface-container-lowest text-on-surface ring-2 ring-primary shadow-md"
+                      : "bg-surface-container-low text-on-surface hover:bg-surface-container"
                   }`}
                 >
-                  {fulfillmentMode === 'delivery' && (
+                  {fulfillmentMode === "delivery" && (
                     <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-sm">
                       <Check className="w-3.5 h-3.5" />
                     </div>
@@ -364,25 +430,29 @@ export const CheckoutReviewView: React.FC = () => {
                   <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-2">
                     <Truck className="w-5 h-5" />
                   </div>
-                  <span className="font-bold text-sm text-on-surface">Delivery</span>
+                  <span className="font-bold text-sm text-on-surface">
+                    Delivery
+                  </span>
                   <span className="text-xs text-on-surface-variant mt-1 leading-tight">
                     To your door
                     <br />
-                    <strong className="text-primary font-semibold">25–35 min</strong>
+                    <strong className="text-primary font-semibold">
+                      25–35 min
+                    </strong>
                   </span>
                 </button>
 
                 {/* Card B: Pickup */}
                 <button
                   type="button"
-                  onClick={() => setFulfillmentMode('pickup')}
+                  onClick={() => setFulfillmentMode("pickup")}
                   className={`relative flex flex-col p-3 rounded-xl text-left transition-all duration-200 shadow-sm ${
-                    fulfillmentMode === 'pickup'
-                      ? 'bg-surface-container-lowest text-on-surface ring-2 ring-primary shadow-md'
-                      : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
+                    fulfillmentMode === "pickup"
+                      ? "bg-surface-container-lowest text-on-surface ring-2 ring-primary shadow-md"
+                      : "bg-surface-container-low text-on-surface hover:bg-surface-container"
                   }`}
                 >
-                  {fulfillmentMode === 'pickup' && (
+                  {fulfillmentMode === "pickup" && (
                     <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-sm">
                       <Check className="w-3.5 h-3.5" />
                     </div>
@@ -390,18 +460,22 @@ export const CheckoutReviewView: React.FC = () => {
                   <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-2">
                     <ShoppingBag className="w-5 h-5" />
                   </div>
-                  <span className="font-bold text-sm text-on-surface">Pickup</span>
+                  <span className="font-bold text-sm text-on-surface">
+                    Pickup
+                  </span>
                   <span className="text-xs text-on-surface-variant mt-1 leading-tight">
                     Bistro counter
                     <br />
-                    <strong className="text-on-surface font-semibold">15–20 min</strong>
+                    <strong className="text-on-surface font-semibold">
+                      15–20 min
+                    </strong>
                   </span>
                 </button>
               </div>
             </div>
 
             {/* Dynamic Section: Delivery Destination Details */}
-            {fulfillmentMode === 'delivery' ? (
+            {fulfillmentMode === "delivery" ? (
               <div className="mt-2 flex flex-col gap-3 transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm text-on-surface">
@@ -456,7 +530,7 @@ export const CheckoutReviewView: React.FC = () => {
                       </p>
                       <button
                         type="button"
-                        onClick={() => setFulfillmentMode('pickup')}
+                        onClick={() => setFulfillmentMode("pickup")}
                         className="mt-2.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
                       >
                         <ShoppingBag className="w-3.5 h-3.5" />
@@ -520,7 +594,7 @@ export const CheckoutReviewView: React.FC = () => {
                           onClick={() => setIsEditingNotes(true)}
                           className="text-xs text-on-surface italic cursor-pointer hover:text-primary transition-colors"
                         >
-                          "{notes || 'Click to add instructions...'}"
+                          "{notes || "Click to add instructions..."}"
                         </p>
                       )}
                     </div>
@@ -571,7 +645,9 @@ export const CheckoutReviewView: React.FC = () => {
                       </p>
                       <p className="text-[11px] text-on-surface-variant/80 mt-1 flex items-center gap-1">
                         <Clock className="w-3 h-3 text-primary" />
-                        <span>Open Hours: {openingTime} – {closingTime}</span>
+                        <span>
+                          Open Hours: {openingTime} – {closingTime}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -616,7 +692,7 @@ export const CheckoutReviewView: React.FC = () => {
             )}
 
             {/* Section: Courier Tip Selection (Delivery Mode Only) */}
-            {fulfillmentMode === 'delivery' && (
+            {fulfillmentMode === "delivery" && (
               <div className="mt-4 flex flex-col gap-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -632,7 +708,8 @@ export const CheckoutReviewView: React.FC = () => {
 
                 <div className="p-3.5 bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container/80 flex flex-col gap-3">
                   <p className="text-xs text-on-surface-variant leading-relaxed">
-                    Show appreciation to your delivery courier. Every dollar goes directly to your driver.
+                    Show appreciation to your delivery courier. Every dollar
+                    goes directly to your driver.
                   </p>
 
                   {/* Tip Options Preset Grid */}
@@ -643,7 +720,8 @@ export const CheckoutReviewView: React.FC = () => {
                       { amount: 3.5, label: "$3.50" },
                       { amount: 5.0, label: "$5.00" },
                     ].map((option) => {
-                      const isSelected = !isCustomTip && tipAmount === option.amount;
+                      const isSelected =
+                        !isCustomTip && tipAmount === option.amount;
                       return (
                         <button
                           key={option.amount}
@@ -736,11 +814,11 @@ export const CheckoutReviewView: React.FC = () => {
 
               {/* Option 1: KHQR (Bakong / All Banks) */}
               <div
-                onClick={() => handleSelectPayment('khqr')}
+                onClick={() => handleSelectPayment("khqr")}
                 className={`cursor-pointer relative p-3 bg-surface-container-lowest rounded-xl shadow-sm transition-all duration-150 flex items-center justify-between border ${
-                  paymentMethod === 'khqr'
-                    ? 'ring-2 ring-primary border-primary/40 shadow-md'
-                    : 'border-surface-container hover:bg-surface-container-low'
+                  paymentMethod === "khqr"
+                    ? "ring-2 ring-primary border-primary/40 shadow-md"
+                    : "border-surface-container hover:bg-surface-container-low"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -763,9 +841,9 @@ export const CheckoutReviewView: React.FC = () => {
                 </div>
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    paymentMethod === 'khqr'
-                      ? 'bg-primary text-on-primary'
-                      : 'bg-surface-variant text-transparent'
+                    paymentMethod === "khqr"
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface-variant text-transparent"
                   }`}
                 >
                   <Check className="w-3.5 h-3.5" />
@@ -774,11 +852,11 @@ export const CheckoutReviewView: React.FC = () => {
 
               {/* Option 2: Cash on Delivery (COD) */}
               <div
-                onClick={() => handleSelectPayment('cod')}
+                onClick={() => handleSelectPayment("cod")}
                 className={`cursor-pointer relative p-3 rounded-xl shadow-sm transition-all duration-150 flex items-center justify-between border ${
-                  paymentMethod === 'cod'
-                    ? 'bg-surface-container-lowest ring-2 ring-primary border-primary/40 shadow-md'
-                    : 'bg-surface-container-low border-surface-container hover:bg-surface-container'
+                  paymentMethod === "cod"
+                    ? "bg-surface-container-lowest ring-2 ring-primary border-primary/40 shadow-md"
+                    : "bg-surface-container-low border-surface-container hover:bg-surface-container"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -796,9 +874,9 @@ export const CheckoutReviewView: React.FC = () => {
                 </div>
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    paymentMethod === 'cod'
-                      ? 'bg-primary text-on-primary'
-                      : 'bg-surface-variant text-transparent'
+                    paymentMethod === "cod"
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface-variant text-transparent"
                   }`}
                 >
                   <Check className="w-3.5 h-3.5" />
@@ -807,13 +885,15 @@ export const CheckoutReviewView: React.FC = () => {
 
               {/* Option 3: Pay at Restaurant Counter */}
               <div
-                onClick={() => handleSelectPayment('counter')}
+                onClick={() => handleSelectPayment("counter")}
                 className={`cursor-pointer relative p-3 rounded-xl shadow-sm transition-all duration-150 flex items-center justify-between border ${
-                  fulfillmentMode === 'delivery' ? 'opacity-50 cursor-not-allowed' : ''
+                  fulfillmentMode === "delivery"
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 } ${
-                  paymentMethod === 'counter'
-                    ? 'bg-surface-container-lowest ring-2 ring-primary border-primary/40 shadow-md'
-                    : 'bg-surface-container-low border-surface-container'
+                  paymentMethod === "counter"
+                    ? "bg-surface-container-lowest ring-2 ring-primary border-primary/40 shadow-md"
+                    : "bg-surface-container-low border-surface-container"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -836,9 +916,9 @@ export const CheckoutReviewView: React.FC = () => {
                 </div>
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    paymentMethod === 'counter'
-                      ? 'bg-primary text-on-primary'
-                      : 'bg-surface-variant text-transparent'
+                    paymentMethod === "counter"
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface-variant text-transparent"
                   }`}
                 >
                   <Check className="w-3.5 h-3.5" />
@@ -852,7 +932,8 @@ export const CheckoutReviewView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <UtensilsCrossed className="w-4 h-4 text-primary" />
                   <h3 className="font-bold text-sm text-on-surface">
-                    Order Summary ({items.reduce((acc, i) => acc + i.quantity, 0)} items)
+                    Order Summary (
+                    {items.reduce((acc, i) => acc + i.quantity, 0)} items)
                   </h3>
                 </div>
                 <span className="text-xs text-primary font-bold">
@@ -862,10 +943,16 @@ export const CheckoutReviewView: React.FC = () => {
 
               {/* Dynamic Live Items List */}
               {items.map((item) => {
-                const priceNum = typeof item.price === 'string' ? parseFloat(item.price) : Number(item.price || 0);
+                const priceNum =
+                  typeof item.price === "string"
+                    ? parseFloat(item.price)
+                    : Number(item.price || 0);
                 const itemSubtotal = priceNum * item.quantity;
                 return (
-                  <div key={item.food_id} className="flex items-center justify-between py-1.5 text-on-surface border-b border-surface-container/30 last:border-0">
+                  <div
+                    key={item.food_id}
+                    className="flex items-center justify-between py-1.5 text-on-surface border-b border-surface-container/30 last:border-0"
+                  >
                     <div className="flex items-center gap-2.5 min-w-0">
                       {item.food?.image_url ? (
                         <img
@@ -904,17 +991,17 @@ export const CheckoutReviewView: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>
-                    {fulfillmentMode === 'delivery'
-                      ? 'Delivery Fee (1.4 mi)'
-                      : 'Pickup Packaging'}
+                    {fulfillmentMode === "delivery"
+                      ? `Delivery Fee (${distanceKm.toFixed(1)} km)`
+                      : "Pickup Packaging"}
                   </span>
                   <span>${deliveryFee.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Packaging & Tax</span>
+                  <span>{`Packaging & Tax (${taxRate}%)`}</span>
                   <span>${packagingAndTax.toFixed(2)}</span>
                 </div>
-                {fulfillmentMode === 'delivery' && (
+                {fulfillmentMode === "delivery" && (
                   <div className="flex items-center justify-between text-secondary font-medium">
                     <span className="flex items-center gap-1">
                       <Heart className="w-3.5 h-3.5 fill-secondary/20" />
@@ -936,8 +1023,8 @@ export const CheckoutReviewView: React.FC = () => {
             <div className="mt-2 p-3 rounded-xl bg-surface-container flex items-center gap-2.5 border border-surface-container-high">
               <Flame className="w-5 h-5 text-secondary flex-shrink-0 fill-secondary/20" />
               <p className="text-xs text-on-surface-variant">
-                Packed in artisanal thermal foil to preserve woodfired heat and aroma
-                straight to your table.
+                Packed in artisanal thermal foil to preserve woodfired heat and
+                aroma straight to your table.
               </p>
             </div>
           </div>
@@ -953,7 +1040,9 @@ export const CheckoutReviewView: React.FC = () => {
                 <Lock className="w-3 h-3 text-secondary" />
                 256-Bit SSL Encrypted Checkout
               </span>
-              <span className="text-primary font-bold">Amber & Ember Kitchen</span>
+              <span className="text-primary font-bold">
+                Amber & Ember Kitchen
+              </span>
             </div>
 
             <button
@@ -962,8 +1051,8 @@ export const CheckoutReviewView: React.FC = () => {
               disabled={isSubmitting || isOutOfZone}
               className={`w-full h-13 py-3.5 transition-all rounded-xl flex items-center justify-between px-space-lg shadow-lg font-bold text-sm ${
                 isOutOfZone
-                  ? 'bg-surface-container-highest text-on-surface-variant cursor-not-allowed opacity-80'
-                  : 'bg-primary hover:bg-primary-container text-on-primary active:scale-[0.98]'
+                  ? "bg-surface-container-highest text-on-surface-variant cursor-not-allowed opacity-80"
+                  : "bg-primary hover:bg-primary-container text-on-primary active:scale-[0.98]"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -976,10 +1065,10 @@ export const CheckoutReviewView: React.FC = () => {
                 )}
                 <span>
                   {isOutOfZone
-                    ? 'Delivery Unavailable (Out of Zone)'
-                    : paymentMethod === 'khqr'
-                    ? 'Proceed with KHQR'
-                    : 'Place Order'}
+                    ? "Delivery Unavailable (Out of Zone)"
+                    : paymentMethod === "khqr"
+                      ? "Proceed with KHQR"
+                      : "Place Order"}
                 </span>
               </div>
               <div className="flex items-center gap-2 font-extrabold text-base">
@@ -1020,7 +1109,7 @@ export const CheckoutReviewView: React.FC = () => {
               real-time.
             </p>
             <div className="w-full mt-4 p-3 bg-surface-container rounded-xl flex justify-between text-xs text-on-surface font-bold">
-              <span>Order {confirmedOrder?.order_number || '#ORD-8942'}</span>
+              <span>Order {confirmedOrder?.order_number || "#ORD-8942"}</span>
               <span className="text-primary">
                 ${confirmedOrder?.total_amount?.toFixed(2)}
               </span>
@@ -1029,7 +1118,7 @@ export const CheckoutReviewView: React.FC = () => {
               type="button"
               onClick={() => {
                 setIsConfirmationOpen(false);
-                router.push('/orders');
+                router.push("/orders");
               }}
               className="mt-4 w-full py-3 bg-primary text-on-primary rounded-xl font-bold text-sm shadow hover:bg-primary-container transition-colors"
             >
@@ -1041,4 +1130,3 @@ export const CheckoutReviewView: React.FC = () => {
     </div>
   );
 };
-

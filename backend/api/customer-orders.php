@@ -13,6 +13,33 @@ $pdo = getDB();
 if ($method === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
 
+    // Action: Upload Payment Proof Slip
+    if (($input['action'] ?? '') === 'upload_proof' || !empty($input['payment_proof_url'])) {
+        $orderIdInput = trim($input['order_id'] ?? $input['order_number'] ?? '');
+        $proofUrl = $input['payment_proof_url'] ?? '';
+
+        if (empty($orderIdInput)) {
+            jsonResponse(0, 'order_id is required', null, 400);
+        }
+
+        require_once __DIR__ . '/../lib/upload.php';
+        $savedPath = saveBase64Image($proofUrl, 'proofs') ?? $proofUrl;
+
+        $upStmt = $pdo->prepare("
+            UPDATE orders 
+            SET payment_proof_url = ?, payment_status = 'pending_review', updated_at = NOW() 
+            WHERE order_number = ? OR id = ?
+        ");
+        $upStmt->execute([$savedPath, $orderIdInput, is_numeric($orderIdInput) ? (int)$orderIdInput : 0]);
+
+        jsonResponse(1, 'Payment proof uploaded successfully. Awaiting admin review.', [
+            'order_id' => $orderIdInput,
+            'payment_proof_url' => $savedPath,
+            'payment_status' => 'pending_review'
+        ], 200);
+        return;
+    }
+
     if (empty($input['items']) || !is_array($input['items'])) {
         jsonResponse(0, 'Order items are required', null, 400);
     }
@@ -24,6 +51,8 @@ if ($method === 'POST') {
         : 'delivery';
     
     $deliveryAddress = trim($input['delivery_address'] ?? $input['deliveryAddress'] ?? '');
+    $deliveryLat = isset($input['delivery_lat']) ? (float)$input['delivery_lat'] : (isset($input['deliveryLat']) ? (float)$input['deliveryLat'] : null);
+    $deliveryLng = isset($input['delivery_lng']) ? (float)$input['delivery_lng'] : (isset($input['deliveryLng']) ? (float)$input['deliveryLng'] : null);
     $notes = trim($input['notes'] ?? '');
     $paymentMethodInput = strtolower(trim($input['payment_method'] ?? $input['paymentMethod'] ?? 'khqr'));
 
@@ -41,19 +70,11 @@ if ($method === 'POST') {
     $telegramChatId = trim($input['telegram_chat_id'] ?? $input['telegramChatId'] ?? '');
 
     // Authenticate if token provided
-    $authUser = null;
-    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
-    if (!empty($authHeader) || !empty($_GET['token']) || !empty($input['token'])) {
-        try {
-            $authUser = AuthMiddleware::authenticate($pdo, ['customer', 'admin', 'staff', 'delivery']);
-            if ($authUser) {
-                $userId = (int)$authUser['id'];
-                if (empty($customerName)) $customerName = $authUser['name'] ?? $customerName;
-                if (empty($customerPhone)) $customerPhone = $authUser['phone'] ?? $customerPhone;
-            }
-        } catch (Throwable $e) {
-            // Optional auth fallback
-        }
+    $authUser = AuthMiddleware::getOptionalUser($pdo);
+    if ($authUser) {
+        $userId = (int)$authUser['id'];
+        if (empty($customerName)) $customerName = $authUser['name'] ?? $customerName;
+        if (empty($customerPhone)) $customerPhone = $authUser['phone'] ?? $customerPhone;
     }
 
     if (empty($customerPhone)) {
@@ -85,8 +106,50 @@ if ($method === 'POST') {
         ];
     }
 
-    $deliveryFee = $fulfillmentType === 'delivery' ? 2.00 : 0.00;
-    $packagingAndTax = 1.20;
+    // Fetch Settings from database for dynamic fee & tax calculations
+    require_once __DIR__ . '/../services/SettingsService.php';
+    $settingsService = new SettingsService($pdo);
+    $settings = $settingsService->getSettings();
+
+    $taxRate = isset($settings['tax_rate']) ? (float)$settings['tax_rate'] : 9.03;
+    $baseDeliveryFee = isset($settings['base_delivery_fee']) ? (float)$settings['base_delivery_fee'] : 1.50;
+    $baseIncludedKm = isset($settings['base_included_km']) ? (float)$settings['base_included_km'] : 3.0;
+    $extraFeePerKm = isset($settings['extra_fee_per_km']) ? (float)$settings['extra_fee_per_km'] : 0.50;
+    $freeDeliveryMinSubtotal = isset($settings['free_delivery_min_subtotal']) ? (float)$settings['free_delivery_min_subtotal'] : 25.00;
+    $storeLat = isset($settings['store_latitude']) ? (float)$settings['store_latitude'] : 13.352270;
+    $storeLng = isset($settings['store_longitude']) ? (float)$settings['store_longitude'] : 103.955116;
+
+    // Delivery fee calculation
+    if (isset($input['delivery_fee']) && is_numeric($input['delivery_fee'])) {
+        $deliveryFee = (float)$input['delivery_fee'];
+    } elseif ($fulfillmentType === 'delivery') {
+        if ($foodAmount >= $freeDeliveryMinSubtotal) {
+            $deliveryFee = 0.00;
+        } elseif ($deliveryLat !== null && $deliveryLng !== null) {
+            $rad = M_PI / 180;
+            $dlat = ($deliveryLat - $storeLat) * $rad;
+            $dlng = ($deliveryLng - $storeLng) * $rad;
+            $a = sin($dlat / 2) * sin($dlat / 2) + cos($storeLat * $rad) * cos($deliveryLat * $rad) * sin($dlng / 2) * sin($dlng / 2);
+            $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+            $distKm = 6371 * $c;
+
+            $deliveryFee = round($distKm * $extraFeePerKm, 2);
+        } else {
+            $deliveryFee = 0.00;
+        }
+    } else {
+        $deliveryFee = 0.00;
+    }
+
+    // Packaging & Tax calculation
+    if (isset($input['tax_amount']) && is_numeric($input['tax_amount'])) {
+        $packagingAndTax = (float)$input['tax_amount'];
+    } elseif (isset($input['packaging_and_tax']) && is_numeric($input['packaging_and_tax'])) {
+        $packagingAndTax = (float)$input['packaging_and_tax'];
+    } else {
+        $packagingAndTax = round(($foodAmount * $taxRate) / 100.0, 2);
+    }
+
     $tip = max(0.0, (float)($input['tip'] ?? 0));
     $totalAmount = round($foodAmount + $deliveryFee + $packagingAndTax + $tip, 2);
     $amountKhr = (int)round($totalAmount * 4100);
@@ -101,11 +164,11 @@ if ($method === 'POST') {
         $stmt = $pdo->prepare("
             INSERT INTO orders (
                 order_number, user_id, customer_name, customer_phone, telegram_chat_id,
-                fulfillment_type, delivery_address, delivery_fee, food_amount, total_amount, amount_khr,
+                fulfillment_type, delivery_address, delivery_lat, delivery_lng, delivery_fee, food_amount, total_amount, amount_khr,
                 payment_method, payment_status, status, notes, created_at
             ) VALUES (
                 ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, 'pending', 'pending', ?, NOW()
             )
         ");
@@ -118,6 +181,8 @@ if ($method === 'POST') {
             $telegramChatId,
             $fulfillmentType,
             $deliveryAddress,
+            $deliveryLat,
+            $deliveryLng,
             $deliveryFee,
             $foodAmount,
             $totalAmount,
@@ -198,15 +263,41 @@ try {
     $pdo = getDB();
 
     // Authenticate user token or accept phone / customer_id parameter
-    $authUser = null;
-    try {
-        $authUser = AuthMiddleware::authenticate($pdo, ['customer', 'admin', 'staff', 'delivery']);
-    } catch (Exception $e) {
-        // Fallback to query params if auth token not passed
-    }
+    $authUser = AuthMiddleware::getOptionalUser($pdo);
 
     $customerPhone = trim($_GET['phone'] ?? ($authUser['phone'] ?? ''));
     $userId = $authUser ? (int)$authUser['id'] : (int)($_GET['user_id'] ?? 0);
+    $orderIdQuery = trim($_GET['order_id'] ?? $_GET['order_number'] ?? '');
+
+    if (!empty($orderIdQuery)) {
+        $query = "
+            SELECT o.*, u.name as delivery_staff_name, u.phone as delivery_staff_phone
+            FROM orders o
+            LEFT JOIN users u ON o.delivery_staff_id = u.id
+            WHERE o.order_number = ? OR o.id = ?
+            ORDER BY o.id DESC LIMIT 1
+        ";
+        $stmt = $pdo->prepare($query);
+        $stmt->execute([$orderIdQuery, is_numeric($orderIdQuery) ? (int)$orderIdQuery : 0]);
+        $orders = $stmt->fetchAll();
+
+        foreach ($orders as &$order) {
+            $order['id'] = (int)$order['id'];
+            $order['total_amount'] = (float)$order['total_amount'];
+
+            $itemStmt = $pdo->prepare("
+                SELECT oi.id, oi.food_id, oi.food_name, oi.price, oi.quantity, oi.subtotal, f.image_url 
+                FROM order_items oi
+                LEFT JOIN foods f ON oi.food_id = f.id
+                WHERE oi.order_id = ?
+            ");
+            $itemStmt->execute([$order['id']]);
+            $order['items'] = $itemStmt->fetchAll();
+        }
+
+        jsonResponse(1, 'Customer order fetched successfully', $orders);
+        return;
+    }
 
     if (empty($customerPhone) && $userId <= 0) {
         jsonResponse(1, 'Customer orders fetched successfully', [], 200);

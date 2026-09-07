@@ -46,15 +46,9 @@ if ($method === 'PATCH' || $method === 'POST') {
         $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
         $stmt->execute([$input['status'], $input['order_id']]);
 
-        // 📲 SEND TELEGRAM NOTIFICATIONS
-        $statusMsg = formatOrderStatusUpdateMessage($order, $input['status']);
-
-        // 1. Notify Admin/Delivery Group
-        notifyTelegramGroup($statusMsg);
-
-        // 2. Notify Customer (if customer has linked Telegram)
-        if (!empty($order['telegram_chat_id'])) {
-            notifyCustomerTelegram($order['telegram_chat_id'], $statusMsg);
+        // 📲 SEND TELEGRAM NOTIFICATION TO CUSTOMER ONLY
+        if (function_exists('sendStatusUpdateToCustomer')) {
+            sendStatusUpdateToCustomer($pdo, $order, $input['status']);
         }
 
         // 📜 Log System Action

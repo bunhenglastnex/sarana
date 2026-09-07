@@ -31,9 +31,8 @@ export default function CustomerPageLayout() {
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   // Cart store integration (Persisted in IndexedDB)
+  const cartItems = useCartStore((state) => state.items);
   const addFoodToCart = useCartStore((state) => state.addItem);
-  const getItemCount = useCartStore((state) => state.getItemCount);
-  const getFoodSubtotal = useCartStore((state) => state.getFoodSubtotal);
 
   // Pagination & infinite scroll states (12 limit per page)
   const [page, setPage] = useState(1);
@@ -273,7 +272,9 @@ export default function CustomerPageLayout() {
         description: newItem.item.description,
         is_available: true,
       } as any,
-      newItem.quantity
+      newItem.quantity,
+      newItem.selectedOptions,
+      newItem.specialInstructions
     );
   };
 
@@ -292,8 +293,21 @@ export default function CustomerPageLayout() {
     );
   };
 
-  const totalCartCount = getItemCount();
-  const totalCartPrice = getFoodSubtotal();
+  const totalCartCount = useMemo(() => {
+    return cartItems.reduce((count, item) => count + item.quantity, 0);
+  }, [cartItems]);
+
+  const totalCartPrice = useMemo(() => {
+    return cartItems.reduce(
+      (sum, item) =>
+        sum +
+        (typeof item.price === "string"
+          ? parseFloat(item.price)
+          : Number(item.price || 0)) *
+          item.quantity,
+      0
+    );
+  }, [cartItems]);
 
   return (
     <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 pb-28 bg-surface min-h-screen">

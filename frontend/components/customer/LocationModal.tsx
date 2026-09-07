@@ -4,6 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { X, MapPin, Check, Plus, Navigation, Loader2, Trash2, Star } from 'lucide-react';
 import { useAddressStore, SavedAddress } from '@/lib/store/useAddressStore';
 import { useAuthStore } from '@/lib/store/useAuthStore';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface LocationModalProps {
   isOpen: boolean;
@@ -263,16 +270,17 @@ export const LocationModal: React.FC<LocationModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-on-surface mb-1">Badge Tag</label>
-                <select
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline text-xs text-on-surface focus:outline-none focus:border-primary"
-                >
-                  <option value="Home">Home</option>
-                  <option value="Office">Office</option>
-                  <option value="Default">Default</option>
-                  <option value="Other">Other</option>
-                </select>
+                <Select value={newTag} onValueChange={(val) => setNewTag(val)}>
+                  <SelectTrigger className="h-9 w-full rounded-xl bg-surface-container-lowest border border-outline text-xs text-on-surface focus:border-primary">
+                    <SelectValue placeholder="Select tag" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[60] bg-surface-container-lowest border border-outline shadow-xl rounded-xl">
+                    <SelectItem value="Home">Home</SelectItem>
+                    <SelectItem value="Office">Office</SelectItem>
+                    <SelectItem value="Default">Default</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex items-center pt-5">
@@ -348,64 +356,74 @@ export const LocationModal: React.FC<LocationModalProps> = ({
               </div>
 
               <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                {savedAddresses.map((item) => {
-                  const isSelected = item.address === currentAddress;
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => {
-                        onSelectAddress(item.address, item.lat || undefined, item.lng || undefined);
-                        onClose();
-                      }}
-                      className={`w-full p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer group ${
-                        isSelected
-                          ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                          : 'border-surface-container-high bg-surface-container-lowest hover:border-primary/50'
-                      }`}
-                    >
-                      <div className="flex items-start gap-2.5 min-w-0 pr-2">
-                        <MapPin
-                          className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                            isSelected ? 'text-primary' : 'text-outline'
-                          }`}
-                        />
-                        <div className="flex flex-col min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-on-surface">
-                              {item.label}
+                {savedAddresses.length === 0 ? (
+                  <div className="text-center py-6 px-4 bg-surface-container-lowest rounded-xl border border-surface-container space-y-1.5">
+                    <MapPin className="w-7 h-7 text-outline mx-auto opacity-40" />
+                    <p className="text-xs font-bold text-on-surface">No Saved Addresses Yet</p>
+                    <p className="text-[11px] text-on-surface-variant">
+                      Add your home or office address below for fast 1-click delivery checkout.
+                    </p>
+                  </div>
+                ) : (
+                  savedAddresses.map((item) => {
+                    const isSelected = item.address === currentAddress;
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => {
+                          onSelectAddress(item.address, item.lat || undefined, item.lng || undefined);
+                          onClose();
+                        }}
+                        className={`w-full p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer group ${
+                          isSelected
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                            : 'border-surface-container-high bg-surface-container-lowest hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5 min-w-0 pr-2">
+                          <MapPin
+                            className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                              isSelected ? 'text-primary' : 'text-outline'
+                            }`}
+                          />
+                          <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-xs text-on-surface">
+                                {item.label}
+                              </span>
+                              {item.isDefault && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold flex items-center gap-0.5">
+                                  <Star className="w-2.5 h-2.5 fill-primary text-primary" />
+                                  Default
+                                </span>
+                              )}
+                              {item.tag && !item.isDefault && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">
+                                  {item.tag}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-on-surface-variant truncate">
+                              {item.address}
                             </span>
-                            {item.isDefault && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold flex items-center gap-0.5">
-                                <Star className="w-2.5 h-2.5 fill-primary text-primary" />
-                                Default
-                              </span>
-                            )}
-                            {item.tag && !item.isDefault && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">
-                                {item.tag}
-                              </span>
-                            )}
                           </div>
-                          <span className="text-xs text-on-surface-variant truncate">
-                            {item.address}
-                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {isSelected && <Check className="w-5 h-5 text-primary flex-shrink-0" />}
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteAddress(e, item.id)}
+                            title="Delete address"
+                            className="opacity-0 group-hover:opacity-100 p-1.5 text-on-surface-variant hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {isSelected && <Check className="w-5 h-5 text-primary flex-shrink-0" />}
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteAddress(e, item.id)}
-                          title="Delete address"
-                          className="opacity-0 group-hover:opacity-100 p-1.5 text-on-surface-variant hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { formatProofUrl } from "@/lib/utils";
 import {
   Bike,
   ShoppingBag,
@@ -159,7 +160,7 @@ export const KdsCard: React.FC<KdsCardProps> = ({ ticket, onAction }) => {
             >
               <img
                 src={
-                  ticket.proofImageUrl ||
+                  formatProofUrl(ticket.proofImageUrl) ||
                   "https://images.unsplash.com/photo-1556742049-0a67923004a3?w=300&auto=format&fit=crop"
                 }
                 alt="KHQR Payment Slip"
@@ -346,14 +347,14 @@ export const KdsCard: React.FC<KdsCardProps> = ({ ticket, onAction }) => {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="w-full h-64 rounded-xl overflow-hidden bg-surface-container-highest border border-border/20 relative">
+            <div className="w-full h-80 rounded-xl overflow-hidden bg-black/90 border border-border/20 relative flex items-center justify-center">
               <img
                 src={
-                  ticket.proofImageUrl ||
+                  formatProofUrl(ticket.proofImageUrl) ||
                   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10"
                 }
                 alt="Full KHQR Payment Slip"
-                className="w-full h-full object-cover"
+                className="max-w-full max-h-full object-contain"
               />
             </div>
             <div className="flex items-center justify-between text-xs text-on-surface-variant bg-surface-container-low p-2.5 rounded-xl border border-border/20">

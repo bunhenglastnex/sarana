@@ -462,11 +462,9 @@ if ($method === 'GET') {
             ");
             $stmt->execute([$staffId, $orderId]);
 
-            // 📲 TELEGRAM ALERT
-            $statusMsg = formatOrderStatusUpdateMessage($order, 'on_the_way', "Assigned Rider: {$riderName}");
-            notifyTelegramGroup($statusMsg);
-            if (!empty($order['telegram_chat_id'])) {
-                notifyCustomerTelegram($order['telegram_chat_id'], $statusMsg);
+            // 📲 TELEGRAM ALERT TO CUSTOMER ONLY
+            if (function_exists('sendStatusUpdateToCustomer')) {
+                sendStatusUpdateToCustomer($pdo, $order, 'on_the_way', "Assigned Rider: {$riderName}");
             }
 
             // 📜 Log System Action
@@ -521,11 +519,9 @@ if ($method === 'GET') {
             ");
             $stmt->execute([$staffId, $savedProofPath, $orderId]);
 
-            // 📲 TELEGRAM ALERT
-            $statusMsg = formatOrderStatusUpdateMessage($order, 'completed', "Delivered by {$riderName}. Cash Collected!" . ($savedProofPath ? " (Proof Photo Attached)" : ""));
-            notifyTelegramGroup($statusMsg);
-            if (!empty($order['telegram_chat_id'])) {
-                notifyCustomerTelegram($order['telegram_chat_id'], $statusMsg);
+            // 📲 TELEGRAM ALERT TO CUSTOMER ONLY
+            if (function_exists('sendStatusUpdateToCustomer')) {
+                sendStatusUpdateToCustomer($pdo, $order, 'completed', "Delivered by {$riderName}. Cash Collected!" . ($savedProofPath ? " (Proof Photo Attached)" : ""));
             }
 
             // 📜 Log System Action

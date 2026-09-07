@@ -352,10 +352,14 @@ export const OrderDirectory: React.FC<OrderDirectoryProps> = ({
                         className={`font-label-sm text-[10px] px-1.5 py-0.5 rounded uppercase font-bold inline-block mt-0.5 ${
                           order.paymentIsPaid
                             ? "bg-secondary-fixed text-on-secondary-fixed"
+                            : order.paymentStatus === "pending_review" || order.proofImageUrl
+                            ? "bg-amber-100 text-amber-900 border border-amber-300 animate-pulse"
                             : "bg-surface-container-high text-on-surface-variant"
                         }`}
                       >
-                        {order.paymentBadgeLabel}
+                        {order.paymentStatus === "pending_review"
+                          ? "SLIP UPLOADED"
+                          : order.paymentBadgeLabel}
                       </span>
                     </td>
 

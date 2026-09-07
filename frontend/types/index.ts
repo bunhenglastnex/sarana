@@ -1,5 +1,6 @@
 export interface Food {
   id: number;
+  slug?: string;
   name: string;
   price: number;
   description?: string;
@@ -14,6 +15,8 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  options?: Record<string, string>;
+  notes?: string;
   food?: Food;
 }
 

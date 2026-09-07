@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Heart,
@@ -17,10 +17,11 @@ import {
   ShieldCheck,
   Loader2,
   AlertCircle,
-} from 'lucide-react';
-import { FoodItem } from './FoodCard';
-import Api, { useApi } from '@/lib/api';
-import { useCartStore, useAuthStore, useFavoritesStore } from '@/lib/store';
+} from "lucide-react";
+import { FoodItem } from "./FoodCard";
+import { ShareModal } from "./ShareModal";
+import Api, { useApi } from "@/lib/api";
+import { useCartStore, useAuthStore, useFavoritesStore } from "@/lib/store";
 
 interface ItemDetailViewProps {
   slug: string;
@@ -31,25 +32,30 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
   const addItemToCart = useCartStore((state) => state.addItem);
   const { userId, phone } = useAuthStore();
   const isLocalFavorite = useFavoritesStore((state) => state.isLocalFavorite);
-  const toggleLocalFavorite = useFavoritesStore((state) => state.toggleLocalFavorite);
+  const toggleLocalFavorite = useFavoritesStore(
+    (state) => state.toggleLocalFavorite,
+  );
 
   // Fetch live food detail by slug or ID from backend API
-  const { data: apiResponse, loading, error } = useApi<any>('/foods.php', {
+  const {
+    data: apiResponse,
+    loading,
+    error,
+  } = useApi<any>("/foods.php", {
     slug,
-    id: slug,
   });
 
   const rawItem = apiResponse?.data || apiResponse;
 
   // Format single food detail item
   const item: FoodItem | null = useMemo(() => {
-    if (!rawItem || typeof rawItem !== 'object' || !rawItem.name) {
+    if (!rawItem || typeof rawItem !== "object" || !rawItem.name) {
       return null;
     }
 
     let parsedOptions = [];
     try {
-      if (typeof rawItem.options === 'string' && rawItem.options.trim()) {
+      if (typeof rawItem.options === "string" && rawItem.options.trim()) {
         parsedOptions = JSON.parse(rawItem.options);
       } else if (Array.isArray(rawItem.options)) {
         parsedOptions = rawItem.options;
@@ -62,36 +68,45 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
       id: String(rawItem.id),
       slug: rawItem.slug || String(rawItem.id),
       name: rawItem.name,
-      category: rawItem.category_slug || rawItem.category || 'general',
+      category: rawItem.category_slug || rawItem.category || "general",
       price: Number(rawItem.price || 0),
-      description: rawItem.description || '',
+      description: rawItem.description || "",
       imageUrl:
         rawItem.imageUrl ||
         rawItem.image_url ||
-        'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
-      badge: rawItem.badge || (rawItem.badge_text ? { text: rawItem.badge_text, type: rawItem.badge_type || 'fire' } : undefined),
+        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+      badge:
+        rawItem.badge ||
+        (rawItem.badge_text
+          ? { text: rawItem.badge_text, type: rawItem.badge_type || "fire" }
+          : undefined),
       options: parsedOptions,
       stockQuantity: rawItem.stockQuantity ?? rawItem.stock_quantity ?? 50,
-      prepTimeMinutes: rawItem.prepTimeMinutes ?? rawItem.prep_time_minutes ?? 15,
+      prepTimeMinutes:
+        rawItem.prepTimeMinutes ?? rawItem.prep_time_minutes ?? 15,
       is_available: rawItem.is_available ?? rawItem.isAvailable ?? true,
     };
   }, [rawItem]);
 
   const [quantity, setQuantity] = useState(1);
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [specialInstructions, setSpecialInstructions] = useState('');
+  const [selectedOptions, setSelectedOptions] = useState<
+    Record<string, string>
+  >({});
   const [isFavorite, setIsFavorite] = useState(false);
   const [added, setAdded] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   // Check initial favorite status (DB if logged in, IndexedDB if guest)
   useEffect(() => {
     if (!item?.id) return;
     if (userId || phone) {
-      Api.get('/favorites.php', { phone, user_id: userId })
+      Api.get("/favorites.php", { phone, user_id: userId })
         .then((res) => {
           const favs = res.data?.data || res.data || [];
           if (Array.isArray(favs)) {
-            const isFav = favs.some((f: any) => String(f.food_id || f.id) === String(item.id));
+            const isFav = favs.some(
+              (f: any) => String(f.food_id || f.id) === String(item.id),
+            );
             setIsFavorite(isFav);
           }
         })
@@ -108,7 +123,11 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
 
     if (userId || phone) {
       try {
-        await Api.post('/favorites.php', { food_id: Number(item.id), phone, user_id: userId });
+        await Api.post("/favorites.php", {
+          food_id: Number(item.id),
+          phone,
+          user_id: userId,
+        });
       } catch {
         setIsFavorite(!newFavState);
       }
@@ -135,7 +154,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
   const handleOptionSelect = (
     groupName: string,
     choiceLabel: string,
-    isRequired: boolean
+    isRequired: boolean,
   ) => {
     setSelectedOptions((prev) => {
       if (!isRequired && prev[groupName] === choiceLabel) {
@@ -152,8 +171,8 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
 
   const handleAddToCart = () => {
     if (!item) return;
-    
-    // Add item to Zustand Cart Store
+
+    // Add item to Zustand Cart Store with selected options
     addItemToCart(
       {
         id: Number(item.id),
@@ -164,13 +183,14 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
         description: item.description,
         is_available: true,
       } as any,
-      quantity
+      quantity,
+      selectedOptions,
     );
 
     setAdded(true);
     setTimeout(() => {
       setAdded(false);
-      router.push('/cart');
+      router.push("/cart");
     }, 1000);
   };
 
@@ -179,7 +199,9 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
     return (
       <div className="bg-surface text-on-surface min-h-screen flex flex-col items-center justify-center p-6">
         <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
-        <p className="font-bold text-sm text-on-surface-variant">Loading item details...</p>
+        <p className="font-bold text-sm text-on-surface-variant">
+          Loading item details...
+        </p>
       </div>
     );
   }
@@ -191,13 +213,16 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
         <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4">
           <AlertCircle className="w-7 h-7" />
         </div>
-        <h2 className="font-extrabold text-lg text-on-surface">Item Not Found</h2>
+        <h2 className="font-extrabold text-lg text-on-surface">
+          Item Not Found
+        </h2>
         <p className="text-xs text-on-surface-variant mt-1 mb-6">
-          The requested menu item could not be found or is currently unavailable.
+          The requested menu item could not be found or is currently
+          unavailable.
         </p>
         <button
           type="button"
-          onClick={() => router.push('/')}
+          onClick={() => router.push("/")}
           className="py-3 px-6 rounded-full bg-primary text-on-primary font-bold text-xs shadow-md active:scale-95 transition-all"
         >
           Return to Menu
@@ -225,14 +250,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
         <div className="flex items-center gap-2 pointer-events-auto">
           <button
             type="button"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: item.name, url: window.location.href });
-              } else {
-                navigator.clipboard.writeText(window.location.href);
-                alert('Link copied to clipboard!');
-              }
-            }}
+            onClick={() => setIsShareOpen(true)}
             aria-label="Share item"
             className="w-10 h-10 rounded-full bg-surface-bright/80 backdrop-blur-md text-on-surface flex items-center justify-center shadow-md hover:bg-white active:scale-90 transition-all border border-surface-container"
           >
@@ -244,10 +262,14 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
             onClick={toggleFavorite}
             aria-label="Toggle favorite"
             className={`w-10 h-10 rounded-full bg-surface-bright/80 backdrop-blur-md flex items-center justify-center shadow-md active:scale-90 transition-all border border-surface-container ${
-              isFavorite ? 'text-red-500 fill-red-500' : 'text-on-surface-variant'
+              isFavorite
+                ? "text-red-500 fill-red-500"
+                : "text-on-surface-variant"
             }`}
           >
-            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+            <Heart
+              className={`w-5 h-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`}
+            />
           </button>
         </div>
       </div>
@@ -266,9 +288,9 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
           {/* Badge Overlay */}
           {item.badge && (
             <div className="absolute bottom-4 left-space-lg bg-surface-bright/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
-              {item.badge.type === 'fire' ? (
+              {item.badge.type === "fire" ? (
                 <Flame className="w-4 h-4 text-primary" />
-              ) : item.badge.type === 'award' ? (
+              ) : item.badge.type === "award" ? (
                 <Award className="w-4 h-4 text-secondary" />
               ) : (
                 <Star className="w-4 h-4 text-secondary fill-secondary" />
@@ -300,7 +322,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
                 <span>{item.prepTimeMinutes || 15} mins</span>
               </div>
               <div className="w-1 h-1 rounded-full bg-outline-variant" />
-              
+
               {/* Stock Inventory Pill */}
               {maxStock <= 0 ? (
                 <div className="flex items-center gap-1 font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
@@ -332,9 +354,9 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
               {item.options.map((optGroup) => {
                 const isRequired =
                   optGroup.required ??
-                  (!optGroup.name.toLowerCase().includes('extra') &&
-                    !optGroup.name.toLowerCase().includes('topping') &&
-                    !optGroup.name.toLowerCase().includes('optional'));
+                  (!optGroup.name.toLowerCase().includes("extra") &&
+                    !optGroup.name.toLowerCase().includes("topping") &&
+                    !optGroup.name.toLowerCase().includes("optional"));
 
                 return (
                   <div
@@ -368,21 +390,21 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
                               handleOptionSelect(
                                 optGroup.name,
                                 choice.label,
-                                isRequired
+                                isRequired,
                               )
                             }
                             className={`flex items-center justify-between p-3.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.99] ${
                               isSelected
-                                ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary'
-                                : 'border-surface-container-high bg-surface-container-lowest text-on-surface hover:border-outline'
+                                ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
+                                : "border-surface-container-high bg-surface-container-lowest text-on-surface hover:border-outline"
                             }`}
                           >
                             <div className="flex items-center gap-2.5">
                               <div
                                 className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                                   isSelected
-                                    ? 'border-primary bg-primary text-white'
-                                    : 'border-outline'
+                                    ? "border-primary bg-primary text-white"
+                                    : "border-outline"
                                 }`}
                               >
                                 {isSelected && (
@@ -405,20 +427,6 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
               })}
             </div>
           )}
-
-          {/* Special Instructions Note */}
-          <div className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm border border-surface-container/60 space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-on-surface">
-              Special Kitchen Note
-            </label>
-            <textarea
-              rows={2}
-              value={specialInstructions}
-              onChange={(e) => setSpecialInstructions(e.target.value)}
-              placeholder="e.g. Extra sauce on side, light salt..."
-              className="w-full p-3 rounded-xl bg-surface-container-low border border-surface-container-high text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
         </div>
       </main>
 
@@ -457,10 +465,10 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
             onClick={handleAddToCart}
             className={`flex-1 py-3 px-4 rounded-full font-extrabold text-sm flex items-center justify-between shadow-md active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
               maxStock <= 0
-                ? 'bg-surface-container-highest text-on-surface-variant'
+                ? "bg-surface-container-highest text-on-surface-variant"
                 : added
-                ? 'bg-secondary text-on-secondary'
-                : 'bg-primary text-on-primary hover:bg-primary-container'
+                  ? "bg-secondary text-on-secondary"
+                  : "bg-primary text-on-primary hover:bg-primary-container"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -482,6 +490,18 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
           </button>
         </div>
       </aside>
+
+      {/* Share Item Popup Modal */}
+      {item && (
+        <ShareModal
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+          title={item.name}
+          description={item.description}
+          imageUrl={item.imageUrl}
+          price={item.price}
+        />
+      )}
     </div>
   );
 };

@@ -21,18 +21,7 @@ if ($method === 'GET') {
 
         // 1. Fetch Single Food Detail by ID or Slug
         if (!empty($targetId) || !empty($targetSlug)) {
-            $extractedId = null;
-            $queryVal = !empty($targetId) ? $targetId : $targetSlug;
-
-            if (is_numeric($queryVal)) {
-                $extractedId = (int)$queryVal;
-            } elseif (preg_match('/^(?:item|food)-(\d+)/i', $queryVal, $matches)) {
-                $extractedId = (int)$matches[1];
-            } elseif (preg_match('/(\d+)/', $queryVal, $matches)) {
-                $extractedId = (int)$matches[1];
-            }
-
-            $detailSql = "
+            $baseSql = "
                 SELECT f.id, f.category_id, c.name as category_name, c.slug as category_slug, 
                        f.name, f.slug, f.price, f.description, f.image_url, 
                        f.badge_text, f.badge_type,
@@ -45,19 +34,32 @@ if ($method === 'GET') {
                        f.status
                 FROM foods f
                 LEFT JOIN categories c ON f.category_id = c.id
-                WHERE f.id = ? OR f.slug = ? OR (f.id = ? AND ? > 0)
-                LIMIT 1
             ";
 
-            $stmt = $pdo->prepare($detailSql);
-            $stmt->execute([
-                $extractedId ?: 0,
-                $queryVal,
-                $extractedId ?: 0,
-                $extractedId ?: 0
-            ]);
+            $food = null;
 
-            $food = $stmt->fetch();
+            // Priority 1: Match by exact slug
+            $searchSlug = !empty($targetSlug) ? $targetSlug : $targetId;
+            if (!empty($searchSlug)) {
+                $stmt = $pdo->prepare($baseSql . " WHERE f.slug = ? LIMIT 1");
+                $stmt->execute([$searchSlug]);
+                $food = $stmt->fetch();
+            }
+
+            // Priority 2: Match by exact numeric ID if targetId is numeric
+            if (!$food && !empty($targetId) && is_numeric($targetId)) {
+                $stmt = $pdo->prepare($baseSql . " WHERE f.id = ? LIMIT 1");
+                $stmt->execute([(int)$targetId]);
+                $food = $stmt->fetch();
+            }
+
+            // Priority 3: Fallback match by numeric ID if targetSlug is numeric
+            if (!$food && !empty($targetSlug) && is_numeric($targetSlug)) {
+                $stmt = $pdo->prepare($baseSql . " WHERE f.id = ? LIMIT 1");
+                $stmt->execute([(int)$targetSlug]);
+                $food = $stmt->fetch();
+            }
+
             if (!$food) {
                 jsonResponse(0, 'Food item not found', null, 404);
             }

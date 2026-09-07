@@ -28,16 +28,10 @@ export interface AddressState {
   fetchOrSyncAddresses: (userId?: number | string | null) => Promise<void>;
 }
 
-const DEFAULT_INITIAL_ADDRESSES: SavedAddress[] = [
-  { id: 'def-1', label: 'Home', address: '520 N Michigan Ave, Apt 14F', lat: 13.354000, lng: 103.956000, tag: 'Default', isDefault: true },
-  { id: 'def-2', label: 'Work', address: '742 Evergreen Terrace, Suite 100', lat: 13.358000, lng: 103.960000, tag: 'Office', isDefault: false },
-  { id: 'def-3', label: "Partner's Place", address: '120 Broadway Ave, Apt 12', lat: 13.349000, lng: 103.951000, tag: 'Home', isDefault: false },
-];
-
 export const useAddressStore = create<AddressState>()(
   persist(
     (set, get) => ({
-      savedAddresses: DEFAULT_INITIAL_ADDRESSES,
+      savedAddresses: [],
 
       addAddress: async (newAddrData, userId) => {
         const id = `addr-${Date.now()}`;
@@ -149,23 +143,25 @@ export const useAddressStore = create<AddressState>()(
         if (!userId) return;
 
         try {
-          // Fetch backend addresses
+          // Fetch live backend addresses strictly from API
           const res: any = await Api.get(`/customer-addresses.php?user_id=${userId}`);
-          const apiAddresses: SavedAddress[] = res?.data || res || [];
+          const apiAddresses: SavedAddress[] = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
 
-          if (Array.isArray(apiAddresses) && apiAddresses.length > 0) {
+          if (apiAddresses.length > 0) {
             set({ savedAddresses: apiAddresses });
           } else {
-            // Bulk sync guest addresses up to backend
-            const local = get().savedAddresses;
-            if (local.length > 0) {
+            // Check if there are guest addresses created in local session to sync
+            const localGuest = get().savedAddresses.filter((a) => typeof a.id === 'string' && a.id.startsWith('addr-'));
+            if (localGuest.length > 0) {
               const syncRes: any = await Api.post('/customer-addresses.php', {
                 user_id: userId,
-                addresses: local,
+                addresses: localGuest,
               });
               if (syncRes?.data && Array.isArray(syncRes.data)) {
                 set({ savedAddresses: syncRes.data });
               }
+            } else {
+              set({ savedAddresses: [] });
             }
           }
         } catch (err) {

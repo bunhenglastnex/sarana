@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { OrderRecord } from "@/types/orders";
 import { AdminRefundModal } from "./AdminRefundModal";
+import { formatProofUrl } from "@/lib/utils";
 
 interface OrderInspectorProps {
   order: OrderRecord;
@@ -327,14 +328,18 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
         </div>
 
         {/* Courier Drop-Off & Payment Verification Card */}
-        {order.paymentIsPaid && (
+        {(order.paymentIsPaid || !!order.proofImageUrl || order.paymentStatus === "pending_review") && (
           <div className="bg-surface-container-low p-space-sm rounded-xl flex flex-col gap-2 border border-border/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 font-label-sm text-xs font-bold text-on-surface">
                 <Camera className="w-3.5 h-3.5 text-primary" />
-                <span>Courier Delivery & Payment Verification</span>
+                <span>
+                  {order.paymentMethod === "khqr" || order.proofImageUrl
+                    ? "KHQR Payment Slip & Verification"
+                    : "Courier Delivery & Payment Verification"}
+                </span>
               </div>
-              {isAdminVerified ? (
+              {isAdminVerified || order.paymentIsPaid ? (
                 <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-label-sm text-[10px] font-bold flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                   Verified & Approved
@@ -342,13 +347,13 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
               ) : (
                 <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-label-sm text-[10px] font-bold flex items-center gap-1 animate-pulse">
                   <ShieldCheck className="w-3 h-3 text-amber-700" />
-                  Pending Verification
+                  Pending Review
                 </span>
               )}
             </div>
 
             <div className="bg-surface-container-lowest p-2 rounded-lg flex items-center justify-between gap-2 border border-border/20">
-              {/* Delivery Drop Image Thumbnail */}
+              {/* Delivery Drop / Payment Slip Image Thumbnail */}
               <div className="flex items-center gap-2">
                 <div
                   onClick={() => setShowProofModal(true)}
@@ -356,10 +361,10 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
                 >
                   <img
                     src={
-                      order.proofImageUrl ||
+                      formatProofUrl(order.proofImageUrl) ||
                       "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=300&auto=format&fit=crop"
                     }
-                    alt="Drop-off Proof Photo"
+                    alt="Payment Slip / Proof Photo"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -369,16 +374,22 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
 
                 <div>
                   <div className="font-label-md text-xs font-bold text-on-surface">
-                    Drop-Off Photo & Payment Slip
+                    {order.paymentMethod === "khqr"
+                      ? "Customer Payment Slip"
+                      : "Drop-Off Photo & Payment Slip"}
                   </div>
                   <div className="font-body-sm text-[11px] text-on-surface-variant flex items-center gap-1">
-                    <span>Driver Verified Cash (${order.totalPrice.toFixed(2)})</span>
+                    <span>
+                      {order.paymentMethod === "khqr"
+                        ? `Uploaded KHQR ($${order.totalPrice.toFixed(2)})`
+                        : `Driver Verified Cash ($${order.totalPrice.toFixed(2)})`}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Admin Action Button */}
-              {!isAdminVerified ? (
+              {!isAdminVerified && !order.paymentIsPaid ? (
                 <button
                   onClick={handleConfirmAdminVerification}
                   className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-label-sm text-[11px] font-bold shadow-xs flex items-center gap-1 transition-colors"
@@ -388,7 +399,7 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
                 </button>
               ) : (
                 <span className="font-label-sm text-[11px] text-emerald-700 font-bold">
-                  ✓ Cash Settled
+                  ✓ Payment Confirmed
                 </span>
               )}
             </div>
@@ -649,7 +660,10 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
           >
             <div className="flex items-center justify-between border-b border-border/30 pb-2">
               <span className="font-headline-sm text-sm font-bold text-on-surface">
-                Drop-Off Proof &amp; Receipt Photo ({order.id})
+                {order.paymentMethod === "khqr"
+                  ? "KHQR Customer Payment Slip"
+                  : "Drop-Off Proof & Receipt Photo"}{" "}
+                ({order.id})
               </span>
               <button
                 onClick={() => setShowProofModal(false)}
@@ -658,20 +672,22 @@ export const OrderInspector: React.FC<OrderInspectorProps> = ({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="w-full h-64 rounded-xl overflow-hidden bg-surface-container-highest border border-border/20">
+            <div className="w-full h-80 rounded-xl overflow-hidden bg-black/90 border border-border/20 flex items-center justify-center">
               <img
                 src={
-                  order.proofImageUrl ||
+                  formatProofUrl(order.proofImageUrl) ||
                   "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=600&auto=format&fit=crop"
                 }
-                alt="Full Delivery Proof"
-                className="w-full h-full object-cover"
+                alt="Full Delivery Proof or Payment Slip"
+                className="max-w-full max-h-full object-contain"
               />
             </div>
             <div className="flex items-center justify-between text-xs text-on-surface-variant">
-              <span>Driver: Liam Vance (ID 4791)</span>
+              <span>
+                Customer: {order.customerName} ({order.customerPhone})
+              </span>
               <span className="font-bold text-emerald-700">
-                Cash Collected: ${order.totalPrice.toFixed(2)}
+                Amount: ${order.totalPrice.toFixed(2)}
               </span>
             </div>
           </div>

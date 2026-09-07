@@ -220,6 +220,7 @@ if ($method === 'GET') {
                 'discount'             => 0.00,
                 'tax'                  => round((float)$o['food_amount'] * 0.08, 2),
                 'paymentMethod'        => $payMethod,
+                'paymentStatus'        => $paymentStatusRaw,
                 'paymentBadgeLabel'    => $payBadge,
                 'paymentIsPaid'        => $isPaid,
                 'deliveryAddress'      => $o['delivery_address'] ?? null,
@@ -298,6 +299,11 @@ if ($method === 'GET') {
         if ($action === 'accept') {
             $upStmt = $pdo->prepare("UPDATE orders SET status = 'preparing' WHERE id = ?");
             $upStmt->execute([$dbId]);
+
+            if (function_exists('sendStatusUpdateToCustomer')) {
+                sendStatusUpdateToCustomer($pdo, $order, 'preparing', 'Admin confirmed product & started kitchen prep.');
+            }
+
             jsonResponse(1, "Order {$order['order_number']} ACCEPTED & PREPARING", [
                 'order_id' => '#' . ltrim($order['order_number'], '#'),
                 'status'   => 'preparing'
@@ -306,6 +312,11 @@ if ($method === 'GET') {
             $readyStatus = ($order['fulfillment_type'] === 'pickup') ? 'ready_for_pickup' : 'ready_for_delivery';
             $upStmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
             $upStmt->execute([$readyStatus, $dbId]);
+
+            if (function_exists('sendStatusUpdateToCustomer')) {
+                sendStatusUpdateToCustomer($pdo, $order, $readyStatus, 'Dish is packed & ready for courier dispatch.');
+            }
+
             jsonResponse(1, "Order {$order['order_number']} marked as READY", [
                 'order_id' => '#' . ltrim($order['order_number'], '#'),
                 'status'   => 'ready'
@@ -313,6 +324,11 @@ if ($method === 'GET') {
         } elseif ($action === 'start_delivery' || $action === 'dispatch') {
             $upStmt = $pdo->prepare("UPDATE orders SET status = 'on_the_way' WHERE id = ?");
             $upStmt->execute([$dbId]);
+
+            if (function_exists('sendStatusUpdateToCustomer')) {
+                sendStatusUpdateToCustomer($pdo, $order, 'on_the_way', 'Courier is on the way with your food (កំពុងដឹក).');
+            }
+
             jsonResponse(1, "Order {$order['order_number']} DISPATCHED for delivery", [
                 'order_id' => '#' . ltrim($order['order_number'], '#'),
                 'status'   => 'in_transit'
@@ -320,6 +336,11 @@ if ($method === 'GET') {
         } elseif (in_array($action, ['complete', 'mark_picked_up', 'mark_delivered'])) {
             $upStmt = $pdo->prepare("UPDATE orders SET status = 'completed' WHERE id = ?");
             $upStmt->execute([$dbId]);
+
+            if (function_exists('sendStatusUpdateToCustomer')) {
+                sendStatusUpdateToCustomer($pdo, $order, 'completed', 'Order successfully delivered & completed! (ប្រគល់ជូនរួចរាល់)');
+            }
+
             jsonResponse(1, "Order {$order['order_number']} COMPLETED and cleared", [
                 'order_id' => '#' . ltrim($order['order_number'], '#'),
                 'status'   => 'completed'
@@ -328,10 +349,29 @@ if ($method === 'GET') {
             $reason = $input['cancel_reason'] ?? $input['reason'] ?? 'Cancelled by admin expediter';
             $upStmt = $pdo->prepare("UPDATE orders SET status = 'cancelled', notes = ? WHERE id = ?");
             $upStmt->execute([$reason, $dbId]);
+
+            if (function_exists('sendStatusUpdateToCustomer')) {
+                sendStatusUpdateToCustomer($pdo, $order, 'cancelled', "Reason: {$reason}");
+            }
+
             jsonResponse(1, "Order {$order['order_number']} CANCELLED", ['order_id' => $order['order_number'], 'status' => 'cancelled']);
         } elseif ($action === 'verify_admin' || $action === 'verify') {
             $upStmt = $pdo->prepare("UPDATE orders SET payment_status = 'verified' WHERE id = ?");
             $upStmt->execute([$dbId]);
+
+            if (function_exists('sendStatusUpdateToCustomer')) {
+                $msg = "✅ <b>PAYMENT VERIFIED BY ADMIN</b>\n━━━━━━━━━━━━━━━━━━━━\n🆔 <b>Order #:</b> <code>{$order['order_number']}</code>\n💳 <b>Status:</b> KHQR Payment Verified & Settled!";
+                $chatId = $order['telegram_chat_id'] ?? null;
+                if (empty($chatId) && !empty($order['customer_phone'])) {
+                    $uStmt = $pdo->prepare("SELECT telegram_chat_id FROM users WHERE phone = ? LIMIT 1");
+                    $uStmt->execute([$order['customer_phone']]);
+                    $chatId = $uStmt->fetchColumn() ?: null;
+                }
+                if (!empty($chatId)) {
+                    notifyCustomerTelegram($chatId, $msg);
+                }
+            }
+
             jsonResponse(1, "Order {$order['order_number']} payment verified by admin", ['order_id' => $order['order_number'], 'payment_status' => 'verified']);
         } elseif ($action === 'process_refund' || $action === 'refund') {
             $proofUrl = $input['refund_proof_url'] ?? $input['proofUrl'] ?? $input['proof_image_url'] ?? $input['proof'] ?? null;

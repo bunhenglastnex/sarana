@@ -15,9 +15,9 @@ export interface CartState {
   telegramChatId: string;
 
   // Actions
-  addItem: (food: Food, quantity?: number) => void;
-  removeItem: (foodId: number) => void;
-  updateQuantity: (foodId: number, quantity: number) => void;
+  addItem: (food: Food, quantity?: number, options?: Record<string, string>, notes?: string) => void;
+  removeItem: (foodId: number, optionsKey?: string) => void;
+  updateQuantity: (foodId: number, quantity: number, optionsKey?: string) => void;
   clearCart: () => void;
   setFulfillmentType: (type: FulfillmentType) => void;
   setCustomerInfo: (info: Partial<{ customerName: string; customerPhone: string; deliveryAddress: string; notes: string; telegramChatId: string }>) => void;
@@ -40,14 +40,19 @@ export const useCartStore = create<CartState>()(
       notes: '',
       telegramChatId: '',
 
-      addItem: (food, quantity = 1) => {
+      addItem: (food, quantity = 1, options = {}, notes = '') => {
         const currentItems = get().items;
         const foodId = Number(food.id);
-        const existingIndex = currentItems.findIndex((i) => Number(i.food_id) === foodId);
+        const optionsKey = JSON.stringify(options || {});
+        
+        const existingIndex = currentItems.findIndex(
+          (i) => Number(i.food_id) === foodId && JSON.stringify(i.options || {}) === optionsKey
+        );
 
         if (existingIndex > -1) {
           const updated = [...currentItems];
           updated[existingIndex].quantity += quantity;
+          if (notes) updated[existingIndex].notes = notes;
           set({ items: updated });
         } else {
           set({
@@ -58,6 +63,8 @@ export const useCartStore = create<CartState>()(
                 name: food.name,
                 price: typeof food.price === 'string' ? parseFloat(food.price) : Number(food.price || 0),
                 quantity,
+                options: options || {},
+                notes: notes || '',
                 food: {
                   ...food,
                   image_url: food.image_url || (food as any).imageUrl || '',
@@ -68,19 +75,32 @@ export const useCartStore = create<CartState>()(
         }
       },
 
-      removeItem: (foodId) => {
-        set({ items: get().items.filter((i) => Number(i.food_id) !== Number(foodId)) });
+      removeItem: (foodId, optionsKey) => {
+        set({
+          items: get().items.filter((i) => {
+            if (Number(i.food_id) !== Number(foodId)) return true;
+            if (optionsKey !== undefined) {
+              return JSON.stringify(i.options || {}) !== optionsKey;
+            }
+            return false;
+          }),
+        });
       },
 
-      updateQuantity: (foodId, quantity) => {
+      updateQuantity: (foodId, quantity, optionsKey) => {
         if (quantity <= 0) {
-          get().removeItem(foodId);
+          get().removeItem(foodId, optionsKey);
           return;
         }
         set({
-          items: get().items.map((i) =>
-            Number(i.food_id) === Number(foodId) ? { ...i, quantity } : i
-          ),
+          items: get().items.map((i) => {
+            const matchesFood = Number(i.food_id) === Number(foodId);
+            const matchesOptions = optionsKey === undefined || JSON.stringify(i.options || {}) === optionsKey;
+            if (matchesFood && matchesOptions) {
+              return { ...i, quantity };
+            }
+            return i;
+          }),
         });
       },
 

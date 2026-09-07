@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Trash2,
@@ -8,7 +8,6 @@ import {
   Plus,
   Truck,
   Utensils,
-  Ticket,
   Lock,
   ArrowRight,
   Sparkles,
@@ -16,12 +15,14 @@ import {
   User,
   LogIn,
   X,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useCartStore, useAuthStore } from "@/lib/store";
 import { useApi } from "@/lib/api";
 
 export const CartView: React.FC = () => {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const { name: customerName, userId, token, phone } = useAuthStore();
   const {
     items: cartItems,
@@ -31,8 +32,11 @@ export const CartView: React.FC = () => {
     addItem,
   } = useCartStore();
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [includeCutlery, setIncludeCutlery] = useState(true);
-  const [promoApplied, setPromoApplied] = useState(false);
   const [addedUpsells, setAddedUpsells] = useState<Record<string, boolean>>({});
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -54,15 +58,24 @@ export const CartView: React.FC = () => {
     }));
   }, [rawFoods]);
 
-  const handleUpdateQty = (foodId: number, delta: number) => {
-    const existing = cartItems.find((item) => Number(item.food_id) === foodId);
+  const handleUpdateQty = (
+    foodId: number,
+    delta: number,
+    optionsKey?: string,
+  ) => {
+    const existing = cartItems.find(
+      (item) =>
+        Number(item.food_id) === foodId &&
+        (optionsKey === undefined ||
+          JSON.stringify(item.options || {}) === optionsKey),
+    );
     if (existing) {
-      updateQuantity(foodId, existing.quantity + delta);
+      updateQuantity(foodId, existing.quantity + delta, optionsKey);
     }
   };
 
-  const handleRemoveItem = (foodId: number) => {
-    removeItem(foodId);
+  const handleRemoveItem = (foodId: number, optionsKey?: string) => {
+    removeItem(foodId, optionsKey);
   };
 
   const handleClearCart = () => {
@@ -84,32 +97,53 @@ export const CartView: React.FC = () => {
     }
   };
 
+  // Fetch live admin settings for dynamic tax & delivery fee threshold
+  const { data: settingsRes } = useApi<any>("/settings.php");
+  const settings = settingsRes?.data || settingsRes || {};
+
+  const taxRate = parseFloat(settings.tax_rate ?? "2");
+  const freeDeliveryMinSubtotal = parseFloat(
+    settings.free_delivery_min_subtotal ?? "25.00",
+  );
+
   // Financial calculations from store items
   const subtotal = cartItems.reduce(
     (sum, item) =>
       sum +
-      (typeof item.price === "string" ? parseFloat(item.price) : Number(item.price || 0)) *
+      (typeof item.price === "string"
+        ? parseFloat(item.price)
+        : Number(item.price || 0)) *
         item.quantity,
     0,
   );
-  const discount = promoApplied ? 5.0 : 0;
-  const deliveryThreshold = 40.0;
-  const deliveryFee = subtotal >= deliveryThreshold || subtotal === 0 ? 0 : 2.5;
-  const amountToFreeDelivery = Math.max(0, deliveryThreshold - subtotal);
-  const deliveryProgressPercent = Math.min(
-    100,
-    Math.round((subtotal / deliveryThreshold) * 100),
-  );
-
-  const serviceTax = subtotal > 0 ? 2.45 : 0;
+  const discount = 0;
+  const isFreeDelivery = subtotal >= freeDeliveryMinSubtotal;
+  const estimatedDeliveryFee = subtotal > 0 ? (isFreeDelivery ? 0 : 0) : 0;
+  const serviceTax = subtotal > 0 ? (subtotal * taxRate) / 100 : 0;
   const finalTotal = Math.max(
     0,
-    subtotal - discount + deliveryFee + serviceTax,
+    subtotal - discount + estimatedDeliveryFee + serviceTax,
   );
   const totalItemCount = cartItems.reduce(
     (acc, item) => acc + item.quantity,
     0,
   );
+
+  if (!mounted) {
+    return (
+      <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 pb-28 bg-surface min-h-screen">
+        <div className="flex flex-col w-full pb-6">
+          <div className="flex items-center justify-between py-space-sm">
+            <h1 className="font-extrabold text-xl text-on-surface">My Cart</h1>
+          </div>
+          <div className="space-y-4 mt-4 animate-pulse">
+            <div className="h-24 bg-surface-container-low rounded-xl" />
+            <div className="h-24 bg-surface-container-low rounded-xl" />
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 pb-28 bg-surface min-h-screen">
@@ -134,42 +168,22 @@ export const CartView: React.FC = () => {
           )}
         </div>
 
-        {/* Delivery Progress Indicator */}
-        <div className="bg-surface-container-low p-space-sm rounded-xl mb-space-md shadow-sm border border-surface-container/60">
-          <div className="flex items-center justify-between mb-space-2xs">
-            <div className="flex items-center gap-1.5">
-              <Truck className="w-4 h-4 text-secondary" />
-              <span className="font-bold text-xs text-on-surface">
-                Free Delivery Threshold
-              </span>
-            </div>
-            <span className="text-xs text-primary font-bold">
-              {amountToFreeDelivery > 0
-                ? `Add $${amountToFreeDelivery.toFixed(2)} more!`
-                : "Free Delivery Unlocked!"}
-            </span>
-          </div>
-          <div className="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
-            <div
-              className="h-full bg-secondary transition-all duration-500 rounded-full"
-              style={{ width: `${deliveryProgressPercent}%` }}
-            />
-          </div>
-        </div>
-
         {/* Cart Items List */}
         {cartItems.length > 0 ? (
           <div className="flex flex-col gap-space-sm mb-space-lg">
-            {cartItems.map((cartItem) => {
+            {cartItems.map((cartItem, idx) => {
               const foodId = Number(cartItem.food_id);
               const imgUrl =
                 cartItem.food?.image_url ||
                 (cartItem.food as any)?.imageUrl ||
                 "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80";
+              const optionsKey = JSON.stringify(cartItem.options || {});
+              const hasOptions =
+                cartItem.options && Object.keys(cartItem.options).length > 0;
 
               return (
                 <div
-                  key={cartItem.food_id}
+                  key={`${cartItem.food_id}-${optionsKey}-${idx}`}
                   className="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex gap-space-sm relative transition-all duration-200 border border-surface-container/60"
                 >
                   <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
@@ -186,14 +200,53 @@ export const CartView: React.FC = () => {
                         <h4 className="font-bold text-sm text-on-surface truncate">
                           {cartItem.name}
                         </h4>
-                        <p className="text-xs text-on-surface-variant line-clamp-1">
-                          {cartItem.food?.description || "Freshly cooked to order"}
-                        </p>
+
+                        {/* Selected Customization Options Badge Tags */}
+                        {hasOptions ? (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {Object.entries(cartItem.options!).map(
+                              ([grp, val]) => (
+                                <span
+                                  key={grp}
+                                  className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-surface-container-low text-on-surface-variant border border-surface-container-high"
+                                >
+                                  <span className="text-outline font-normal">
+                                    {grp}:
+                                  </span>
+                                  <span className="text-primary font-bold">
+                                    {val}
+                                  </span>
+                                </span>
+                              ),
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-on-surface-variant line-clamp-1">
+                            {cartItem.food?.description ||
+                              "Freshly cooked to order"}
+                          </p>
+                        )}
+
+                        {/* Customize / Edit Options Link */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const slug =
+                              cartItem.food?.slug ||
+                              (cartItem.food as any)?.id ||
+                              cartItem.food_id;
+                            router.push(`/items-detail/${slug}`);
+                          }}
+                          className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 mt-1.5 transition-colors"
+                        >
+                          <SlidersHorizontal className="w-3 h-3" />
+                          <span>Customize / Edit Options</span>
+                        </button>
                       </div>
                       <button
                         type="button"
                         aria-label="Remove item"
-                        onClick={() => handleRemoveItem(foodId)}
+                        onClick={() => handleRemoveItem(foodId, optionsKey)}
                         className="text-tertiary hover:text-error transition-colors p-1"
                       >
                         <Trash2 className="w-4 h-4 text-outline hover:text-red-500" />
@@ -213,7 +266,9 @@ export const CartView: React.FC = () => {
                         <button
                           type="button"
                           aria-label="Decrease quantity"
-                          onClick={() => handleUpdateQty(foodId, -1)}
+                          onClick={() =>
+                            handleUpdateQty(foodId, -1, optionsKey)
+                          }
                           className="w-7 h-7 flex items-center justify-center rounded-full text-on-surface hover:bg-surface transition-transform active:scale-90"
                         >
                           <Minus className="w-3.5 h-3.5" />
@@ -224,7 +279,7 @@ export const CartView: React.FC = () => {
                         <button
                           type="button"
                           aria-label="Increase quantity"
-                          onClick={() => handleUpdateQty(foodId, 1)}
+                          onClick={() => handleUpdateQty(foodId, 1, optionsKey)}
                           className="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface transition-transform active:scale-90"
                         >
                           <Plus className="w-3.5 h-3.5" />
@@ -285,51 +340,6 @@ export const CartView: React.FC = () => {
               }`}
             />
           </button>
-        </div>
-
-        {/* Promo Code Card */}
-        <div className="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm mb-space-md border border-surface-container/60">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-space-xs min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-primary-fixed flex items-center justify-center text-primary flex-shrink-0">
-                <Ticket className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                {promoApplied ? (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-[10px] uppercase tracking-wider bg-secondary-fixed text-on-secondary-fixed px-1.5 py-0.5 rounded">
-                      AMBER20
-                    </span>
-                    <span className="text-xs text-primary font-semibold truncate">
-                      ✓ $5.00 discount applied
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-xs font-semibold text-on-surface-variant">
-                    Have a promo code?
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {promoApplied ? (
-              <button
-                type="button"
-                onClick={() => setPromoApplied(false)}
-                className="text-xs font-bold text-error hover:opacity-80 transition-opacity"
-              >
-                Remove
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setPromoApplied(true)}
-                className="text-xs font-bold text-primary hover:text-primary-container transition-colors"
-              >
-                Apply AMBER20
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Upsell Recommendation Carousel */}
@@ -401,29 +411,22 @@ export const CartView: React.FC = () => {
               </span>
             </div>
 
-            {promoApplied && (
-              <div className="flex justify-between items-center text-xs text-primary font-bold">
-                <span>Promo Discount (AMBER20)</span>
-                <span>-${discount.toFixed(2)}</span>
-              </div>
-            )}
-
             <div className="flex justify-between items-center text-xs text-on-surface-variant">
               <div className="flex flex-col">
                 <span>Delivery Fee</span>
                 <span className="text-[10px] font-bold text-secondary">
-                  {subtotal >= deliveryThreshold
-                    ? "Free over $40.00"
-                    : "Standard Delivery"}
+                  {isFreeDelivery
+                    ? "Free Delivery Unlocked"
+                    : "Calculated at checkout by distance"}
                 </span>
               </div>
               <span className="text-on-surface font-semibold">
-                ${deliveryFee.toFixed(2)}
+                {isFreeDelivery ? "$0.00" : "At Checkout"}
               </span>
             </div>
 
             <div className="flex justify-between items-center text-xs text-on-surface-variant">
-              <span>Restaurant Service & Tax</span>
+              <span>{`Packaging & Tax (${taxRate}%)`}</span>
               <span className="text-on-surface font-semibold">
                 ${serviceTax.toFixed(2)}
               </span>
@@ -496,7 +499,8 @@ export const CartView: React.FC = () => {
               Account Required?
             </h3>
             <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
-              Sign in to earn rewards, save delivery addresses, and track live order status. Or continue as guest.
+              Sign in to earn rewards, save delivery addresses, and track live
+              order status. Or continue as guest.
             </p>
 
             <div className="w-full flex flex-col gap-2.5 mt-5">
@@ -527,4 +531,3 @@ export const CartView: React.FC = () => {
     </main>
   );
 };
-

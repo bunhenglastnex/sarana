@@ -48,6 +48,24 @@ class AuthMiddleware {
     /**
      * Get bearer token from HTTP headers or request body
      */
+    public static function getOptionalUser(PDO $pdo): ?array {
+        $token = self::getTokenFromRequest();
+        if (empty($token)) {
+            return null;
+        }
+
+        if (preg_match('/^token_([a-z]+)_(\d+)_/i', $token, $matches)) {
+            $userId = (int)$matches[2];
+            $stmt = $pdo->prepare("SELECT id, name, phone, email, avatar_url, role, telegram_chat_id, telegram_username, status FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch();
+            if ($user && ($user['status'] ?? 'active') === 'active') {
+                return $user;
+            }
+        }
+        return null;
+    }
+
     private static function getTokenFromRequest(): ?string {
         $headers = function_exists('getallheaders') ? getallheaders() : [];
         $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null;

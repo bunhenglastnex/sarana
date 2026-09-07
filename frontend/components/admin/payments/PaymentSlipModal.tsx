@@ -3,6 +3,7 @@
 import React from "react";
 import { CheckCircle2, X, AlertTriangle, ShieldCheck, Download, ZoomIn } from "lucide-react";
 import { TransactionRecord } from "@/types/payments";
+import { formatProofUrl } from "@/lib/utils";
 
 interface PaymentSlipModalProps {
   transaction: TransactionRecord;
@@ -58,14 +59,14 @@ export const PaymentSlipModal: React.FC<PaymentSlipModalProps> = ({
         </div>
 
         {/* High Resolution Payment Slip Image */}
-        <div className="w-full h-72 rounded-xl overflow-hidden bg-surface-container-highest border border-border/20 relative group">
+        <div className="w-full h-72 rounded-xl overflow-hidden bg-black/90 border border-border/20 relative group flex items-center justify-center">
           <img
             src={
-              transaction.proofImageUrl ||
+              formatProofUrl(transaction.proofImageUrl) ||
               "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10"
             }
             alt="KHQR Payment Proof Slip"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute top-2 right-2 bg-black/60 text-white font-label-sm text-[10px] px-2 py-1 rounded-md backdrop-blur-xs flex items-center gap-1">
             <ZoomIn className="w-3 h-3" />

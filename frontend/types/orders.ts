@@ -48,6 +48,7 @@ export interface OrderRecord {
   discount: number;
   tax: number;
   paymentMethod: PaymentMethod;
+  paymentStatus?: string;
   paymentBadgeLabel: string;
   paymentIsPaid: boolean;
   deliveryAddress?: string;

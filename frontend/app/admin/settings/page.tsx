@@ -46,6 +46,7 @@ function SettingsPageContent() {
     openingTime: "10:00",
     closingTime: "22:00",
     taxRate: 9.25,
+    khqrImageUrl: "",
 
     // Audio & Notifications
     enableAudioChimes: true,
@@ -99,6 +100,7 @@ function SettingsPageContent() {
           openingTime: res.data.opening_time ?? prev.openingTime,
           closingTime: res.data.closing_time ?? prev.closingTime,
           taxRate: res.data.tax_rate ?? prev.taxRate,
+          khqrImageUrl: res.data.khqr_image_url ?? prev.khqrImageUrl,
 
           // Audio
           enableAudioChimes: res.data.enable_audio_chimes ?? prev.enableAudioChimes,
@@ -151,6 +153,7 @@ function SettingsPageContent() {
       opening_time: formData.openingTime,
       closing_time: formData.closingTime,
       tax_rate: formData.taxRate,
+      khqr_image_url: formData.khqrImageUrl,
 
       enable_audio_chimes: formData.enableAudioChimes,
       chime_tone: formData.chimeTone,

@@ -55,6 +55,13 @@ class SettingsService {
         foreach ($input as $key => $value) {
             if ($key === 'action' || $key === 'token') continue;
 
+            // Handle base64 image upload for KHQR image
+            if (($key === 'khqr_image_url' || $key === 'khqrImageUrl') && !empty($value)) {
+                require_once __DIR__ . '/../lib/upload.php';
+                $value = saveBase64Image($value, 'qr') ?? $value;
+                $key = 'khqr_image_url';
+            }
+
             $group = 'general';
             if (strpos($key, 'telegram') === 0) $group = 'telegram';
             elseif (strpos($key, 'delivery') !== false || strpos($key, 'radius') !== false || strpos($key, 'fee') !== false || strpos($key, 'zone') !== false) $group = 'delivery';
