@@ -246,6 +246,16 @@ export const CheckoutReviewView: React.FC = () => {
       return;
     }
 
+    if (!customerPhone || !customerPhone.trim()) {
+      alert("Please enter a valid contact phone number.");
+      return;
+    }
+
+    if (fulfillmentMode === "delivery" && (!deliveryAddress || !deliveryAddress.trim())) {
+      alert("Please enter a valid delivery address.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

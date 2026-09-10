@@ -77,28 +77,56 @@ if ($method === 'POST') {
         if (empty($customerPhone)) $customerPhone = $authUser['phone'] ?? $customerPhone;
     }
 
-    if (empty($customerPhone)) {
-        $customerPhone = '012345678'; // Default contact phone if not provided
+    if (empty($customerPhone) && $authUser) {
+        $customerPhone = $authUser['phone'] ?? '';
     }
 
-    // Calculate Subtotal & Totals
+    if (empty($customerPhone)) {
+        jsonResponse(0, 'Validation Error: Customer phone number is required', null, 400);
+    }
+
+    if ($fulfillmentType === 'delivery' && empty($deliveryAddress)) {
+        jsonResponse(0, 'Validation Error: Delivery address is required for delivery orders', null, 400);
+    }
+
+    // Calculate Subtotal & Totals with DB Price Verification & Stock Availability Checks
     $foodAmount = 0.0;
     $itemsToInsert = [];
 
+    $foodCheckStmt = $pdo->prepare("SELECT id, name, price, is_available, image_url FROM foods WHERE id = ? LIMIT 1");
+
     foreach ($input['items'] as $item) {
         $foodId = !empty($item['food_id']) ? (int)$item['food_id'] : (!empty($item['foodId']) ? (int)$item['foodId'] : null);
-        $foodName = trim($item['food_name'] ?? $item['name'] ?? 'Menu Item');
-        $price = (float)($item['price'] ?? 0);
+        $clientFoodName = trim($item['food_name'] ?? $item['name'] ?? 'Menu Item');
         $quantity = max(1, (int)($item['quantity'] ?? 1));
-        $subtotal = round($price * $quantity, 2);
-        $imageUrl = trim($item['image_url'] ?? $item['imageUrl'] ?? '');
         $itemNotes = trim($item['notes'] ?? '');
+        $imageUrl = trim($item['image_url'] ?? $item['imageUrl'] ?? '');
 
+        $realPrice = (float)($item['price'] ?? 0);
+        $realFoodName = $clientFoodName;
+
+        if ($foodId) {
+            $foodCheckStmt->execute([$foodId]);
+            $dbFood = $foodCheckStmt->fetch();
+            if ($dbFood) {
+                if (isset($dbFood['is_available']) && (int)$dbFood['is_available'] === 0) {
+                    jsonResponse(0, "Item '{$dbFood['name']}' is currently out of stock", null, 400);
+                }
+                $realPrice = (float)$dbFood['price'];
+                $realFoodName = $dbFood['name'];
+                if (empty($imageUrl) && !empty($dbFood['image_url'])) {
+                    $imageUrl = $dbFood['image_url'];
+                }
+            }
+        }
+
+        $subtotal = round($realPrice * $quantity, 2);
         $foodAmount += $subtotal;
+
         $itemsToInsert[] = [
             'food_id' => $foodId,
-            'food_name' => $foodName,
-            'price' => $price,
+            'food_name' => $realFoodName,
+            'price' => $realPrice,
             'quantity' => $quantity,
             'subtotal' => $subtotal,
             'image_url' => $imageUrl,
@@ -154,9 +182,20 @@ if ($method === 'POST') {
     $totalAmount = round($foodAmount + $deliveryFee + $packagingAndTax + $tip, 2);
     $amountKhr = (int)round($totalAmount * 4100);
 
-    // Generate Unique Order Number e.g. ORD-8942
-    $orderNumInt = rand(10000, 99999);
-    $orderNumber = 'ORD-' . $orderNumInt;
+    // Collision-Safe Unique Order Number Generation e.g. ORD-8942
+    $orderNumber = '';
+    for ($attempt = 0; $attempt < 10; $attempt++) {
+        $candidateNum = 'ORD-' . rand(10000, 99999);
+        $chkStmt = $pdo->prepare("SELECT id FROM orders WHERE order_number = ? LIMIT 1");
+        $chkStmt->execute([$candidateNum]);
+        if (!$chkStmt->fetch()) {
+            $orderNumber = $candidateNum;
+            break;
+        }
+    }
+    if (empty($orderNumber)) {
+        $orderNumber = 'ORD-' . time() . rand(10, 99);
+    }
 
     try {
         $pdo->beginTransaction();

@@ -37,95 +37,7 @@ export interface LiveOrder {
   elapsedTime: string;
 }
 
-const initialOrders: LiveOrder[] = [
-  {
-    id: "#1031",
-    customerName: "Marcus Brody",
-    customerPhone: "+1 (555) 392-8812",
-    channel: "delivery",
-    itemsSummary: "2x Smoked Truffle Burger, 1x Russet Fries",
-    note: "Extra garlic aioli on side",
-    totalPrice: 34.5,
-    paymentBadge: "PAID (KHQR)",
-    paymentIsPaid: true,
-    paymentMethod: "khqr",
-    proofImageUrl:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTW_nSl8ar5rgvxpgYec8c80SO7FC8JTpLhfNGATJtMEA&s=10",
-    status: "pending",
-    elapsedTime: "3m ago",
-  },
-  {
-    id: "#1030",
-    customerName: "Elena Vance",
-    customerPhone: "+1 (555) 714-2209",
-    channel: "pickup",
-    itemsSummary: "1x Woodfired Burrata Pizza, 1x House Red",
-    totalPrice: 28.0,
-    paymentBadge: "PAID (COUNTER)",
-    paymentIsPaid: true,
-    paymentMethod: "counter",
-    status: "preparing",
-    elapsedTime: "9m ago",
-  },
-  {
-    id: "#1029",
-    customerName: "David K.",
-    customerPhone: "+1 (555) 902-1430",
-    channel: "delivery",
-    itemsSummary: "3x Ember Woodfired Wings, 2x Charred Brioche",
-    totalPrice: 45.0,
-    paymentBadge: "UNPAID (COD)",
-    paymentIsPaid: false,
-    paymentMethod: "cod",
-    status: "delivery",
-    elapsedTime: "18m ago",
-  },
-  {
-    id: "#1028",
-    customerName: "Nadia S.",
-    customerPhone: "+1 (555) 604-3319",
-    channel: "delivery",
-    itemsSummary: "1x Hearth-Smoked Angus Burger, 1x Citrus Lemonade",
-    totalPrice: 23.0,
-    paymentBadge: "PAID (KHQR)",
-    paymentIsPaid: true,
-    paymentMethod: "khqr",
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=500&auto=format&fit=crop",
-    status: "pending",
-    elapsedTime: "1m ago",
-  },
-  {
-    id: "#1027",
-    customerName: "Sofia Thorne",
-    customerPhone: "+1 (555) 441-9877",
-    channel: "pickup",
-    itemsSummary: "1x Smoked Truffle Burger, 1x Craft Cider",
-    totalPrice: 22.5,
-    paymentBadge: "PAID (KHQR)",
-    paymentIsPaid: true,
-    paymentMethod: "khqr",
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=500&auto=format&fit=crop",
-    status: "ready",
-    elapsedTime: "24m ago",
-  },
-  {
-    id: "#1024",
-    customerName: "Arthur Pendelton",
-    customerPhone: "+1 (555) 120-9931",
-    channel: "delivery",
-    itemsSummary: "2x Burrata Pizzas, 2x Truffle Fries, 1x Tiramisu",
-    totalPrice: 56.0,
-    paymentBadge: "PAID (KHQR)",
-    paymentIsPaid: true,
-    paymentMethod: "khqr",
-    proofImageUrl:
-      "https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&auto=format&fit=crop",
-    status: "completed",
-    elapsedTime: "42m ago",
-  },
-];
+const initialOrders: LiveOrder[] = [];
 
 interface LiveOrdersTableProps {
   initialOrders?: LiveOrder[];
@@ -138,7 +50,7 @@ export const LiveOrdersTable: React.FC<LiveOrdersTableProps> = ({
   onAction,
   onRefresh,
 }) => {
-  const [orders, setOrders] = useState<LiveOrder[]>(externalOrders && externalOrders.length > 0 ? externalOrders : initialOrders);
+  const [orders, setOrders] = useState<LiveOrder[]>(externalOrders || []);
   const [filter, setFilter] = useState<"all" | "pending" | "preparing" | "delivery">("all");
 
   React.useEffect(() => {
