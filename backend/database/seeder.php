@@ -6,41 +6,53 @@
  * @param PDO $pdo
  */
 function seedDatabase(PDO $pdo): void {
-    echo "🌱 Seeding sample data...\n";
+    echo "🌱 Seeding sample multi-tenant data...\n";
 
-    // Seed Users: Admin, Staff, Delivery Riders
-    $adminPassword = password_hash('admin123', PASSWORD_BCRYPT);
+    // 1. Seed Multi-Tenant Restaurants
+    $pdo->exec("INSERT IGNORE INTO restaurants (id, name, slug, logo_url, banner_url, address, lat, lng, phone, is_active) VALUES
+        (1, 'Amber & Ember Woodfired Bistro', 'amber-ember-bistro', 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150', 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600', '520 N Michigan Ave, Suite 14F, Siem Reap', 13.35227000, 103.95511600, '+855 23 888 999', 1),
+        (2, 'Spice Route Artisan Grill', 'spice-route-grill', 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=150', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600', '188 Pub Street Promenade, Siem Reap', 13.35400000, 103.95800000, '+855 23 777 888', 1),
+        (3, 'Phnom Penh Noodle House', 'phnom-penh-noodle-house', 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=150', 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600', '42 Riverfront Boulevard, Siem Reap', 13.34800000, 103.95100000, '+855 23 666 555', 1)");
+
+    // 2. Seed Users: Super Admin, Tenant Admins, Shared Delivery Riders, Customers
+    $superPassword  = password_hash('admin123', PASSWORD_BCRYPT);
+    $adminPassword  = password_hash('admin123', PASSWORD_BCRYPT);
     $driverPassword = password_hash('driver123', PASSWORD_BCRYPT);
+    $custPassword   = password_hash('customer123', PASSWORD_BCRYPT);
 
-    $stmt = $pdo->prepare("INSERT IGNORE INTO users (id, name, phone, email, role, password, avatar_url) VALUES
-        (1, 'Restaurant Admin', '012111222', 'admin@restaurant.com', 'admin', ?, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'),
-        (2, 'Liem Vance', '098333444', 'delivery1@restaurant.com', 'delivery', ?, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'),
-        (3, 'David Chen', '099555666', 'delivery2@restaurant.com', 'delivery', ?, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'),
-        (4, 'Sokha Seng', '099777888', 'delivery3@restaurant.com', 'delivery', ?, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150')");
-    $stmt->execute([$adminPassword, $driverPassword, $driverPassword, $driverPassword]);
+    $stmt = $pdo->prepare("INSERT IGNORE INTO users (id, name, phone, email, role, restaurant_id, password, avatar_url) VALUES
+        (10, 'Super Platform Admin', '012000000', 'superadmin@system.com', 'super_admin', NULL, ?, 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'),
+        (1, 'Amber Bistro Owner (Admin)', '012111222', 'admin@restaurant.com', 'admin', 1, ?, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'),
+        (5, 'Spice Route Owner (Admin)', '012222333', 'admin2@restaurant.com', 'admin', 2, ?, 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+        (2, 'Liem Vance (Shared Courier)', '098333444', 'delivery1@restaurant.com', 'delivery', NULL, ?, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'),
+        (3, 'David Chen (Shared Courier)', '099555666', 'delivery2@restaurant.com', 'delivery', NULL, ?, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'),
+        (4, 'Sokha Seng (Shared Courier)', '099777888', 'delivery3@restaurant.com', 'delivery', NULL, ?, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150')");
+    $stmt->execute([$superPassword, $adminPassword, $adminPassword, $driverPassword, $driverPassword, $driverPassword]);
 
-    // Seed Courier Telemetry (GPS positions & vehicle labels)
+    // Seed Courier Telemetry (Shared Fleet)
     $pdo->exec("INSERT IGNORE INTO courier_telemetry (id, user_id, vehicle_type, vehicle_label, lat, lng, speed_kmh, temp_celsius, status) VALUES
         (1, 2, 'motorbike', 'Motorbike #2 (CB150)', 13.35480000, 103.95850000, 28, 65, 'on_delivery'),
         (2, 3, 'motorbike', 'Motorbike #1', 13.34850000, 103.94800000, 24, 68, 'on_delivery'),
         (3, 4, 'e_scooter', 'E-Scooter #4', 13.35600000, 103.95200000, 22, 62, 'on_delivery')");
 
-    // Seed Categories
-    $pdo->exec("INSERT IGNORE INTO categories (id, name, icon) VALUES
-        (1, 'Burgers & Sandwiches', 'sandwich'),
-        (2, 'Fried Chicken & Sides', 'drumstick'),
-        (3, 'Beverages & Soft Drinks', 'cup-soda'),
-        (4, 'Desserts & Sweets', 'cake')");
+    // Seed Multi-Tenant Categories
+    $pdo->exec("INSERT IGNORE INTO categories (id, restaurant_id, name, icon) VALUES
+        (1, 1, 'Woodfired Burgers', 'sandwich'),
+        (2, 1, 'Artisan Sides', 'drumstick'),
+        (3, 2, 'Smoked BBQ & Wings', 'flame'),
+        (4, 2, 'Craft Drinks', 'cup-soda'),
+        (5, 3, 'Traditional Noodles', 'utensils'),
+        (6, 3, 'Asian Sweets', 'cake')");
 
-    // Seed Foods
-    $pdo->exec("INSERT IGNORE INTO foods (id, category_id, name, price, description, image_url, is_available, status) VALUES
-        (1, 1, 'Classic Double Cheeseburger', 4.50, 'សាច់គោ ២ បន្ទះ ឈីសក្រាស់ និងបន្លែស្រស់', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', 1, 'public'),
-        (2, 1, 'Crispy Chicken Burger', 3.80, 'សាច់មាន់បំពងស្រួយ ទឹកជ្រលក់ហឹរតិចៗ', 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500', 1, 'public'),
-        (3, 2, 'Spicy Fried Chicken Wings (6pcs)', 4.20, 'ស្លាបមាន់បំពងហឹរបែបកូរ៉េ', 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=500', 1, 'public'),
-        (4, 2, 'French Fries (Large)', 2.00, 'ដំឡូងបារាំងបំពងស្រួយជាមួយទឹកប៉េងប៉ោះ', 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=500', 1, 'public'),
-        (5, 3, 'Coca Cola Original (Can)', 1.00, 'កូកាកូឡាត្រជាក់ស្រស់ស្រាយ', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500', 1, 'public'),
-        (6, 3, 'Iced Lemon Green Tea', 1.50, 'តែបៃតងក្រូចឆ្មាផ្អែមត្រជាក់', 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500', 1, 'public'),
-        (7, 4, 'Secret Chef Special Cake (Draft)', 5.00, 'នំខេកពិសេសលួចធ្វើថ្មី', 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500', 1, 'draft')");
+    // Seed Multi-Tenant Foods
+    $pdo->exec("INSERT IGNORE INTO foods (id, restaurant_id, category_id, name, price, description, image_url, is_available, status) VALUES
+        (1, 1, 1, 'Classic Double Cheeseburger', 4.50, 'Amber Bistro woodfired beef patties with extra cheddar', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', 1, 'public'),
+        (2, 1, 1, 'Crispy Chicken Burger', 3.80, 'Crispy chicken fillet with spicy aioli', 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500', 1, 'public'),
+        (3, 2, 3, 'Spicy Fried Chicken Wings (6pcs)', 4.20, 'Korean style spicy glaze wings from Spice Route', 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=500', 1, 'public'),
+        (4, 1, 2, 'French Fries (Large)', 2.00, 'Hand-cut russet fries with sea salt', 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=500', 1, 'public'),
+        (5, 2, 4, 'Cold Craft Kola (Can)', 1.00, 'Ice cold handcrafted soda', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500', 1, 'public'),
+        (6, 3, 5, 'Phnom Penh Special Noodle Soup', 4.80, 'Rich pork broth with seafood and fresh herbs', 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500', 1, 'public'),
+        (7, 1, 1, 'Secret Chef Special Cake (Draft)', 5.00, 'Draft artisanal dessert', 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500', 1, 'draft')");
 
     // Seed Customers
     $custPassword = password_hash('customer123', PASSWORD_BCRYPT);

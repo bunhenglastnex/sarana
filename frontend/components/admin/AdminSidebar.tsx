@@ -19,6 +19,7 @@ import {
   LogOut,
   User,
   ScrollText,
+  Building2,
 } from "lucide-react";
 
 import { useState } from "react";
@@ -163,9 +164,22 @@ export const AdminSidebar: React.FC = () => {
             <span className="font-label-lg text-label-lg">Categories</span>
           </Link>
 
+          {/* Platform & Multi-Tenant Section */}
+          <div className="px-space-xs pt-space-md pb-1 font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">
+            Platform &amp; Multi-Tenant
+          </div>
+
+          <Link
+            href="/admin/restaurants"
+            className={navItemClass("/admin/restaurants")}
+          >
+            <Building2 className="w-5 h-5 shrink-0" />
+            <span className="font-label-lg text-label-lg">Restaurants</span>
+          </Link>
+
           {/* Business & People Section */}
           <div className="px-space-xs pt-space-md pb-1 font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">
-            Business & People
+            Business &amp; People
           </div>
 
           <Link

@@ -22,9 +22,9 @@ class AuthMiddleware {
 
         // Extract token_role_userId_hash if token follows token_format
         $user = null;
-        if (preg_match('/^token_([a-z]+)_(\d+)_/i', $token, $matches)) {
+        if (preg_match('/^token_([a-z_]+)_(\d+)_/i', $token, $matches)) {
             $userId = (int)$matches[2];
-            $stmt = $pdo->prepare("SELECT id, name, phone, email, avatar_url, role, telegram_chat_id, telegram_username, status FROM users WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, name, phone, email, avatar_url, role, restaurant_id, telegram_chat_id, telegram_username, status FROM users WHERE id = ?");
             $stmt->execute([$userId]);
             $user = $stmt->fetch();
         }
@@ -37,12 +37,28 @@ class AuthMiddleware {
             jsonResponse(0, 'Forbidden: Account is inactive or disabled', null, 403);
         }
 
-        // Check Role-Based Access Control
-        if (!empty($allowedRoles) && !in_array($user['role'], $allowedRoles, true)) {
+        // Check Role-Based Access Control (super_admin bypasses specific admin/staff checks)
+        if (!empty($allowedRoles) && !in_array($user['role'], $allowedRoles, true) && $user['role'] !== 'super_admin') {
             jsonResponse(0, "Forbidden: Required role [" . implode(', ', $allowedRoles) . "] privilege missing", null, 403);
         }
 
         return $user;
+    }
+
+    /**
+     * Helper to get tenant restaurant ID for strict data isolation.
+     * Returns null if super_admin viewing all, delivery rider, or customer.
+     * Returns int restaurant_id for tenant admin / staff.
+     */
+    public static function getTenantFilter(PDO $pdo, array $allowedRoles = ['admin', 'staff']): ?int {
+        $user = self::authenticate($pdo, array_merge(['super_admin'], $allowedRoles));
+        if ($user['role'] === 'super_admin') {
+            if (isset($_GET['restaurant_id']) && is_numeric($_GET['restaurant_id'])) {
+                return (int)$_GET['restaurant_id'];
+            }
+            return null;
+        }
+        return !empty($user['restaurant_id']) ? (int)$user['restaurant_id'] : 1;
     }
 
     /**
@@ -54,9 +70,9 @@ class AuthMiddleware {
             return null;
         }
 
-        if (preg_match('/^token_([a-z]+)_(\d+)_/i', $token, $matches)) {
+        if (preg_match('/^token_([a-z_]+)_(\d+)_/i', $token, $matches)) {
             $userId = (int)$matches[2];
-            $stmt = $pdo->prepare("SELECT id, name, phone, email, avatar_url, role, telegram_chat_id, telegram_username, status FROM users WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, name, phone, email, avatar_url, role, restaurant_id, telegram_chat_id, telegram_username, status FROM users WHERE id = ?");
             $stmt->execute([$userId]);
             $user = $stmt->fetch();
             if ($user && ($user['status'] ?? 'active') === 'active') {

@@ -268,13 +268,14 @@ if ($method === 'GET') {
     }
 } elseif ($method === 'POST') {
     // Requires Admin Role
-    $admin = AuthMiddleware::authenticate($pdo, ['admin']);
+    $admin = AuthMiddleware::authenticate($pdo, ['admin', 'staff']);
     $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
     if (empty($input['name']) || !isset($input['price'])) {
         jsonResponse(0, 'Validation Error: Food name and price are required.', null, 400);
     }
 
+    $restaurantId = !empty($admin['restaurant_id']) ? (int)$admin['restaurant_id'] : (!empty($input['restaurant_id']) ? (int)$input['restaurant_id'] : 1);
     $status = isset($input['status']) && in_array($input['status'], ['public', 'draft']) ? $input['status'] : 'public';
     $categoryId = !empty($input['category_id']) ? (int)$input['category_id'] : (!empty($input['categoryId']) ? (int)$input['categoryId'] : null);
     
@@ -298,10 +299,11 @@ if ($method === 'GET') {
 
     try {
         $stmt = $pdo->prepare("
-            INSERT INTO foods (category_id, name, slug, price, description, image_url, badge_text, badge_type, is_top_seller, prep_time_minutes, options, is_available, stock_quantity, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO foods (restaurant_id, category_id, name, slug, price, description, image_url, badge_text, badge_type, is_top_seller, prep_time_minutes, options, is_available, stock_quantity, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
+            $restaurantId,
             $categoryId,
             trim($input['name']),
             $slug,

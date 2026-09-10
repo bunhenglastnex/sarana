@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { FoodItem } from "./FoodCard";
 import { ShareModal } from "./ShareModal";
+import { RestaurantConflictModal } from "./RestaurantConflictModal";
 import Api, { useApi } from "@/lib/api";
 import { useCartStore, useAuthStore, useFavoritesStore } from "@/lib/store";
 
@@ -30,6 +31,7 @@ interface ItemDetailViewProps {
 export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
   const router = useRouter();
   const addItemToCart = useCartStore((state) => state.addItem);
+  const forceAddItemToCart = useCartStore((state) => state.forceAddItem);
   const { userId, phone } = useAuthStore();
   const isLocalFavorite = useFavoritesStore((state) => state.isLocalFavorite);
   const toggleLocalFavorite = useFavoritesStore(
@@ -66,6 +68,9 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
 
     return {
       id: String(rawItem.id),
+      restaurant_id: Number(rawItem.restaurant_id || 1),
+      restaurant_name: rawItem.restaurant_name || "Amber Bistro",
+      restaurant_logo: rawItem.restaurant_logo || "",
       slug: rawItem.slug || String(rawItem.id),
       name: rawItem.name,
       category: rawItem.category_slug || rawItem.category || "general",
@@ -95,6 +100,17 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [added, setAdded] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+
+  // Cart conflict state
+  const [conflictModalState, setConflictModalState] = useState<{
+    isOpen: boolean;
+    currentRestaurantName: string;
+    newRestaurantName: string;
+  }>({
+    isOpen: false,
+    currentRestaurantName: "",
+    newRestaurantName: "",
+  });
 
   // Check initial favorite status (DB if logged in, IndexedDB if guest)
   useEffect(() => {
@@ -172,20 +188,32 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
   const handleAddToCart = () => {
     if (!item) return;
 
-    // Add item to Zustand Cart Store with selected options
-    addItemToCart(
-      {
-        id: Number(item.id),
-        name: item.name,
-        price: item.price,
-        image_url: item.imageUrl,
-        category: item.category,
-        description: item.description,
-        is_available: true,
-      } as any,
+    const foodPayload = {
+      id: Number(item.id),
+      restaurant_id: item.restaurant_id || 1,
+      restaurant_name: item.restaurant_name || "Restaurant",
+      name: item.name,
+      price: item.price,
+      image_url: item.imageUrl,
+      category: item.category,
+      description: item.description,
+      is_available: true,
+    };
+
+    const res = addItemToCart(
+      foodPayload as any,
       quantity,
-      selectedOptions,
+      selectedOptions
     );
+
+    if (res.isConflict) {
+      setConflictModalState({
+        isOpen: true,
+        currentRestaurantName: res.currentRestaurantName || "Current Restaurant",
+        newRestaurantName: res.newRestaurantName || "New Restaurant",
+      });
+      return;
+    }
 
     setAdded(true);
     setTimeout(() => {
@@ -500,6 +528,37 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
           description={item.description}
           imageUrl={item.imageUrl}
           price={item.price}
+        />
+      )}
+
+      {/* Multi-Restaurant Cart Conflict Modal */}
+      {item && (
+        <RestaurantConflictModal
+          isOpen={conflictModalState.isOpen}
+          currentRestaurantName={conflictModalState.currentRestaurantName}
+          newRestaurantName={conflictModalState.newRestaurantName}
+          onClose={() =>
+            setConflictModalState((prev) => ({ ...prev, isOpen: false }))
+          }
+          onConfirmReplace={() => {
+            const foodPayload = {
+              id: Number(item.id),
+              restaurant_id: item.restaurant_id || 1,
+              restaurant_name: item.restaurant_name || "Restaurant",
+              name: item.name,
+              price: item.price,
+              image_url: item.imageUrl,
+              category: item.category,
+              description: item.description,
+              is_available: true,
+            };
+            forceAddItemToCart(foodPayload as any, quantity, selectedOptions);
+            setAdded(true);
+            setTimeout(() => {
+              setAdded(false);
+              router.push("/cart");
+            }, 1000);
+          }}
         />
       )}
     </div>

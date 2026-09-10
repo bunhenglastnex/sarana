@@ -93,7 +93,12 @@ if ($method === 'POST') {
     $foodAmount = 0.0;
     $itemsToInsert = [];
 
-    $foodCheckStmt = $pdo->prepare("SELECT id, name, price, is_available, image_url FROM foods WHERE id = ? LIMIT 1");
+    // Calculate Subtotal & Totals with DB Price Verification & Stock Availability Checks
+    $foodAmount = 0.0;
+    $itemsToInsert = [];
+    $orderRestaurantId = !empty($input['restaurant_id']) ? (int)$input['restaurant_id'] : null;
+
+    $foodCheckStmt = $pdo->prepare("SELECT id, restaurant_id, name, price, is_available, image_url FROM foods WHERE id = ? LIMIT 1");
 
     foreach ($input['items'] as $item) {
         $foodId = !empty($item['food_id']) ? (int)$item['food_id'] : (!empty($item['foodId']) ? (int)$item['foodId'] : null);
@@ -117,6 +122,9 @@ if ($method === 'POST') {
                 if (empty($imageUrl) && !empty($dbFood['image_url'])) {
                     $imageUrl = $dbFood['image_url'];
                 }
+                if (!$orderRestaurantId && !empty($dbFood['restaurant_id'])) {
+                    $orderRestaurantId = (int)$dbFood['restaurant_id'];
+                }
             }
         }
 
@@ -134,6 +142,10 @@ if ($method === 'POST') {
         ];
     }
 
+    if (!$orderRestaurantId) {
+        $orderRestaurantId = 1; // Default to Restaurant HQ
+    }
+
     // Fetch Settings from database for dynamic fee & tax calculations
     require_once __DIR__ . '/../services/SettingsService.php';
     $settingsService = new SettingsService($pdo);
@@ -144,8 +156,20 @@ if ($method === 'POST') {
     $baseIncludedKm = isset($settings['base_included_km']) ? (float)$settings['base_included_km'] : 3.0;
     $extraFeePerKm = isset($settings['extra_fee_per_km']) ? (float)$settings['extra_fee_per_km'] : 0.50;
     $freeDeliveryMinSubtotal = isset($settings['free_delivery_min_subtotal']) ? (float)$settings['free_delivery_min_subtotal'] : 25.00;
+    
+    // Fetch Restaurant Origin Coordinates
     $storeLat = isset($settings['store_latitude']) ? (float)$settings['store_latitude'] : 13.352270;
     $storeLng = isset($settings['store_longitude']) ? (float)$settings['store_longitude'] : 103.955116;
+
+    if ($orderRestaurantId) {
+        $restoStmt = $pdo->prepare("SELECT lat, lng FROM restaurants WHERE id = ? LIMIT 1");
+        $restoStmt->execute([$orderRestaurantId]);
+        $restoRow = $restoStmt->fetch();
+        if ($restoRow && !empty($restoRow['lat']) && !empty($restoRow['lng'])) {
+            $storeLat = (float)$restoRow['lat'];
+            $storeLng = (float)$restoRow['lng'];
+        }
+    }
 
     // Delivery fee calculation
     if (isset($input['delivery_fee']) && is_numeric($input['delivery_fee'])) {
@@ -202,17 +226,18 @@ if ($method === 'POST') {
 
         $stmt = $pdo->prepare("
             INSERT INTO orders (
-                order_number, user_id, customer_name, customer_phone, telegram_chat_id,
+                restaurant_id, order_number, user_id, customer_name, customer_phone, telegram_chat_id,
                 fulfillment_type, delivery_address, delivery_lat, delivery_lng, delivery_fee, food_amount, total_amount, amount_khr,
                 payment_method, payment_status, status, notes, created_at
             ) VALUES (
-                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?, ?,
                 ?, 'pending', 'pending', ?, NOW()
             )
         ");
 
         $stmt->execute([
+            $orderRestaurantId,
             $orderNumber,
             $userId,
             $customerName,

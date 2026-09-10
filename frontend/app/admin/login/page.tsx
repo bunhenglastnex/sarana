@@ -71,7 +71,8 @@ export default function AdminLoginPage() {
           userId: res.data.userId,
           name: res.data.name,
           phone: res.data.phone,
-          role: "admin",
+          role: res.data.role || "admin",
+          restaurantId: res.data.restaurantId || res.data.restaurant_id || null,
         });
         router.push("/admin");
       } else {

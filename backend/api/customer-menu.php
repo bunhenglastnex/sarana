@@ -75,13 +75,15 @@ try {
     $countStmt->execute($params);
     $totalItems = (int)$countStmt->fetchColumn();
 
-    // 3. Fetch Paginated Public Foods
+    // 3. Fetch Paginated Public Foods with Restaurant Joining
     $query = "
-        SELECT f.id, f.category_id, c.name as category_name, c.slug as category_slug,
+        SELECT f.id, f.restaurant_id, r.name as restaurant_name, r.logo_url as restaurant_logo,
+               f.category_id, c.name as category_name, c.slug as category_slug,
                f.name, f.slug, f.price, f.description, f.image_url,
                f.badge_text, f.badge_type, f.is_top_seller, f.prep_time_minutes,
                f.options, f.is_available, f.stock_quantity, f.is_featured, f.status
         FROM foods f
+        LEFT JOIN restaurants r ON f.restaurant_id = r.id
         LEFT JOIN categories c ON f.category_id = c.id
         {$whereSql}
         ORDER BY f.is_top_seller DESC, f.is_featured DESC, f.id DESC
@@ -94,6 +96,9 @@ try {
 
     foreach ($foods as &$food) {
         $food['id'] = (int)$food['id'];
+        $food['restaurant_id'] = (int)($food['restaurant_id'] ?? 1);
+        $food['restaurant_name'] = $food['restaurant_name'] ?? 'Amber Bistro';
+        $food['restaurant_logo'] = $food['restaurant_logo'] ?? '';
         $food['category_id'] = $food['category_id'] ? (int)$food['category_id'] : null;
         $food['category'] = $food['category_slug'] ?? ($food['category_name'] ? strtolower(str_replace(' ', '-', $food['category_name'])) : 'general');
         $food['price'] = (float)$food['price'];

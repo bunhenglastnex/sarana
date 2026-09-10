@@ -22,8 +22,15 @@ if ($method === 'GET') {
         $page               = max(1, (int)($_GET['page'] ?? 1));
         $limit              = max(1, min(100, (int)($_GET['limit'] ?? 10)));
 
+        $tenantId = AuthMiddleware::getTenantFilter($pdo, ['admin', 'staff']);
+
         $whereClause = " WHERE 1=1";
         $params = [];
+
+        if ($tenantId !== null) {
+            $whereClause .= " AND o.restaurant_id = ?";
+            $params[] = $tenantId;
+        }
 
         // Apply Status Filter
         if ($statusFilter !== 'all' && !empty($statusFilter)) {

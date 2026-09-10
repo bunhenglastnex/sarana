@@ -5,6 +5,9 @@ import { Heart, Plus, ThumbsUp, Flame, Award, Check } from 'lucide-react';
 
 export interface FoodItem {
   id: string;
+  restaurant_id?: number;
+  restaurant_name?: string;
+  restaurant_logo?: string;
   slug?: string;
   name: string;
   category: string;
@@ -109,6 +112,11 @@ export const FoodCard: React.FC<FoodCardProps> = ({
       {/* Product Information Section */}
       <div className="p-space-md flex flex-col justify-between flex-1">
         <div>
+          {item.restaurant_name && (
+            <span className="inline-block text-[10px] font-extrabold uppercase tracking-wide text-primary bg-primary/10 px-2 py-0.5 rounded-md mb-1.5">
+              {item.restaurant_name}
+            </span>
+          )}
           <h4 className="font-bold text-base text-on-surface group-hover:text-primary transition-colors">
             {item.name}
           </h4>

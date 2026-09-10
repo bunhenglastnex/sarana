@@ -13,9 +13,12 @@ export interface CartState {
   deliveryAddress: string;
   notes: string;
   telegramChatId: string;
+  restaurantId: number | null;
+  restaurantName: string | null;
 
   // Actions
-  addItem: (food: Food, quantity?: number, options?: Record<string, string>, notes?: string) => void;
+  addItem: (food: Food, quantity?: number, options?: Record<string, string>, notes?: string) => { isConflict: boolean; currentRestaurantName?: string; newRestaurantName?: string };
+  forceAddItem: (food: Food, quantity?: number, options?: Record<string, string>, notes?: string) => void;
   removeItem: (foodId: number, optionsKey?: string) => void;
   updateQuantity: (foodId: number, quantity: number, optionsKey?: string) => void;
   clearCart: () => void;
@@ -39,9 +42,24 @@ export const useCartStore = create<CartState>()(
       deliveryAddress: '',
       notes: '',
       telegramChatId: '',
+      restaurantId: null,
+      restaurantName: null,
 
       addItem: (food, quantity = 1, options = {}, notes = '') => {
         const currentItems = get().items;
+        const currentRestoId = get().restaurantId;
+        const targetRestoId = food.restaurant_id || 1;
+        const targetRestoName = food.restaurant_name || 'Restaurant';
+
+        // Check for multi-restaurant conflict (Option B Single-Restaurant Enforcement)
+        if (currentItems.length > 0 && currentRestoId && currentRestoId !== targetRestoId) {
+          return {
+            isConflict: true,
+            currentRestaurantName: get().restaurantName || 'Current Restaurant',
+            newRestaurantName: targetRestoName,
+          };
+        }
+
         const foodId = Number(food.id);
         const optionsKey = JSON.stringify(options || {});
         
@@ -53,9 +71,11 @@ export const useCartStore = create<CartState>()(
           const updated = [...currentItems];
           updated[existingIndex].quantity += quantity;
           if (notes) updated[existingIndex].notes = notes;
-          set({ items: updated });
+          set({ items: updated, restaurantId: targetRestoId, restaurantName: targetRestoName });
         } else {
           set({
+            restaurantId: targetRestoId,
+            restaurantName: targetRestoName,
             items: [
               ...currentItems,
               {
@@ -73,18 +93,48 @@ export const useCartStore = create<CartState>()(
             ],
           });
         }
+        return { isConflict: false };
+      },
+
+      forceAddItem: (food, quantity = 1, options = {}, notes = '') => {
+        const foodId = Number(food.id);
+        const targetRestoId = food.restaurant_id || 1;
+        const targetRestoName = food.restaurant_name || 'Restaurant';
+
+        set({
+          items: [
+            {
+              food_id: foodId,
+              name: food.name,
+              price: typeof food.price === 'string' ? parseFloat(food.price) : Number(food.price || 0),
+              quantity,
+              options: options || {},
+              notes: notes || '',
+              food: {
+                ...food,
+                image_url: food.image_url || (food as any).imageUrl || '',
+              },
+            },
+          ],
+          restaurantId: targetRestoId,
+          restaurantName: targetRestoName,
+        });
       },
 
       removeItem: (foodId, optionsKey) => {
-        set({
-          items: get().items.filter((i) => {
-            if (Number(i.food_id) !== Number(foodId)) return true;
-            if (optionsKey !== undefined) {
-              return JSON.stringify(i.options || {}) !== optionsKey;
-            }
-            return false;
-          }),
+        const remaining = get().items.filter((i) => {
+          if (Number(i.food_id) !== Number(foodId)) return true;
+          if (optionsKey !== undefined) {
+            return JSON.stringify(i.options || {}) !== optionsKey;
+          }
+          return false;
         });
+
+        if (remaining.length === 0) {
+          set({ items: [], restaurantId: null, restaurantName: null });
+        } else {
+          set({ items: remaining });
+        }
       },
 
       updateQuantity: (foodId, quantity, optionsKey) => {
@@ -104,7 +154,7 @@ export const useCartStore = create<CartState>()(
         });
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], restaurantId: null, restaurantName: null }),
 
       setFulfillmentType: (type) => set({ fulfillmentType: type }),
 

@@ -10,6 +10,7 @@ if (!$isCli) {
 }
 
 require_once __DIR__ . '/../config/env.php';
+require_once __DIR__ . '/tables/restaurants.php';
 require_once __DIR__ . '/tables/users.php';
 require_once __DIR__ . '/tables/categories.php';
 require_once __DIR__ . '/tables/foods.php';
@@ -44,6 +45,7 @@ try {
 
     // 3. Create Tables in dependency order
     echo "📦 Creating database tables...\n";
+    createRestaurantsTable($pdo);
     createUsersTable($pdo);
     createCategoriesTable($pdo);
     createFoodsTable($pdo);

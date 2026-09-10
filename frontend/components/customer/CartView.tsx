@@ -26,6 +26,7 @@ export const CartView: React.FC = () => {
   const { name: customerName, userId, token, phone } = useAuthStore();
   const {
     items: cartItems,
+    restaurantName,
     updateQuantity,
     removeItem,
     clearCart,
@@ -167,6 +168,14 @@ export const CartView: React.FC = () => {
             </button>
           )}
         </div>
+
+        {/* Active Restaurant Banner */}
+        {restaurantName && cartItems.length > 0 && (
+          <div className="flex items-center gap-2 px-3.5 py-2.5 bg-primary/10 rounded-xl mb-3 border border-primary/20 text-xs font-bold text-primary shadow-sm">
+            <ShoppingBag className="w-4 h-4 shrink-0" />
+            <span>Ordering from: <strong className="font-extrabold">{restaurantName}</strong></span>
+          </div>
+        )}
 
         {/* Cart Items List */}
         {cartItems.length > 0 ? (

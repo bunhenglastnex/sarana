@@ -8,19 +8,22 @@
 function createCategoriesTable(PDO $pdo): void {
     $sql = "CREATE TABLE IF NOT EXISTS categories (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        restaurant_id INT NOT NULL DEFAULT 1,
         name VARCHAR(100) NOT NULL,
         slug VARCHAR(100) NULL,
         icon VARCHAR(50) DEFAULT 'utensils',
         image_url VARCHAR(255) NULL,
         description TEXT NULL,
         sort_order INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
     $pdo->exec($sql);
 
     // Migration helper for existing tables
     $alters = [
+        "ALTER TABLE categories ADD COLUMN restaurant_id INT NOT NULL DEFAULT 1 AFTER id",
         "ALTER TABLE categories ADD COLUMN slug VARCHAR(100) NULL AFTER name",
         "ALTER TABLE categories ADD COLUMN image_url VARCHAR(255) NULL AFTER icon",
         "ALTER TABLE categories ADD COLUMN description TEXT NULL AFTER image_url",
@@ -33,5 +36,5 @@ function createCategoriesTable(PDO $pdo): void {
         } catch (PDOException $e) {}
     }
 
-    echo "  ✅ Table 'categories' ready (with Slug, Image & Sort Order).\n";
+    echo "  ✅ Table 'categories' ready (with Multi-Tenant, Slug, Image & Sort Order).\n";
 }

@@ -11,13 +11,16 @@ export interface AuthState {
   phone: string | null;
   email: string | null;
   avatarUrl: string | null;
-  role: 'admin' | 'staff' | 'delivery' | 'customer';
+  role: 'super_admin' | 'admin' | 'staff' | 'delivery' | 'customer';
+  restaurantId: number | null;
+  selectedTenantId: number | null;
   telegramChatId: string | null;
   telegramUsername: string | null;
   isTelegramLinked: boolean;
 
   // Actions
   setSession: (session: Partial<AuthState>) => void;
+  setSelectedTenantId: (tenantId: number | null) => void;
   clearSession: () => void;
   setTelegramLink: (chatId: string, username?: string) => void;
 }
@@ -32,6 +35,8 @@ export const useAuthStore = create<AuthState>()(
       email: null,
       avatarUrl: null,
       role: 'customer',
+      restaurantId: null,
+      selectedTenantId: null,
       telegramChatId: null,
       telegramUsername: null,
       isTelegramLinked: false,
@@ -43,6 +48,9 @@ export const useAuthStore = create<AuthState>()(
           isTelegramLinked: Boolean(session.telegramChatId || state.telegramChatId),
         })),
 
+      setSelectedTenantId: (tenantId) =>
+        set({ selectedTenantId: tenantId }),
+
       clearSession: () =>
         set({
           token: null,
@@ -52,6 +60,8 @@ export const useAuthStore = create<AuthState>()(
           email: null,
           avatarUrl: null,
           role: 'customer',
+          restaurantId: null,
+          selectedTenantId: null,
           telegramChatId: null,
           telegramUsername: null,
           isTelegramLinked: false,

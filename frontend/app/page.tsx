@@ -16,6 +16,7 @@ import { AddProductPopup } from "@/components/customer/AddProductPopup";
 import { FloatingCartBar } from "@/components/customer/FloatingCartBar";
 import { LocationModal } from "@/components/customer/LocationModal";
 import { TelegramBotModal } from "@/components/customer/TelegramBotModal";
+import { RestaurantConflictModal } from "@/components/customer/RestaurantConflictModal";
 import { useAuthStore, useFavoritesStore, useCartStore } from "@/lib/store";
 import Api from "@/lib/api";
 import { Flame, ChevronRight, Loader2 } from "lucide-react";
@@ -33,6 +34,23 @@ export default function CustomerPageLayout() {
   // Cart store integration (Persisted in IndexedDB)
   const cartItems = useCartStore((state) => state.items);
   const addFoodToCart = useCartStore((state) => state.addItem);
+  const forceAddFoodToCart = useCartStore((state) => state.forceAddItem);
+
+  // Cart multi-restaurant conflict modal state
+  const [conflictModalState, setConflictModalState] = useState<{
+    isOpen: boolean;
+    currentRestaurantName: string;
+    newRestaurantName: string;
+    pendingFood: any;
+    pendingQuantity?: number;
+    pendingOptions?: Record<string, string>;
+    pendingNotes?: string;
+  }>({
+    isOpen: false,
+    currentRestaurantName: "",
+    newRestaurantName: "",
+    pendingFood: null,
+  });
 
   // Pagination & infinite scroll states (12 limit per page)
   const [page, setPage] = useState(1);
@@ -226,6 +244,9 @@ export default function CustomerPageLayout() {
 
         return {
           id: String(item.id),
+          restaurant_id: Number(item.restaurant_id || 1),
+          restaurant_name: item.restaurant_name || "Amber Bistro",
+          restaurant_logo: item.restaurant_logo || "",
           slug: item.slug || String(item.id),
           name: item.name,
           category: item.category_slug || item.category || "all",
@@ -262,35 +283,62 @@ export default function CustomerPageLayout() {
     specialInstructions: string;
     totalPrice: number;
   }) => {
-    addFoodToCart(
-      {
-        id: Number(newItem.item.id),
-        name: newItem.item.name,
-        price: newItem.item.price,
-        image_url: newItem.item.imageUrl,
-        category: newItem.item.category,
-        description: newItem.item.description,
-        is_available: true,
-      } as any,
+    const foodPayload = {
+      id: Number(newItem.item.id),
+      restaurant_id: newItem.item.restaurant_id || 1,
+      restaurant_name: newItem.item.restaurant_name || "Restaurant",
+      name: newItem.item.name,
+      price: newItem.item.price,
+      image_url: newItem.item.imageUrl,
+      category: newItem.item.category,
+      description: newItem.item.description,
+      is_available: true,
+    };
+
+    const res = addFoodToCart(
+      foodPayload as any,
       newItem.quantity,
       newItem.selectedOptions,
       newItem.specialInstructions
     );
+
+    if (res.isConflict) {
+      setConflictModalState({
+        isOpen: true,
+        currentRestaurantName: res.currentRestaurantName || "Current Restaurant",
+        newRestaurantName: res.newRestaurantName || "New Restaurant",
+        pendingFood: foodPayload,
+        pendingQuantity: newItem.quantity,
+        pendingOptions: newItem.selectedOptions,
+        pendingNotes: newItem.specialInstructions,
+      });
+    }
   };
 
   const handleQuickAdd = (foodItem: FoodItem) => {
-    addFoodToCart(
-      {
-        id: Number(foodItem.id),
-        name: foodItem.name,
-        price: foodItem.price,
-        image_url: foodItem.imageUrl,
-        category: foodItem.category,
-        description: foodItem.description,
-        is_available: true,
-      } as any,
-      1
-    );
+    const foodPayload = {
+      id: Number(foodItem.id),
+      restaurant_id: foodItem.restaurant_id || 1,
+      restaurant_name: foodItem.restaurant_name || "Restaurant",
+      name: foodItem.name,
+      price: foodItem.price,
+      image_url: foodItem.imageUrl,
+      category: foodItem.category,
+      description: foodItem.description,
+      is_available: true,
+    };
+
+    const res = addFoodToCart(foodPayload as any, 1);
+
+    if (res.isConflict) {
+      setConflictModalState({
+        isOpen: true,
+        currentRestaurantName: res.currentRestaurantName || "Current Restaurant",
+        newRestaurantName: res.newRestaurantName || "New Restaurant",
+        pendingFood: foodPayload,
+        pendingQuantity: 1,
+      });
+    }
   };
 
   const totalCartCount = useMemo(() => {
@@ -435,6 +483,26 @@ export default function CustomerPageLayout() {
           setIsTelegramModalOpen(false);
           // Clean query params from address bar
           router.replace("/", { scroll: false });
+        }}
+      />
+
+      {/* Multi-Restaurant Cart Conflict Modal */}
+      <RestaurantConflictModal
+        isOpen={conflictModalState.isOpen}
+        currentRestaurantName={conflictModalState.currentRestaurantName}
+        newRestaurantName={conflictModalState.newRestaurantName}
+        onClose={() =>
+          setConflictModalState((prev) => ({ ...prev, isOpen: false }))
+        }
+        onConfirmReplace={() => {
+          if (conflictModalState.pendingFood) {
+            forceAddFoodToCart(
+              conflictModalState.pendingFood,
+              conflictModalState.pendingQuantity || 1,
+              conflictModalState.pendingOptions || {},
+              conflictModalState.pendingNotes || ""
+            );
+          }
         }}
       />
     </main>

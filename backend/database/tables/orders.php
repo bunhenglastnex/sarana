@@ -8,6 +8,7 @@
 function createOrdersTable(PDO $pdo): void {
     $sql = "CREATE TABLE IF NOT EXISTS orders (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        restaurant_id INT NULL,
         order_number VARCHAR(50) NOT NULL UNIQUE,
         user_id INT NULL,
         customer_name VARCHAR(100) NOT NULL,
@@ -50,6 +51,7 @@ function createOrdersTable(PDO $pdo): void {
         notes TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE SET NULL,
         FOREIGN KEY (delivery_staff_id) REFERENCES users(id) ON DELETE SET NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
@@ -58,6 +60,7 @@ function createOrdersTable(PDO $pdo): void {
 
     // Safely add columns if table already existed without them
     $alterQueries = [
+        "ALTER TABLE orders ADD COLUMN restaurant_id INT NULL AFTER id",
         "ALTER TABLE orders ADD COLUMN user_id INT NULL AFTER order_number",
         "ALTER TABLE orders ADD COLUMN telegram_chat_id VARCHAR(50) NULL AFTER customer_phone",
         "ALTER TABLE orders ADD COLUMN delivery_lat DECIMAL(10,8) NULL AFTER delivery_address",
