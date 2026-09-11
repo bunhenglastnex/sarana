@@ -66,7 +66,7 @@ export const LiveOrdersTable: React.FC<LiveOrdersTableProps> = ({
 
   const handleAccept = (order: LiveOrder) => {
     if (order.paymentMethod === "khqr" || order.paymentBadge.includes("KHQR")) {
-      // Auto preview KHQR slip first matching live-order-board logic
+      // Auto preview KHQR slip first
       setSelectedOrderForProof(order);
     } else {
       // Direct accept for non-KHQR orders

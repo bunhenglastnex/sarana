@@ -217,11 +217,11 @@ export const AdminNotificationPopover: React.FC = () => {
         {/* Popover Footer Link */}
         <div className="p-2 border-t border-border/40 bg-surface-container-lowest text-center">
           <Link
-            href="/admin/live-order-board"
+            href="/admin/orders"
             onClick={() => setIsOpen(false)}
             className="w-full py-1.5 px-3 rounded-xl font-label-sm text-xs font-bold text-primary hover:bg-primary-fixed/40 transition-all flex items-center justify-center gap-1.5"
           >
-            <span>Open Live Kitchen Board</span>
+            <span>View All Orders</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         </div>

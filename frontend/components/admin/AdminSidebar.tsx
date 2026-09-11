@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   Flame,
   LayoutDashboard,
-  CookingPot,
   Receipt,
   Bike,
   UtensilsCrossed,
@@ -35,10 +34,10 @@ export const AdminSidebar: React.FC = () => {
   const displayName = name || "Elena Rostova";
   const displayRole = role === "super_admin" ? "Super Platform Admin" : role === "admin" ? "Restaurant Manager" : (role || "Restaurant Manager");
 
-  const { data } = useApi<any>("/orders.php", { limit: 50 });
-  const rawOrders = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+  const { data: ordersRes } = useApi<any>("/orders.php", { limit: 50 });
+  const rawOrders = Array.isArray(ordersRes?.data) ? ordersRes.data : (Array.isArray(ordersRes) ? ordersRes : []);
   const activeCount = rawOrders.filter(
-    (o: any) => !["completed", "delivered", "picked_up", "cancelled"].includes(String(o.status || "").toLowerCase())
+    (o: any) => !["completed", "delivered", "picked_up", "cancelled", "rejected"].includes(String(o.status || "").toLowerCase())
   ).length;
 
   const isNavActive = (href: string) => {
@@ -85,21 +84,6 @@ export const AdminSidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* Kitchen Hearth Live Badge */}
-        <div className="px-space-md py-space-xs shrink-0 mt-1">
-          <div className="bg-surface-container-lowest rounded-lg p-space-xs px-space-sm flex items-center justify-between shadow-[0_1px_4px_rgba(0,0,0,0.03)] border border-border/40">
-            <div className="flex items-center gap-space-xs">
-              <span className="w-2.5 h-2.5 rounded-full bg-secondary-container animate-pulse"></span>
-              <span className="font-label-sm text-label-sm text-on-surface font-semibold">
-                Kitchen Hearth
-              </span>
-            </div>
-            <span className="font-label-sm text-label-sm text-primary font-bold bg-primary-fixed px-space-xs py-0.5 rounded-full text-[11px]">
-              OPEN
-            </span>
-          </div>
-        </div>
-
         {/* Main Navigation Menu */}
         <nav className="flex-1 px-space-sm py-space-xs space-y-1 overflow-y-auto custom-scrollbar">
           {/* Operations Section */}
@@ -113,34 +97,29 @@ export const AdminSidebar: React.FC = () => {
           </Link>
 
           <Link
-            href="/admin/live-order-board"
+            href="/admin/orders"
             className={`flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors font-medium ${
-              isNavActive("/admin/live-order-board")
+              isNavActive("/admin/orders")
                 ? "bg-primary-container text-on-primary-container font-bold shadow-xs"
                 : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
             }`}
           >
             <div className="flex items-center gap-space-sm min-w-0 pr-1">
-              <CookingPot className="w-5 h-5 shrink-0" />
-              <span className="font-label-lg text-label-lg truncate">
-                Live Kitchen Board
-              </span>
+              <Receipt className="w-5 h-5 shrink-0" />
+              <span className="font-label-lg text-label-lg truncate">Orders</span>
             </div>
-            <span
-              className={`font-label-sm text-[10px] px-2 py-0.5 rounded-full font-extrabold shrink-0 flex items-center gap-1.5 transition-colors ${
-                isNavActive("/admin/live-order-board")
-                  ? "bg-surface-container-lowest text-primary shadow-xs"
-                  : "bg-primary-fixed text-on-primary-fixed"
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              {activeCount} Live
-            </span>
-          </Link>
-
-          <Link href="/admin/orders" className={navItemClass("/admin/orders")}>
-            <Receipt className="w-5 h-5 shrink-0" />
-            <span className="font-label-lg text-label-lg">Orders</span>
+            {activeCount > 0 && (
+              <span
+                className={`font-label-sm text-[10px] px-2 py-0.5 rounded-full font-extrabold shrink-0 flex items-center gap-1.5 transition-colors ${
+                  isNavActive("/admin/orders")
+                    ? "bg-surface-container-lowest text-primary shadow-xs"
+                    : "bg-primary-fixed text-on-primary-fixed"
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                {activeCount} Live
+              </span>
+            )}
           </Link>
 
           <Link
