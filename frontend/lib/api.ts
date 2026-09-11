@@ -217,13 +217,14 @@ async function executeRequest<T = any>(
         ...headers,
       };
 
-      // Auto-attach Authorization Bearer token from Zustand Store, Cookie, or localStorage
-      if (typeof window !== "undefined" && !requestHeaders["Authorization"]) {
+      // Auto-attach Authorization Bearer token & X-Tenant-ID header from Zustand Store
+      if (typeof window !== "undefined") {
         try {
-          // 1. Check active Zustand store memory first
-          let token = useAuthStore.getState().token;
+          const authState = useAuthStore.getState();
+          let token = authState.token;
+          const selectedTenantId = authState.selectedTenantId;
 
-          // 2. Check Cookie storage
+          // 1. Check Cookie storage
           if (!token) {
             const cookieVal = Cookies.get("auth-storage");
             if (cookieVal) {
@@ -232,7 +233,7 @@ async function executeRequest<T = any>(
             }
           }
 
-          // 3. Check localStorage fallback
+          // 2. Check localStorage fallback
           if (!token) {
             const localVal = window.localStorage.getItem("auth-storage");
             if (localVal) {
@@ -241,8 +242,16 @@ async function executeRequest<T = any>(
             }
           }
 
-          if (token) {
+          if (token && !requestHeaders["Authorization"]) {
             requestHeaders["Authorization"] = `Bearer ${token}`;
+          }
+
+          if (
+            selectedTenantId !== null &&
+            selectedTenantId !== undefined &&
+            !requestHeaders["X-Tenant-ID"]
+          ) {
+            requestHeaders["X-Tenant-ID"] = String(selectedTenantId);
           }
         } catch {
           // Ignore parse errors
@@ -518,6 +527,8 @@ export function useApi<T = any>(
   params?: Record<string, any>,
   options?: RequestOptions,
 ): UseApiResult<T> {
+  const selectedTenantId = useAuthStore((state) => state.selectedTenantId);
+
   // Check initial cache synchronously to avoid flickering if already cached
   const initialData = endpoint ? Api.cache.get<T>(endpoint, params) : null;
 
@@ -572,7 +583,7 @@ export function useApi<T = any>(
     if (endpoint) {
       fetchData(true);
     }
-  }, [endpoint, paramsString, fetchData]);
+  }, [endpoint, paramsString, selectedTenantId, fetchData]);
 
   return {
     data,

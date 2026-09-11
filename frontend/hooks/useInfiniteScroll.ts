@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Api } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export interface PaginationMeta {
   total: number;
@@ -21,6 +22,7 @@ export function useInfiniteScroll<T = any>(
   endpoint: string,
   options: UseInfiniteScrollOptions = {}
 ) {
+  const selectedTenantId = useAuthStore((state) => state.selectedTenantId);
   const { limit = 12, params = {}, enabled = true } = options;
 
   const [items, setItems] = useState<T[]>([]);
@@ -90,11 +92,11 @@ export function useInfiniteScroll<T = any>(
     [endpoint, limit, serializedParams, enabled]
   );
 
-  // Initial Fetch Page 1
+  // Initial Fetch Page 1 (and re-fetch on tenant switch)
   useEffect(() => {
     setPage(1);
     fetchPage(1, false);
-  }, [endpoint, serializedParams]);
+  }, [endpoint, serializedParams, selectedTenantId]);
 
   // IntersectionObserver Sentinel Binding
   useEffect(() => {

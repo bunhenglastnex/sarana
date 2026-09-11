@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Building2,
   Plus,
@@ -15,12 +16,14 @@ import {
   Shield,
   Edit2,
   Store,
+  ArrowRight,
 } from "lucide-react";
 import Api, { useApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export default function RestaurantsManagementPage() {
-  const { role } = useAuthStore();
+  const router = useRouter();
+  const { role, selectedTenantId, setSelectedTenantId } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);

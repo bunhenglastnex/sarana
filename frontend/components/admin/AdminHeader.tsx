@@ -4,30 +4,17 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Search,
   Timer,
-  Building2,
   User,
   LogOut,
-  ChevronDown,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { AdminNotificationPopover } from "./AdminNotificationPopover";
 import { LogoutConfirmModal } from "./LogoutConfirmModal";
-import { useApi } from "@/lib/api";
 
 export const AdminHeader: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const { name, role, selectedTenantId, setSelectedTenantId } = useAuthStore();
+  const { name, role } = useAuthStore();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-
-  // Fetch restaurants directory for Super Admin switching
-  const { data: restaurantsRes } = useApi<any>(
-    role === "super_admin" ? "/restaurants.php" : null
-  );
-  const restaurants = Array.isArray(restaurantsRes?.data)
-    ? restaurantsRes.data
-    : Array.isArray(restaurantsRes)
-    ? restaurantsRes
-    : [];
 
   // Focus search input on pressing '/'
   useEffect(() => {
@@ -47,7 +34,7 @@ export const AdminHeader: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-64 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-border/40 z-40 px-space-lg flex items-center justify-between gap-space-md">
-      {/* Left Search Bar & Tenant Switcher Container */}
+      {/* Left Search Bar Container */}
       <div className="flex items-center gap-space-md flex-1 max-w-2xl">
         <div className="relative w-full max-w-xs sm:max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
@@ -59,29 +46,6 @@ export const AdminHeader: React.FC = () => {
             type="text"
           />
         </div>
-
-        {/* Super Admin Multi-Tenant Switcher */}
-        {role === "super_admin" && (
-          <div className="relative flex items-center">
-            <Building2 className="w-4 h-4 text-primary absolute left-2.5 pointer-events-none" />
-            <select
-              value={selectedTenantId ?? ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSelectedTenantId(val ? Number(val) : null);
-              }}
-              className="pl-8 pr-7 py-1.5 rounded-lg bg-primary/10 text-primary font-bold text-xs outline-none border border-primary/20 hover:bg-primary/15 transition-all cursor-pointer appearance-none"
-            >
-              <option value="">All Restaurants (Platform Total)</option>
-              {restaurants.map((r: any) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-primary absolute right-2 pointer-events-none" />
-          </div>
-        )}
       </div>
 
       {/* Right Telemetry & Station Info */}

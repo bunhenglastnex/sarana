@@ -25,7 +25,7 @@ import { useAuthStore } from "@/lib/store/useAuthStore";
 type SettingTabKey = "general" | "audio" | "security" | "telegram" | "delivery";
 
 function SettingsPageContent() {
-  const { role } = useAuthStore();
+  const { role, selectedTenantId, setSelectedTenantId } = useAuthStore();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -41,7 +41,6 @@ function SettingsPageContent() {
     router.push(`/admin/settings?tab=${newTab}`, { scroll: false });
   };
 
-  const [selectedTenantId, setSelectedTenantId] = useState<number>(1);
   const { data: restaurantsRes } = useApi<any>("/restaurants.php");
   const rawRestaurants = Array.isArray(restaurantsRes?.data)
     ? restaurantsRes.data
@@ -215,29 +214,6 @@ function SettingsPageContent() {
 
   return (
     <div className="flex flex-col w-full min-h-screen pb-space-2xl space-y-space-lg">
-      {/* 1. Super Admin Tenant Switcher Bar */}
-      {role === "super_admin" && rawRestaurants.length > 0 && (
-        <div className="bg-amber-500/10 border border-amber-500/30 p-3 px-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
-          <div className="flex items-center gap-2 text-on-surface font-bold">
-            <Building2 className="w-4 h-4 text-amber-600" />
-            <span>Super Admin Tenant Target:</span>
-            <span className="text-on-surface-variant font-normal hidden sm:inline">
-              (Viewing &amp; Editing settings for selected restaurant profile)
-            </span>
-          </div>
-          <select
-            value={selectedTenantId}
-            onChange={(e) => setSelectedTenantId(Number(e.target.value))}
-            className="p-2 px-3 rounded-xl bg-surface-container-lowest border border-amber-500/40 text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer shadow-xs"
-          >
-            {rawRestaurants.map((r: any) => (
-              <option key={r.id} value={r.id}>
-                {r.name} (ID #{r.id})
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* 2. Horizontal Tab Navigation Bar with URL Query Synchronization (?tab=...) */}
       <div className="bg-surface-container-lowest p-1.5 rounded-2xl shadow-sm border border-border/40 flex flex-wrap items-center gap-1.5 overflow-x-auto">
