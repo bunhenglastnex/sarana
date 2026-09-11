@@ -14,6 +14,9 @@ $pdo = getDB();
 
 if ($method === 'GET') {
     try {
+        $tenantId = AuthMiddleware::getTenantFilter($pdo, ['admin', 'staff']);
+        $tenantWhere = $tenantId !== null ? " AND restaurant_id = " . (int)$tenantId : "";
+
         $range = $_GET['range'] ?? 'today';
         
         // Define date filter bounds
@@ -31,21 +34,21 @@ if ($method === 'GET') {
 
         // 1. KPI Metrics
         // Total Orders
-        $todaySql = "SELECT COUNT(*) FROM orders";
+        $todaySql = "SELECT COUNT(*) FROM orders WHERE 1=1{$tenantWhere}";
         if ($startDate) {
-            $todaySql .= " WHERE created_at >= '{$startDate}'";
+            $todaySql .= " AND created_at >= '{$startDate}'";
         }
         $todayStmt = $pdo->query($todaySql);
         $todayOrders = (int)$todayStmt->fetchColumn();
 
-        // If today has 0 orders (e.g. testing with seeded data), fall back to all DB orders for demonstration
+        // If today has 0 orders, fall back to all-time orders for this tenant
         if ($todayOrders === 0 && $range === 'today') {
-            $todayOrders = (int)$pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+            $todayOrders = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE 1=1{$tenantWhere}")->fetchColumn();
             $startDate = null; // show all time DB stats
         }
 
         // Dynamic growth rate vs yesterday
-        $yesterdayOrders = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE created_at >= '{$yesterdayStart}' AND created_at < '{$todayStart}'")->fetchColumn();
+        $yesterdayOrders = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE created_at >= '{$yesterdayStart}' AND created_at < '{$todayStart}'{$tenantWhere}")->fetchColumn();
         $growth = 0;
         if ($yesterdayOrders > 0) {
             $growth = (int)round((($todayOrders - $yesterdayOrders) / $yesterdayOrders) * 100);
@@ -54,7 +57,7 @@ if ($method === 'GET') {
         }
 
         // Revenue (Verified & Paid Settlements)
-        $revSql = "SELECT SUM(total_amount) as total_rev, COUNT(*) as settled_cnt FROM orders WHERE payment_status IN ('paid', 'verified') AND status NOT IN ('cancelled')";
+        $revSql = "SELECT SUM(total_amount) as total_rev, COUNT(*) as settled_cnt FROM orders WHERE payment_status IN ('paid', 'verified') AND status NOT IN ('cancelled'){$tenantWhere}";
         if ($startDate) {
             $revSql .= " AND created_at >= '{$startDate}'";
         }
@@ -64,19 +67,19 @@ if ($method === 'GET') {
         $settledCount = (int)($revRow['settled_cnt'] ?? 0);
 
         // Pending Action
-        $pendingStmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE status IN ('pending', 'accepted')");
+        $pendingStmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE status IN ('pending', 'accepted'){$tenantWhere}");
         $pendingCount = (int)$pendingStmt->fetchColumn();
 
         // Dispatches / Active Deliveries
-        $deliveryStmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE fulfillment_type = 'delivery' AND status IN ('ready_for_delivery', 'on_the_way')");
+        $deliveryStmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE fulfillment_type = 'delivery' AND status IN ('ready_for_delivery', 'on_the_way'){$tenantWhere}");
         $activeDeliveries = (int)$deliveryStmt->fetchColumn();
 
         // Completed Orders
-        $completedStmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE status IN ('delivered', 'completed', 'picked_up')");
+        $completedStmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE status IN ('delivered', 'completed', 'picked_up'){$tenantWhere}");
         $completedCount = (int)$completedStmt->fetchColumn();
 
         // Unpaid COD / Pending Amount
-        $codSql = "SELECT SUM(total_amount) FROM orders WHERE payment_status IN ('pending', 'unpaid') AND payment_method IN ('cod', 'cash_on_delivery', 'counter_cash')";
+        $codSql = "SELECT SUM(total_amount) FROM orders WHERE payment_status IN ('pending', 'unpaid') AND payment_method IN ('cod', 'cash_on_delivery', 'counter_cash'){$tenantWhere}";
         if ($startDate) {
             $codSql .= " AND created_at >= '{$startDate}'";
         }
@@ -84,15 +87,17 @@ if ($method === 'GET') {
         $codPendingTotal = (float)($codStmt->fetchColumn() ?? 0.00);
 
         // 2. Top Seller Item Today
-        $topSellerStmt = $pdo->query("
+        $topSellerSql = "
             SELECT oi.food_name, SUM(oi.quantity) as total_qty, MAX(oi.price) as unit_price, MAX(f.image_url) as image_url
             FROM order_items oi
             JOIN orders o ON oi.order_id = o.id
             LEFT JOIN foods f ON oi.food_id = f.id
+            WHERE 1=1{$tenantWhere}
             GROUP BY oi.food_name
             ORDER BY total_qty DESC
             LIMIT 1
-        ");
+        ";
+        $topSellerStmt = $pdo->query($topSellerSql);
         $topSeller = $topSellerStmt->fetch(PDO::FETCH_ASSOC);
 
         $signatureItem = [
@@ -106,9 +111,10 @@ if ($method === 'GET') {
         $rhythmSql = "
             SELECT HOUR(created_at) as hr, COUNT(*) as order_count, SUM(total_amount) as total_rev
             FROM orders
+            WHERE 1=1{$tenantWhere}
         ";
         if ($startDate) {
-            $rhythmSql .= " WHERE created_at >= '{$startDate}'";
+            $rhythmSql .= " AND created_at >= '{$startDate}'";
         }
         $rhythmSql .= " GROUP BY HOUR(created_at) ORDER BY hr ASC";
 
@@ -146,9 +152,10 @@ if ($method === 'GET') {
         $mixSql = "
             SELECT fulfillment_type, COUNT(*) as count_orders, SUM(total_amount) as channel_rev
             FROM orders
+            WHERE 1=1{$tenantWhere}
         ";
         if ($startDate) {
-            $mixSql .= " WHERE created_at >= '{$startDate}'";
+            $mixSql .= " AND created_at >= '{$startDate}'";
         }
         $mixSql .= " GROUP BY fulfillment_type";
 
@@ -192,6 +199,7 @@ if ($method === 'GET') {
             SELECT o.*, u.name as delivery_staff_name
             FROM orders o
             LEFT JOIN users u ON o.delivery_staff_id = u.id
+            WHERE 1=1{$tenantWhere}
             ORDER BY o.created_at DESC, o.id DESC
             LIMIT 10
         ")->fetchAll(PDO::FETCH_ASSOC);

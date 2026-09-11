@@ -27,7 +27,7 @@ export default function AdminAppLayout({
   // Automatically redirect unauthenticated or non-admin users to login after mounting
   useEffect(() => {
     if (isMounted && !isAdminLogin) {
-      if (!token || role !== "admin") {
+      if (!token || !["admin", "super_admin"].includes(role)) {
         router.push("/admin/login");
       }
     }
@@ -48,8 +48,8 @@ export default function AdminAppLayout({
     );
   }
 
-  // RBAC Access Control Guard: Only role === 'admin' with valid token permitted
-  const isAuthorizedAdmin = Boolean(token && role === "admin");
+  // RBAC Access Control Guard: Only role === 'admin' or 'super_admin' with valid token permitted
+  const isAuthorizedAdmin = Boolean(token && ["admin", "super_admin"].includes(role));
 
   if (!isAuthorizedAdmin) {
     return (

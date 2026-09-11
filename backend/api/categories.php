@@ -54,17 +54,29 @@ if ($method === 'GET') {
         $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : null;
         $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : null;
 
+        $authUser = AuthMiddleware::getOptionalUser($pdo);
+        $tenantCond = "";
+        $queryParams = [];
+        if ($authUser && $authUser['role'] === 'admin' && !empty($authUser['restaurant_id'])) {
+            $tenantCond = " WHERE (c.restaurant_id IS NULL OR c.restaurant_id = ?) ";
+            $queryParams[] = (int)$authUser['restaurant_id'];
+        } elseif (isset($_GET['restaurant_id']) && is_numeric($_GET['restaurant_id'])) {
+            $tenantCond = " WHERE (c.restaurant_id IS NULL OR c.restaurant_id = ?) ";
+            $queryParams[] = (int)$_GET['restaurant_id'];
+        }
+
         $baseSql = "
-            SELECT c.id, c.name, c.slug, c.icon, c.image_url, c.description, 
+            SELECT c.id, c.restaurant_id, c.name, c.slug, c.icon, c.image_url, c.description, 
                    COALESCE(c.sort_order, 0) as displayOrder,
                    COUNT(f.id) as itemCount
             FROM categories c
             LEFT JOIN foods f ON f.category_id = c.id
+            {$tenantCond}
             GROUP BY c.id
             ORDER BY displayOrder ASC, c.id ASC
         ";
 
-        $result = paginateQuery($pdo, $baseSql, [], $page, $limit);
+        $result = paginateQuery($pdo, $baseSql, $queryParams, $page, $limit);
         $categories = $result['data'];
 
         foreach ($categories as &$cat) {
@@ -99,12 +111,13 @@ if ($method === 'GET') {
         $description = $input['description'] ?? null;
         $rawImage = $input['image_url'] ?? $input['imageUrl'] ?? null;
         $imageUrl = saveBase64Image($rawImage, 'categories');
+        $tenantId = !empty($admin['restaurant_id']) ? (int)$admin['restaurant_id'] : null;
 
         $stmt = $pdo->prepare("
-            INSERT INTO categories (name, slug, icon, image_url, description, sort_order)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO categories (restaurant_id, name, slug, icon, image_url, description, sort_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$name, $slug, $icon, $imageUrl, $description, $displayOrder]);
+        $stmt->execute([$tenantId, $name, $slug, $icon, $imageUrl, $description, $displayOrder]);
         $newId = (int)$pdo->lastInsertId();
 
         logSystemAction($pdo, 'CREATE_CATEGORY', 'CATEGORY', "Category '{$name}' (ID #{$newId}) created by Admin.", 'info', $admin['id'], $admin['name']);

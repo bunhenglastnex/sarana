@@ -17,13 +17,31 @@ import {
   Store,
 } from "lucide-react";
 import Api, { useApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export default function RestaurantsManagementPage() {
+  const { role } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
+
+  if (role !== "super_admin") {
+    return (
+      <div className="w-full min-h-[70vh] flex flex-col items-center justify-center text-center p-space-xl animate-fadeIn">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4 border border-amber-500/20">
+          <Building2 className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-on-surface mb-2">
+          Super Admin Access Required
+        </h2>
+        <p className="text-sm text-on-surface-variant max-w-md leading-relaxed">
+          Multi-tenant restaurant setup and platform management is restricted to <strong className="text-on-surface">Super Platform Administrators</strong>. As a Restaurant Admin, you have full control over your restaurant’s orders, menu, staff, and live operations.
+        </p>
+      </div>
+    );
+  }
 
   const [formData, setFormData] = useState({
     name: "",

@@ -83,6 +83,116 @@ class AuthService {
     }
 
     /**
+     * Register a new Multi-Tenant Restaurant & Owner Admin Account
+     */
+    public function registerRestaurant(array $input): array {
+        $restaurantName = trim($input['restaurant_name'] ?? $input['name'] ?? '');
+        $ownerName      = trim($input['owner_name'] ?? $input['admin_name'] ?? '');
+        $email          = trim($input['email'] ?? $input['admin_email'] ?? '');
+        $phone          = trim($input['phone'] ?? $input['admin_phone'] ?? '');
+        $password       = trim($input['password'] ?? '');
+        $address        = trim($input['address'] ?? '');
+
+        if (empty($restaurantName) || empty($ownerName) || empty($password) || (empty($email) && empty($phone))) {
+            jsonResponse(0, 'Validation Error: Restaurant name, owner name, password, and email/phone are required.', null, 400);
+        }
+
+        if (strlen($password) < 4) {
+            jsonResponse(0, 'Validation Error: Password must be at least 4 characters long.', null, 400);
+        }
+
+        // Check for existing user email/phone
+        if (!empty($email)) {
+            $checkEmail = $this->pdo->prepare("SELECT id FROM users WHERE email = ?");
+            $checkEmail->execute([$email]);
+            if ($checkEmail->fetch()) {
+                jsonResponse(0, 'Validation Error: Email address is already registered to an existing admin account.', null, 400);
+            }
+        }
+
+        if (!empty($phone)) {
+            $checkPhone = $this->pdo->prepare("SELECT id FROM users WHERE phone = ?");
+            $checkPhone->execute([$phone]);
+            if ($checkPhone->fetch()) {
+                jsonResponse(0, 'Validation Error: Phone number is already registered.', null, 400);
+            }
+        }
+
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $restaurantName)));
+        if (empty($slug)) {
+            $slug = 'bistro-' . rand(100, 999);
+        }
+
+        // Ensure slug uniqueness
+        $slugCheck = $this->pdo->prepare("SELECT id FROM restaurants WHERE slug = ?");
+        $slugCheck->execute([$slug]);
+        if ($slugCheck->fetch()) {
+            $slug .= '-' . rand(100, 999);
+        }
+
+        try {
+            $this->pdo->beginTransaction();
+
+            // 1. Insert Restaurant Record
+            $restStmt = $this->pdo->prepare("
+                INSERT INTO restaurants (name, slug, address, phone, is_active)
+                VALUES (?, ?, ?, ?, 1)
+            ");
+            $restStmt->execute([$restaurantName, $slug, !empty($address) ? $address : null, !empty($phone) ? $phone : null]);
+            $restaurantId = (int)$this->pdo->lastInsertId();
+
+            // 2. Insert Owner Admin User
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $userPhone = !empty($phone) ? $phone : ('012' . rand(100000, 999999));
+            $userStmt = $this->pdo->prepare("
+                INSERT INTO users (name, phone, email, role, restaurant_id, password, status)
+                VALUES (?, ?, ?, 'admin', ?, ?, 'active')
+            ");
+            $userStmt->execute([$ownerName, $userPhone, !empty($email) ? $email : null, $restaurantId, $hashedPassword]);
+            $userId = (int)$this->pdo->lastInsertId();
+
+            // 3. Link Owner Admin to Restaurant
+            $upRest = $this->pdo->prepare("UPDATE restaurants SET owner_admin_id = ? WHERE id = ?");
+            $upRest->execute([$userId, $restaurantId]);
+
+            $this->pdo->commit();
+
+            $token = 'token_admin_' . $userId . '_' . bin2hex(random_bytes(8));
+
+            logSystemAction(
+                $this->pdo,
+                'REGISTER_RESTAURANT',
+                'AUTH',
+                "New restaurant registered: '{$restaurantName}' (ID #{$restaurantId}) by Owner Admin '{$ownerName}'.",
+                'info',
+                $userId,
+                $ownerName
+            );
+
+            return [
+                'token'        => $token,
+                'userId'       => $userId,
+                'name'         => $ownerName,
+                'phone'        => $userPhone,
+                'email'        => $email,
+                'role'         => 'admin',
+                'restaurantId' => $restaurantId,
+                'restaurant'   => [
+                    'id'   => $restaurantId,
+                    'name' => $restaurantName,
+                    'slug' => $slug,
+                ],
+                'status'       => 'active'
+            ];
+        } catch (PDOException $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            jsonResponse(0, 'Failed to register restaurant: ' . $e->getMessage(), null, 500);
+        }
+    }
+
+    /**
      * Unified Login method for Customers, Admins, and Delivery Drivers
      */
     public function loginUser(array $input): array {

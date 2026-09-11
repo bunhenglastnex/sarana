@@ -23,6 +23,17 @@ class AuthController {
         $input  = json_decode(file_get_contents('php://input'), true) ?? $_POST ?? [];
 
         switch ($action) {
+            case 'register_restaurant':
+            case 'register-restaurant':
+                if ($method !== 'POST') {
+                    jsonResponse(0, 'Method Not Allowed', null, 405);
+                }
+                RateLimitMiddleware::check($this->pdo, 'register_restaurant', 5, 300, 900);
+                $data = $this->authService->registerRestaurant($input);
+                RateLimitMiddleware::clear($this->pdo, 'register_restaurant');
+                jsonResponse(1, 'Restaurant registered successfully', $data, 201);
+                break;
+
             case 'register':
                 if ($method !== 'POST') {
                     jsonResponse(0, 'Method Not Allowed', null, 405);

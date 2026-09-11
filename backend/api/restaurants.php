@@ -18,11 +18,19 @@ if ($method === 'GET') {
         $search = trim($_GET['search'] ?? '');
         $activeOnly = isset($_GET['active_only']) ? (bool)$_GET['active_only'] : false;
 
+        $authUser = AuthMiddleware::getOptionalUser($pdo);
+
         $sql = "SELECT r.*, u.name as owner_admin_name, u.email as owner_admin_email 
                 FROM restaurants r 
                 LEFT JOIN users u ON r.owner_admin_id = u.id 
                 WHERE 1=1";
         $params = [];
+
+        // If authenticated as normal restaurant admin (not super_admin), restrict to their own restaurant
+        if ($authUser && $authUser['role'] === 'admin' && !empty($authUser['restaurant_id']) && !$activeOnly) {
+            $sql .= " AND r.id = ?";
+            $params[] = (int)$authUser['restaurant_id'];
+        }
 
         if ($activeOnly) {
             $sql .= " AND r.is_active = 1";
@@ -31,7 +39,9 @@ if ($method === 'GET') {
         if ($search !== '') {
             $sql .= " AND (r.name LIKE ? OR r.slug LIKE ? OR r.address LIKE ?)";
             $term = '%' . $search . '%';
-            $params = [$term, $term, $term];
+            $params[] = $term;
+            $params[] = $term;
+            $params[] = $term;
         }
 
         $sql .= " ORDER BY r.id ASC";

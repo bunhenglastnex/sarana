@@ -110,6 +110,16 @@ if ($method === 'GET') {
         $whereConditions = [];
         $params = [];
 
+        // Tenant Isolation Filter
+        $authUser = AuthMiddleware::getOptionalUser($pdo);
+        if ($authUser && $authUser['role'] === 'admin' && !empty($authUser['restaurant_id'])) {
+            $whereConditions[] = "f.restaurant_id = ?";
+            $params[] = (int)$authUser['restaurant_id'];
+        } elseif (isset($_GET['restaurant_id']) && is_numeric($_GET['restaurant_id'])) {
+            $whereConditions[] = "f.restaurant_id = ?";
+            $params[] = (int)$_GET['restaurant_id'];
+        }
+
         // 1. Status Filter (Public vs Draft)
         if ($statusParam) {
             $whereConditions[] = "f.status = ?";

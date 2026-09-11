@@ -33,7 +33,7 @@ export const AdminSidebar: React.FC = () => {
   const { name, role } = useAuthStore();
 
   const displayName = name || "Elena Rostova";
-  const displayRole = role === "admin" ? "General Manager" : role || "General Manager";
+  const displayRole = role === "super_admin" ? "Super Platform Admin" : role === "admin" ? "Restaurant Manager" : (role || "Restaurant Manager");
 
   const { data } = useApi<any>("/orders.php", { limit: 50 });
   const rawOrders = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
@@ -164,18 +164,22 @@ export const AdminSidebar: React.FC = () => {
             <span className="font-label-lg text-label-lg">Categories</span>
           </Link>
 
-          {/* Platform & Multi-Tenant Section */}
-          <div className="px-space-xs pt-space-md pb-1 font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">
-            Platform &amp; Multi-Tenant
-          </div>
+          {/* Platform & Multi-Tenant Section (Super Admin Only) */}
+          {role === "super_admin" && (
+            <>
+              <div className="px-space-xs pt-space-md pb-1 font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">
+                Platform &amp; Multi-Tenant
+              </div>
 
-          <Link
-            href="/admin/restaurants"
-            className={navItemClass("/admin/restaurants")}
-          >
-            <Building2 className="w-5 h-5 shrink-0" />
-            <span className="font-label-lg text-label-lg">Restaurants</span>
-          </Link>
+              <Link
+                href="/admin/restaurants"
+                className={navItemClass("/admin/restaurants")}
+              >
+                <Building2 className="w-5 h-5 shrink-0" />
+                <span className="font-label-lg text-label-lg">Restaurants</span>
+              </Link>
+            </>
+          )}
 
           {/* Business & People Section */}
           <div className="px-space-xs pt-space-md pb-1 font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider font-semibold">
