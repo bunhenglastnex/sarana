@@ -222,8 +222,11 @@ class AuthService {
 
         // Role restriction check
         if (!empty($requiredRole)) {
-            if ($requiredRole === 'admin' && $user['role'] !== 'admin') {
+            if ($requiredRole === 'admin' && !in_array($user['role'], ['admin', 'super_admin'], true)) {
                 jsonResponse(0, 'Access denied. You do not have Admin privileges.', null, 403);
+            }
+            if ($requiredRole === 'super_admin' && $user['role'] !== 'super_admin') {
+                jsonResponse(0, 'Access denied. Super Admin privileges required.', null, 403);
             }
             if ($requiredRole === 'delivery' && $user['role'] !== 'delivery') {
                 jsonResponse(0, 'Access denied. You are not registered as a Delivery Driver.', null, 403);

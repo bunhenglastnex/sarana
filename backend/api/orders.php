@@ -89,7 +89,14 @@ if ($method === 'GET') {
         $stmt->execute($params);
         $rawOrders = $stmt->fetchAll();
 
-        // Also fetch aggregate counts across ALL orders (unfiltered by status tab) for tab headers & metrics
+        // Also fetch aggregate counts across ALL orders (unfiltered by status tab) for tab headers & metrics (scoped to tenant)
+        $aggWhere = " WHERE 1=1";
+        $aggParams = [];
+        if ($tenantId !== null) {
+            $aggWhere .= " AND restaurant_id = ?";
+            $aggParams[] = $tenantId;
+        }
+
         $aggSql = "SELECT 
                     COUNT(*) as count_all,
                     SUM(CASE WHEN status IN ('pending', 'accepted') THEN 1 ELSE 0 END) as count_pending,
@@ -101,8 +108,10 @@ if ($method === 'GET') {
                     SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as count_cancelled,
                     SUM(CASE WHEN payment_status NOT IN ('paid', 'verified') AND payment_method IN ('cod', 'cash_on_delivery') THEN total_amount ELSE 0 END) as cod_pending_total,
                     SUM(CASE WHEN fulfillment_type = 'delivery' AND status NOT IN ('delivered', 'completed', 'cancelled') THEN 1 ELSE 0 END) as active_dispatch_count
-                FROM orders";
-        $aggStmt = $pdo->query($aggSql);
+                FROM orders" . $aggWhere;
+
+        $aggStmt = $pdo->prepare($aggSql);
+        $aggStmt->execute($aggParams);
         $agg = $aggStmt->fetch();
 
         $counts = [
