@@ -17,6 +17,8 @@ import {
   Edit2,
   Store,
   ArrowRight,
+  Key,
+  Lock,
 } from "lucide-react";
 import Api, { useApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/store/useAuthStore";
@@ -29,6 +31,13 @@ export default function RestaurantsManagementPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
+
+  // Reset Password Modal State
+  const [selectedRestoForReset, setSelectedRestoForReset] = useState<any>(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState("admin123");
+  const [resetSubmitting, setResetSubmitting] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
 
   if (role !== "super_admin") {
     return (
@@ -124,13 +133,42 @@ export default function RestaurantsManagementPage() {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRestoForReset) return;
+    setResetSubmitting(true);
+    setResetError("");
+    setResetSuccess("");
+
+    try {
+      const res = await Api.put("/restaurants.php", {
+        id: selectedRestoForReset.id,
+        action: "reset_password",
+        new_password: resetPasswordValue,
+      });
+
+      if (res.data?.success || res.status === 200) {
+        setResetSuccess(`Password for ${selectedRestoForReset.name} admin reset to '${resetPasswordValue}'!`);
+        setTimeout(() => {
+          setSelectedRestoForReset(null);
+          setResetSuccess("");
+          setResetPasswordValue("admin123");
+        }, 1800);
+      } else {
+        setResetError(res.data?.message || "Failed to reset password.");
+      }
+    } catch (err: any) {
+      setResetError(err.response?.data?.message || err.message || "Failed to reset password.");
+    } finally {
+      setResetSubmitting(false);
+    }
+  };
+
   const handleToggleStatus = async (restaurant: any) => {
     const nextStatus = restaurant.is_active ? 0 : 1;
     try {
-      await Api.post("/restaurants.php", {
-        action: "update",
+      await Api.put("/restaurants.php", {
         id: restaurant.id,
-        name: restaurant.name,
         is_active: nextStatus,
       });
       refetch();
@@ -267,17 +305,17 @@ export default function RestaurantsManagementPage() {
                     <Phone className="w-4 h-4 text-secondary shrink-0" />
                     <span>{resto.phone || "No phone number"}</span>
                   </div>
-                  {resto.admin_name && (
+                  {(resto.owner_admin_name || resto.admin_name) && (
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Admin: <strong>{resto.admin_name}</strong> ({resto.admin_email})</span>
+                      <span>Admin: <strong>{resto.owner_admin_name || resto.admin_name}</strong> ({resto.owner_admin_email || resto.admin_email || "No email"})</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Action Buttons Footer */}
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between pt-2 gap-2">
                 <button
                   type="button"
                   onClick={() => handleToggleStatus(resto)}
@@ -287,12 +325,23 @@ export default function RestaurantsManagementPage() {
                       : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
                   }`}
                 >
-                  {resto.is_active ? "Suspend Tenant" : "Activate Tenant"}
+                  {resto.is_active ? "Suspend" : "Activate"}
                 </button>
 
-                <span className="text-[11px] text-on-surface-variant font-medium">
-                  {resto.created_at ? new Date(resto.created_at).toLocaleDateString() : ""}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRestoForReset(resto);
+                    setResetPasswordValue("admin123");
+                    setResetError("");
+                    setResetSuccess("");
+                  }}
+                  className="text-xs font-bold py-1.5 px-3 rounded-lg bg-amber-500/10 text-amber-700 border border-amber-500/30 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 shadow-2xs"
+                  title="Reset Admin Owner Password"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                  <span>Reset Pass</span>
+                </button>
               </div>
             </div>
           ))}
@@ -463,6 +512,85 @@ export default function RestaurantsManagementPage() {
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   <span>Save &amp; Onboard Tenant</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Super Admin Reset Restaurant Password Modal */}
+      {selectedRestoForReset && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest w-full max-w-md rounded-2xl p-6 shadow-2xl border border-surface-container">
+            <div className="flex items-center justify-between border-b border-surface-container pb-4 mb-4">
+              <div className="flex items-center gap-2">
+                <Key className="w-5 h-5 text-amber-600" />
+                <h3 className="font-extrabold text-lg text-on-surface">Reset Admin Password</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedRestoForReset(null)}
+                className="text-on-surface-variant hover:text-on-surface text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 mb-4 text-xs text-amber-900">
+              <p className="font-bold">
+                Resetting password for: <span className="underline">{selectedRestoForReset.name}</span>
+              </p>
+              <p className="mt-1 text-on-surface-variant font-medium">
+                Admin Owner: <strong>{selectedRestoForReset.owner_admin_name || selectedRestoForReset.admin_name || "Admin"}</strong> ({selectedRestoForReset.owner_admin_email || selectedRestoForReset.admin_email || "No email"})
+              </p>
+            </div>
+
+            {resetError && (
+              <div className="p-3 mb-4 rounded-xl bg-red-50 text-red-600 text-xs font-semibold border border-red-200 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{resetError}</span>
+              </div>
+            )}
+
+            {resetSuccess && (
+              <div className="p-3 mb-4 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{resetSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleResetPassword} className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-on-surface">New Password *</label>
+                <input
+                  type="text"
+                  required
+                  value={resetPasswordValue}
+                  onChange={(e) => setResetPasswordValue(e.target.value)}
+                  placeholder="Enter new password (e.g. admin123)"
+                  className="w-full p-2.5 rounded-xl bg-surface-container-low border border-surface-container text-on-surface font-mono font-bold outline-none focus:border-amber-500"
+                />
+                <p className="text-[11px] text-on-surface-variant mt-1">
+                  Default suggestion: <code className="bg-surface-container px-1 py-0.5 rounded font-bold text-primary">admin123</code>
+                </p>
+              </div>
+
+              <div className="pt-4 flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRestoForReset(null)}
+                  className="py-2.5 px-4 rounded-xl border border-surface-container text-on-surface font-bold hover:bg-surface-container-low"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetSubmitting}
+                  className="py-2.5 px-5 rounded-xl bg-amber-600 text-white font-bold shadow-sm hover:bg-amber-700 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {resetSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>Confirm Password Reset</span>
                 </button>
               </div>
             </form>

@@ -15,6 +15,8 @@ export interface Food {
 
 export interface CartItem {
   food_id: number;
+  restaurant_id?: number;
+  restaurant_name?: string;
   name: string;
   price: number;
   quantity: number;

@@ -257,20 +257,39 @@ export const OrdersView: React.FC = () => {
               >
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-secondary-container to-secondary" />
 
-                {/* Top info line */}
-                <div className="flex items-center justify-between pt-1">
+                {/* Restaurant Outlet Header */}
+                <div className="flex items-center justify-between pb-2 border-b border-surface-container/60 pt-1">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-extrabold text-sm text-on-surface tracking-tight truncate">
-                      #{order.order_number || `ORD-${order.id}`}
+                    <div className="w-6 h-6 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 border border-primary/20">
+                      {order.restaurant_logo ? (
+                        <img
+                          src={order.restaurant_logo}
+                          alt={order.restaurant_name || "Restaurant"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Store className="w-3.5 h-3.5 text-primary" />
+                      )}
+                    </div>
+                    <span className="font-extrabold text-xs text-on-surface truncate">
+                      {order.restaurant_name || "Amber & Ember Woodfired Bistro"}
                     </span>
-                    <span className="text-tertiary text-xs">•</span>
-                    <span className="text-xs text-on-surface-variant truncate">
-                      {order.created_at
-                        ? new Date(order.created_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "Today"}
+                  </div>
+                  <span className="text-[11px] text-on-surface-variant shrink-0">
+                    {order.created_at
+                      ? new Date(order.created_at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "Today"}
+                  </span>
+                </div>
+
+                {/* Top info line */}
+                <div className="flex items-center justify-between pt-0.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-extrabold text-sm text-primary tracking-tight truncate">
+                      #{order.order_number || `ORD-${order.id}`}
                     </span>
                   </div>
                   <span className="inline-flex items-center gap-1 bg-surface-container-high text-on-surface px-2.5 py-0.5 rounded-full text-[11px] font-semibold">

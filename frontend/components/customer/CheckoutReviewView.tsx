@@ -263,6 +263,8 @@ export const CheckoutReviewView: React.FC = () => {
         items: items.map((item) => ({
           food_id: item.food_id,
           food_name: item.name,
+          restaurant_id: item.restaurant_id || item.food?.restaurant_id,
+          restaurant_name: item.restaurant_name || item.food?.restaurant_name,
           price:
             typeof item.price === "string"
               ? parseFloat(item.price)
@@ -291,6 +293,7 @@ export const CheckoutReviewView: React.FC = () => {
       const res = await Api.post("/api/customer-orders.php", payload);
 
       if (res.success && res.data) {
+        const createdOrders = res.data.orders || [];
         const orderId = res.data.order_id || res.data.order_number;
         const orderNum = res.data.order_number || `#ORD-${orderId}`;
 
@@ -303,6 +306,7 @@ export const CheckoutReviewView: React.FC = () => {
         } else {
           setConfirmedOrder({
             order_number: orderNum,
+            orders: createdOrders,
             total_amount: totalAmount,
             fulfillmentMode,
             paymentMethod,
@@ -951,47 +955,70 @@ export const CheckoutReviewView: React.FC = () => {
                 </span>
               </div>
 
-              {/* Dynamic Live Items List */}
-              {items.map((item) => {
-                const priceNum =
-                  typeof item.price === "string"
-                    ? parseFloat(item.price)
-                    : Number(item.price || 0);
-                const itemSubtotal = priceNum * item.quantity;
-                return (
-                  <div
-                    key={item.food_id}
-                    className="flex items-center justify-between py-1.5 text-on-surface border-b border-surface-container/30 last:border-0"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      {item.food?.image_url ? (
-                        <img
-                          src={item.food.image_url}
-                          alt={item.name}
-                          className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-surface-container"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant font-bold text-xs flex-shrink-0">
-                          {item.quantity}x
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="font-semibold text-xs text-on-surface truncate">
-                          {item.quantity}x {item.name}
-                        </p>
-                        {item.food?.description && (
-                          <p className="text-[10px] text-on-surface-variant truncate">
-                            {item.food.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <span className="font-bold text-xs text-on-surface ml-2 flex-shrink-0">
-                      ${itemSubtotal.toFixed(2)}
-                    </span>
+              {/* Dynamic Live Items List Grouped by Restaurant */}
+              {Object.values(
+                items.reduce((acc, item) => {
+                  const rId = item.restaurant_id || item.food?.restaurant_id || 0;
+                  const rName =
+                    item.restaurant_name ||
+                    item.food?.restaurant_name ||
+                    (item.food as any)?.restaurant_name ||
+                    restaurantName ||
+                    "Restaurant";
+                  if (!acc[rId]) {
+                    acc[rId] = { restaurantId: rId, restaurantName: rName, items: [] };
+                  }
+                  acc[rId].items.push(item);
+                  return acc;
+                }, {} as Record<number, { restaurantId: number; restaurantName: string; items: typeof items }>)
+              ).map((group) => (
+                <div key={group.restaurantId} className="flex flex-col gap-1 my-1">
+                  <div className="text-[11px] font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded flex items-center gap-1.5 w-fit">
+                    <Store className="w-3 h-3 text-primary" />
+                    <span>{group.restaurantName}</span>
                   </div>
-                );
-              })}
+                  {group.items.map((item) => {
+                    const priceNum =
+                      typeof item.price === "string"
+                        ? parseFloat(item.price)
+                        : Number(item.price || 0);
+                    const itemSubtotal = priceNum * item.quantity;
+                    return (
+                      <div
+                        key={item.food_id}
+                        className="flex items-center justify-between py-1.5 text-on-surface border-b border-surface-container/30 last:border-0 pl-2"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {item.food?.image_url ? (
+                            <img
+                              src={item.food.image_url}
+                              alt={item.name}
+                              className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-surface-container"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant font-bold text-xs flex-shrink-0">
+                              {item.quantity}x
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-xs text-on-surface truncate">
+                              {item.quantity}x {item.name}
+                            </p>
+                            {item.food?.description && (
+                              <p className="text-[10px] text-on-surface-variant truncate">
+                                {item.food.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="font-bold text-xs text-on-surface ml-2 flex-shrink-0">
+                          ${itemSubtotal.toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
 
               {/* Price Calculation Rows */}
               <div className="mt-1 pt-2 border-t border-surface-container flex flex-col gap-1 text-xs text-on-surface-variant">

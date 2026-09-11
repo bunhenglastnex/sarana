@@ -47,18 +47,8 @@ export const useCartStore = create<CartState>()(
 
       addItem: (food, quantity = 1, options = {}, notes = '') => {
         const currentItems = get().items;
-        const currentRestoId = get().restaurantId;
         const targetRestoId = food.restaurant_id || 1;
         const targetRestoName = food.restaurant_name || 'Restaurant';
-
-        // Check for multi-restaurant conflict (Option B Single-Restaurant Enforcement)
-        if (currentItems.length > 0 && currentRestoId && currentRestoId !== targetRestoId) {
-          return {
-            isConflict: true,
-            currentRestaurantName: get().restaurantName || 'Current Restaurant',
-            newRestaurantName: targetRestoName,
-          };
-        }
 
         const foodId = Number(food.id);
         const optionsKey = JSON.stringify(options || {});
@@ -87,6 +77,8 @@ export const useCartStore = create<CartState>()(
                 notes: notes || '',
                 food: {
                   ...food,
+                  restaurant_id: targetRestoId,
+                  restaurant_name: targetRestoName,
                   image_url: food.image_url || (food as any).imageUrl || '',
                 },
               },

@@ -52,8 +52,13 @@ class AuthMiddleware {
      */
     public static function getTenantFilter(PDO $pdo, array $allowedRoles = ['admin', 'staff']): ?int {
         $user = self::authenticate($pdo, array_merge(['super_admin'], $allowedRoles));
+        $requestedTenant = $_GET['restaurant_id'] ?? $_GET['tenant_id'] ?? $_SERVER['HTTP_X_TENANT_ID'] ?? null;
+
+        if ($requestedTenant === 'all' || $requestedTenant === '0') {
+            return null;
+        }
+
         if ($user['role'] === 'super_admin') {
-            $requestedTenant = $_GET['restaurant_id'] ?? $_GET['tenant_id'] ?? $_SERVER['HTTP_X_TENANT_ID'] ?? null;
             if ($requestedTenant !== null && is_numeric($requestedTenant) && (int)$requestedTenant > 0) {
                 return (int)$requestedTenant;
             }
@@ -61,7 +66,7 @@ class AuthMiddleware {
         }
 
         if (empty($user['restaurant_id'])) {
-            jsonResponse(0, 'Forbidden: Admin user is not assigned to any restaurant tenant', null, 403);
+            return 1; // Default fallback to primary restaurant tenant #1
         }
 
         return (int)$user['restaurant_id'];

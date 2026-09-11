@@ -89,15 +89,8 @@ if ($method === 'POST') {
         jsonResponse(0, 'Validation Error: Delivery address is required for delivery orders', null, 400);
     }
 
-    // Calculate Subtotal & Totals with DB Price Verification & Stock Availability Checks
-    $foodAmount = 0.0;
-    $itemsToInsert = [];
-
-    // Calculate Subtotal & Totals with DB Price Verification & Stock Availability Checks
-    $foodAmount = 0.0;
-    $itemsToInsert = [];
-    $orderRestaurantId = !empty($input['restaurant_id']) ? (int)$input['restaurant_id'] : null;
-
+    // Group order items by restaurant_id for multi-restaurant automatic splitting
+    $itemsByRestaurant = [];
     $foodCheckStmt = $pdo->prepare("SELECT id, restaurant_id, name, price, is_available, image_url FROM foods WHERE id = ? LIMIT 1");
 
     foreach ($input['items'] as $item) {
@@ -109,6 +102,7 @@ if ($method === 'POST') {
 
         $realPrice = (float)($item['price'] ?? 0);
         $realFoodName = $clientFoodName;
+        $restoId = !empty($item['restaurant_id']) ? (int)$item['restaurant_id'] : (!empty($item['restaurantId']) ? (int)$item['restaurantId'] : null);
 
         if ($foodId) {
             $foodCheckStmt->execute([$foodId]);
@@ -122,16 +116,27 @@ if ($method === 'POST') {
                 if (empty($imageUrl) && !empty($dbFood['image_url'])) {
                     $imageUrl = $dbFood['image_url'];
                 }
-                if (!$orderRestaurantId && !empty($dbFood['restaurant_id'])) {
-                    $orderRestaurantId = (int)$dbFood['restaurant_id'];
+                if (!$restoId && !empty($dbFood['restaurant_id'])) {
+                    $restoId = (int)$dbFood['restaurant_id'];
                 }
             }
         }
 
-        $subtotal = round($realPrice * $quantity, 2);
-        $foodAmount += $subtotal;
+        if (!$restoId) {
+            $restoId = !empty($input['restaurant_id']) ? (int)$input['restaurant_id'] : 1;
+        }
 
-        $itemsToInsert[] = [
+        $subtotal = round($realPrice * $quantity, 2);
+
+        if (!isset($itemsByRestaurant[$restoId])) {
+            $itemsByRestaurant[$restoId] = [
+                'food_amount' => 0.0,
+                'items' => []
+            ];
+        }
+
+        $itemsByRestaurant[$restoId]['food_amount'] += $subtotal;
+        $itemsByRestaurant[$restoId]['items'][] = [
             'food_id' => $foodId,
             'food_name' => $realFoodName,
             'price' => $realPrice,
@@ -142,10 +147,6 @@ if ($method === 'POST') {
         ];
     }
 
-    if (!$orderRestaurantId) {
-        $orderRestaurantId = 1; // Default to Restaurant HQ
-    }
-
     // Fetch Settings from database for dynamic fee & tax calculations
     require_once __DIR__ . '/../services/SettingsService.php';
     $settingsService = new SettingsService($pdo);
@@ -153,78 +154,17 @@ if ($method === 'POST') {
 
     $taxRate = isset($settings['tax_rate']) ? (float)$settings['tax_rate'] : 9.03;
     $baseDeliveryFee = isset($settings['base_delivery_fee']) ? (float)$settings['base_delivery_fee'] : 1.50;
-    $baseIncludedKm = isset($settings['base_included_km']) ? (float)$settings['base_included_km'] : 3.0;
     $extraFeePerKm = isset($settings['extra_fee_per_km']) ? (float)$settings['extra_fee_per_km'] : 0.50;
     $freeDeliveryMinSubtotal = isset($settings['free_delivery_min_subtotal']) ? (float)$settings['free_delivery_min_subtotal'] : 25.00;
     
-    // Fetch Restaurant Origin Coordinates
-    $storeLat = isset($settings['store_latitude']) ? (float)$settings['store_latitude'] : 13.352270;
-    $storeLng = isset($settings['store_longitude']) ? (float)$settings['store_longitude'] : 103.955116;
-
-    if ($orderRestaurantId) {
-        $restoStmt = $pdo->prepare("SELECT lat, lng FROM restaurants WHERE id = ? LIMIT 1");
-        $restoStmt->execute([$orderRestaurantId]);
-        $restoRow = $restoStmt->fetch();
-        if ($restoRow && !empty($restoRow['lat']) && !empty($restoRow['lng'])) {
-            $storeLat = (float)$restoRow['lat'];
-            $storeLng = (float)$restoRow['lng'];
-        }
-    }
-
-    // Delivery fee calculation
-    if (isset($input['delivery_fee']) && is_numeric($input['delivery_fee'])) {
-        $deliveryFee = (float)$input['delivery_fee'];
-    } elseif ($fulfillmentType === 'delivery') {
-        if ($foodAmount >= $freeDeliveryMinSubtotal) {
-            $deliveryFee = 0.00;
-        } elseif ($deliveryLat !== null && $deliveryLng !== null) {
-            $rad = M_PI / 180;
-            $dlat = ($deliveryLat - $storeLat) * $rad;
-            $dlng = ($deliveryLng - $storeLng) * $rad;
-            $a = sin($dlat / 2) * sin($dlat / 2) + cos($storeLat * $rad) * cos($deliveryLat * $rad) * sin($dlng / 2) * sin($dlng / 2);
-            $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-            $distKm = 6371 * $c;
-
-            $deliveryFee = round($distKm * $extraFeePerKm, 2);
-        } else {
-            $deliveryFee = 0.00;
-        }
-    } else {
-        $deliveryFee = 0.00;
-    }
-
-    // Packaging & Tax calculation
-    if (isset($input['tax_amount']) && is_numeric($input['tax_amount'])) {
-        $packagingAndTax = (float)$input['tax_amount'];
-    } elseif (isset($input['packaging_and_tax']) && is_numeric($input['packaging_and_tax'])) {
-        $packagingAndTax = (float)$input['packaging_and_tax'];
-    } else {
-        $packagingAndTax = round(($foodAmount * $taxRate) / 100.0, 2);
-    }
-
     $tip = max(0.0, (float)($input['tip'] ?? 0));
-    $totalAmount = round($foodAmount + $deliveryFee + $packagingAndTax + $tip, 2);
-    $amountKhr = (int)round($totalAmount * 4100);
-
-    // Collision-Safe Unique Order Number Generation e.g. ORD-8942
-    $orderNumber = '';
-    for ($attempt = 0; $attempt < 10; $attempt++) {
-        $candidateNum = 'ORD-' . rand(10000, 99999);
-        $chkStmt = $pdo->prepare("SELECT id FROM orders WHERE order_number = ? LIMIT 1");
-        $chkStmt->execute([$candidateNum]);
-        if (!$chkStmt->fetch()) {
-            $orderNumber = $candidateNum;
-            break;
-        }
-    }
-    if (empty($orderNumber)) {
-        $orderNumber = 'ORD-' . time() . rand(10, 99);
-    }
+    $totalGroups = count($itemsByRestaurant);
+    $createdOrders = [];
 
     try {
         $pdo->beginTransaction();
 
-        $stmt = $pdo->prepare("
+        $orderInsertStmt = $pdo->prepare("
             INSERT INTO orders (
                 restaurant_id, order_number, user_id, customer_name, customer_phone, telegram_chat_id,
                 fulfillment_type, delivery_address, delivery_lat, delivery_lng, delivery_fee, food_amount, total_amount, amount_khr,
@@ -236,76 +176,124 @@ if ($method === 'POST') {
             )
         ");
 
-        $stmt->execute([
-            $orderRestaurantId,
-            $orderNumber,
-            $userId,
-            $customerName,
-            $customerPhone,
-            $telegramChatId,
-            $fulfillmentType,
-            $deliveryAddress,
-            $deliveryLat,
-            $deliveryLng,
-            $deliveryFee,
-            $foodAmount,
-            $totalAmount,
-            $amountKhr,
-            $paymentMethod,
-            $notes
-        ]);
-
-        $orderId = (int)$pdo->lastInsertId();
-
-        // Insert items
-        $itemStmt = $pdo->prepare("
+        $itemInsertStmt = $pdo->prepare("
             INSERT INTO order_items (
                 order_id, food_id, food_name, price, quantity, subtotal, image_url, notes
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
-        foreach ($itemsToInsert as $it) {
-            $itemStmt->execute([
-                $orderId,
-                $it['food_id'],
-                $it['food_name'],
-                $it['price'],
-                $it['quantity'],
-                $it['subtotal'],
-                $it['image_url'],
-                $it['notes']
+        $groupIndex = 0;
+
+        foreach ($itemsByRestaurant as $restoId => $groupData) {
+            $foodAmount = $groupData['food_amount'];
+            $itemsToInsert = $groupData['items'];
+
+            // Fetch Restaurant Origin Coordinates for distance fee calculation
+            $storeLat = isset($settings['store_latitude']) ? (float)$settings['store_latitude'] : 13.352270;
+            $storeLng = isset($settings['store_longitude']) ? (float)$settings['store_longitude'] : 103.955116;
+
+            $restoStmt = $pdo->prepare("SELECT lat, lng FROM restaurants WHERE id = ? LIMIT 1");
+            $restoStmt->execute([$restoId]);
+            $restoRow = $restoStmt->fetch();
+            if ($restoRow && !empty($restoRow['lat']) && !empty($restoRow['lng'])) {
+                $storeLat = (float)$restoRow['lat'];
+                $storeLng = (float)$restoRow['lng'];
+            }
+
+            // Delivery fee logic per restaurant order
+            if (isset($input['delivery_fee']) && is_numeric($input['delivery_fee'])) {
+                $deliveryFee = round((float)$input['delivery_fee'] / $totalGroups, 2);
+            } elseif ($fulfillmentType === 'delivery') {
+                if ($foodAmount >= $freeDeliveryMinSubtotal) {
+                    $deliveryFee = 0.00;
+                } elseif ($deliveryLat !== null && $deliveryLng !== null) {
+                    $rad = M_PI / 180;
+                    $dlat = ($deliveryLat - $storeLat) * $rad;
+                    $dlng = ($deliveryLng - $storeLng) * $rad;
+                    $a = sin($dlat / 2) * sin($dlat / 2) + cos($storeLat * $rad) * cos($deliveryLat * $rad) * sin($dlng / 2) * sin($dlng / 2);
+                    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+                    $distKm = 6371 * $c;
+
+                    $deliveryFee = round($distKm * $extraFeePerKm, 2);
+                } else {
+                    $deliveryFee = 0.00;
+                }
+            } else {
+                $deliveryFee = 0.00;
+            }
+
+            $packagingAndTax = round(($foodAmount * $taxRate) / 100.0, 2);
+            $groupTip = ($groupIndex === 0) ? $tip : 0.0;
+            $totalAmount = round($foodAmount + $deliveryFee + $packagingAndTax + $groupTip, 2);
+            $amountKhr = (int)round($totalAmount * 4100);
+
+            // Collision-Safe Unique Order Number Generation e.g. ORD-8942
+            $orderNumber = '';
+            for ($attempt = 0; $attempt < 10; $attempt++) {
+                $candidateNum = 'ORD-' . rand(10000, 99999);
+                $chkStmt = $pdo->prepare("SELECT id FROM orders WHERE order_number = ? LIMIT 1");
+                $chkStmt->execute([$candidateNum]);
+                if (!$chkStmt->fetch()) {
+                    $orderNumber = $candidateNum;
+                    break;
+                }
+            }
+            if (empty($orderNumber)) {
+                $orderNumber = 'ORD-' . time() . rand(10, 99);
+            }
+
+            $orderInsertStmt->execute([
+                $restoId,
+                $orderNumber,
+                $userId,
+                $customerName,
+                $customerPhone,
+                $telegramChatId,
+                $fulfillmentType,
+                $deliveryAddress,
+                $deliveryLat,
+                $deliveryLng,
+                $deliveryFee,
+                $foodAmount,
+                $totalAmount,
+                $amountKhr,
+                $paymentMethod,
+                $notes
             ]);
+
+            $orderId = (int)$pdo->lastInsertId();
+
+            foreach ($itemsToInsert as $it) {
+                $itemInsertStmt->execute([
+                    $orderId,
+                    $it['food_id'],
+                    $it['food_name'],
+                    $it['price'],
+                    $it['quantity'],
+                    $it['subtotal'],
+                    $it['image_url'],
+                    $it['notes']
+                ]);
+            }
+
+            $createdOrders[] = [
+                'order_id' => $orderId,
+                'order_number' => $orderNumber,
+                'restaurant_id' => $restoId,
+                'total_amount' => $totalAmount,
+                'amount_khr' => $amountKhr
+            ];
+
+            $groupIndex++;
         }
 
         $pdo->commit();
 
-        // Notify Telegram if library available
-        try {
-            if (file_exists(__DIR__ . '/../lib/telegram.php')) {
-                require_once __DIR__ . '/../lib/telegram.php';
-                $orderData = [
-                    'order_number' => $orderNumber,
-                    'customer_name' => $customerName,
-                    'customer_phone' => $customerPhone,
-                    'fulfillment_type' => $fulfillmentType,
-                    'delivery_address' => $deliveryAddress,
-                    'delivery_fee' => $deliveryFee,
-                    'total_amount' => $totalAmount,
-                    'payment_method' => $paymentMethod,
-                    'notes' => $notes
-                ];
-                $msg = formatNewOrderGroupMessage($orderData, $itemsToInsert);
-                notifyTelegramGroup($msg);
-            }
-        } catch (Throwable $t) {
-            // Log telegram notification failure non-blockingly
-        }
-
-        jsonResponse(1, 'Order created successfully', [
-            'order_id' => $orderId,
-            'order_number' => $orderNumber,
-            'total_amount' => $totalAmount,
-            'amount_khr' => $amountKhr,
+        jsonResponse(1, 'Order(s) created successfully', [
+            'orders' => $createdOrders,
+            'order_id' => $createdOrders[0]['order_id'],
+            'order_number' => $createdOrders[0]['order_number'],
+            'total_amount' => array_sum(array_column($createdOrders, 'total_amount')),
             'payment_method' => $paymentMethodInput,
             'status' => 'pending'
         ], 201);
@@ -335,8 +323,16 @@ try {
 
     if (!empty($orderIdQuery)) {
         $query = "
-            SELECT o.*, u.name as delivery_staff_name, u.phone as delivery_staff_phone
+            SELECT o.*, 
+                   r.name as restaurant_name, 
+                   r.slug as restaurant_slug, 
+                   r.logo_url as restaurant_logo, 
+                   r.address as restaurant_address, 
+                   r.phone as restaurant_phone,
+                   u.name as delivery_staff_name, 
+                   u.phone as delivery_staff_phone
             FROM orders o
+            LEFT JOIN restaurants r ON o.restaurant_id = r.id
             LEFT JOIN users u ON o.delivery_staff_id = u.id
             WHERE o.order_number = ? OR o.id = ?
             ORDER BY o.id DESC LIMIT 1
@@ -370,8 +366,15 @@ try {
 
     // Build SQL Query matching phone or user ID
     $query = "
-        SELECT o.*, u.name as delivery_staff_name
+        SELECT o.*, 
+               r.name as restaurant_name, 
+               r.slug as restaurant_slug, 
+               r.logo_url as restaurant_logo, 
+               r.address as restaurant_address, 
+               r.phone as restaurant_phone,
+               u.name as delivery_staff_name
         FROM orders o
+        LEFT JOIN restaurants r ON o.restaurant_id = r.id
         LEFT JOIN users u ON o.delivery_staff_id = u.id
         WHERE 1=1
     ";

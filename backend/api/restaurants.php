@@ -20,9 +20,9 @@ if ($method === 'GET') {
 
         $authUser = AuthMiddleware::getOptionalUser($pdo);
 
-        $sql = "SELECT r.*, u.name as owner_admin_name, u.email as owner_admin_email 
+        $sql = "SELECT r.*, u.id as owner_admin_id, u.name as owner_admin_name, u.email as owner_admin_email, u.phone as owner_admin_phone 
                 FROM restaurants r 
-                LEFT JOIN users u ON r.owner_admin_id = u.id 
+                LEFT JOIN users u ON (r.owner_admin_id = u.id OR (u.restaurant_id = r.id AND u.role = 'admin')) 
                 WHERE 1=1";
         $params = [];
 
@@ -37,14 +37,16 @@ if ($method === 'GET') {
         }
 
         if ($search !== '') {
-            $sql .= " AND (r.name LIKE ? OR r.slug LIKE ? OR r.address LIKE ?)";
+            $sql .= " AND (r.name LIKE ? OR r.slug LIKE ? OR r.address LIKE ? OR u.name LIKE ? OR u.email LIKE ?)";
             $term = '%' . $search . '%';
+            $params[] = $term;
+            $params[] = $term;
             $params[] = $term;
             $params[] = $term;
             $params[] = $term;
         }
 
-        $sql .= " ORDER BY r.id ASC";
+        $sql .= " GROUP BY r.id ORDER BY r.id ASC";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -170,6 +172,50 @@ if ($method === 'GET') {
     }
 
     try {
+        if ((isset($input['action']) && $input['action'] === 'reset_password') || !empty($input['new_password'])) {
+            $newPassword = trim($input['new_password'] ?? $input['password'] ?? '');
+            if (empty($newPassword) || strlen($newPassword) < 4) {
+                jsonResponse(0, 'Validation Error: Password must be at least 4 characters long', null, 400);
+            }
+
+            // Find owner user ID for this restaurant
+            $rStmt = $pdo->prepare("SELECT owner_admin_id FROM restaurants WHERE id = ?");
+            $rStmt->execute([$id]);
+            $resto = $rStmt->fetch();
+            $ownerId = $resto ? (int)$resto['owner_admin_id'] : 0;
+
+            if ($ownerId <= 0) {
+                $uStmt = $pdo->prepare("SELECT id FROM users WHERE restaurant_id = ? AND role = 'admin' LIMIT 1");
+                $uStmt->execute([$id]);
+                $uRow = $uStmt->fetch();
+                if ($uRow) $ownerId = (int)$uRow['id'];
+            }
+
+            if ($ownerId <= 0) {
+                jsonResponse(0, 'No owner or admin user assigned to this restaurant tenant', null, 404);
+            }
+
+            $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+            $upStmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $upStmt->execute([$hashedPassword, $ownerId]);
+
+            logSystemAction(
+                $pdo,
+                'RESET_RESTAURANT_PASSWORD',
+                'RESTAURANT',
+                "Super Admin reset password for Restaurant ID #{$id} owner (User #{$ownerId}).",
+                'info',
+                $superUser['id'],
+                $superUser['name']
+            );
+
+            jsonResponse(1, "Password for Restaurant ID #{$id} admin reset successfully", [
+                'id' => $id,
+                'owner_id' => $ownerId
+            ]);
+            return;
+        }
+
         if (isset($input['is_active'])) {
             $isActive = (int)(bool)$input['is_active'];
             $stmt = $pdo->prepare("UPDATE restaurants SET is_active = ? WHERE id = ?");

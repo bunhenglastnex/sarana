@@ -6,15 +6,29 @@ import {
   Timer,
   User,
   LogOut,
+  Store,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { AdminNotificationPopover } from "./AdminNotificationPopover";
 import { LogoutConfirmModal } from "./LogoutConfirmModal";
+import Api from "@/lib/api";
 
 export const AdminHeader: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const { name, role } = useAuthStore();
+  const { name, role, selectedTenantId, setSelectedTenantId } = useAuthStore();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [restaurantsList, setRestaurantsList] = useState<Array<{ id: number; name: string }>>([]);
+
+  useEffect(() => {
+    Api.get("/restaurants.php", { active_only: 1 })
+      .then((res) => {
+        const list = res.data?.data || res.data || [];
+        if (Array.isArray(list)) {
+          setRestaurantsList(list);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Focus search input on pressing '/'
   useEffect(() => {
@@ -46,6 +60,32 @@ export const AdminHeader: React.FC = () => {
             type="text"
           />
         </div>
+
+        {/* Store / Tenant Switcher for Super Admins */}
+        {role === "super_admin" && (
+          <div className="hidden md:flex items-center gap-1.5 bg-surface-container-low border border-border/60 rounded-lg px-2 py-1">
+            <Store className="w-3.5 h-3.5 text-primary" />
+            <select
+              value={selectedTenantId === null ? "all" : String(selectedTenantId)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "all") {
+                  setSelectedTenantId(null);
+                } else {
+                  setSelectedTenantId(Number(val));
+                }
+              }}
+              className="bg-transparent text-xs font-bold text-on-surface outline-none cursor-pointer"
+            >
+              <option value="all">All Outlets & Stores</option>
+              {restaurantsList.map((resto) => (
+                <option key={resto.id} value={resto.id}>
+                  {resto.name} (#{resto.id})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Right Telemetry & Station Info */}

@@ -42,9 +42,22 @@ try {
         ];
     }, $rawCategories);
 
+    $restaurantParam = $_GET['restaurant_id'] ?? $_GET['restaurant'] ?? null;
+
     // Build base WHERE clauses & parameters
     $whereSql = " WHERE f.status = 'public' AND f.is_available = 1";
     $params   = [];
+
+    if (!empty($restaurantParam) && $restaurantParam !== 'all') {
+        if (is_numeric($restaurantParam)) {
+            $whereSql .= " AND f.restaurant_id = ?";
+            $params[]  = (int)$restaurantParam;
+        } else {
+            $whereSql .= " AND (r.slug = ? OR r.name = ?)";
+            $params[]  = $restaurantParam;
+            $params[]  = $restaurantParam;
+        }
+    }
 
     if (!empty($categoryParam) && $categoryParam !== 'all') {
         if (is_numeric($categoryParam)) {

@@ -22,9 +22,10 @@ import {
   Send,
   ShoppingBag,
   X,
+  Store,
 } from "lucide-react";
 import { LiveOrderMap } from "./LiveOrderMap";
-import { useApi } from "@/lib/api";
+import Api, { useApi } from "@/lib/api";
 
 interface LiveOrderTrackerViewProps {
   orderRef?: string;
@@ -67,27 +68,22 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
   const fetchLiveOrderData = useCallback(async () => {
     if (!activeOrderNum) return;
     try {
-      const res = await fetch(
-        `http://localhost:8000/api/customer-orders.php?order_id=${encodeURIComponent(
-          activeOrderNum,
-        )}`,
-      );
-      if (res.ok) {
-        const result = await res.json();
-        const rawData = result?.data;
-        if (Array.isArray(rawData) && rawData.length > 0) {
-          setLiveOrder(rawData[0]);
-        } else if (rawData && typeof rawData === "object") {
-          setLiveOrder(rawData);
-        }
-        setLastSyncTime(
-          new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          }),
-        );
+      const res = await Api.get<any>("/customer-orders.php", {
+        order_id: activeOrderNum,
+      });
+      const rawData = res.data?.data || res.data;
+      if (Array.isArray(rawData) && rawData.length > 0) {
+        setLiveOrder(rawData[0]);
+      } else if (rawData && typeof rawData === "object") {
+        setLiveOrder(rawData);
       }
+      setLastSyncTime(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+      );
     } catch (err) {
       console.warn("Live order polling error:", err);
     }
@@ -289,6 +285,47 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
               </div>
             </div>
           )}
+
+          {/* Restaurant Outlet Card */}
+          <div className="w-full bg-surface-container-lowest rounded-2xl p-3.5 shadow-sm flex items-center justify-between gap-3 border border-surface-container/80">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 border border-primary/20 shadow-xs">
+                {liveOrder?.restaurant_logo ? (
+                  <img
+                    src={liveOrder.restaurant_logo}
+                    alt={liveOrder?.restaurant_name || "Restaurant"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Store className="w-5 h-5 text-primary" />
+                )}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                  Preparing Kitchen Outlet
+                </span>
+                <h2 className="font-extrabold text-sm text-on-surface truncate">
+                  {liveOrder?.restaurant_name || settings.store_name || "Amber & Ember Woodfired Bistro"}
+                </h2>
+                <span className="text-[11px] text-on-surface-variant truncate">
+                  {liveOrder?.restaurant_address || settings.store_address || "Siem Reap, Cambodia"}
+                </span>
+              </div>
+            </div>
+
+            {(liveOrder?.restaurant_phone || settings.store_phone) && (
+              <a
+                href={`tel:${liveOrder?.restaurant_phone || settings.store_phone}`}
+                onClick={() =>
+                  triggerNotice(`Calling restaurant ${liveOrder?.restaurant_phone || settings.store_phone}...`)
+                }
+                className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 active:scale-95 transition-all shadow-xs flex-shrink-0"
+                title="Call Restaurant Kitchen"
+              >
+                <Phone className="w-4 h-4" />
+              </a>
+            )}
+          </div>
 
           {/* Live Interactive Leaflet Map Card */}
           <div className="relative w-full rounded-2xl overflow-hidden shadow-md bg-surface-container-high h-64 border border-surface-container-high">

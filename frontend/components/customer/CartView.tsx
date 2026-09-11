@@ -169,136 +169,190 @@ export const CartView: React.FC = () => {
           )}
         </div>
 
-        {/* Active Restaurant Banner */}
-        {restaurantName && cartItems.length > 0 && (
-          <div className="flex items-center gap-2 px-3.5 py-2.5 bg-primary/10 rounded-xl mb-3 border border-primary/20 text-xs font-bold text-primary shadow-sm">
-            <ShoppingBag className="w-4 h-4 shrink-0" />
-            <span>Ordering from: <strong className="font-extrabold">{restaurantName}</strong></span>
-          </div>
+        {/* Active Restaurant / Multi-Restaurant Banner */}
+        {cartItems.length > 0 && (
+          Object.keys(
+            cartItems.reduce((acc, item) => {
+              const rId = item.restaurant_id || item.food?.restaurant_id || 0;
+              acc[rId] = true;
+              return acc;
+            }, {} as Record<number, boolean>)
+          ).length > 1 ? (
+            <div className="flex items-start gap-2.5 px-3.5 py-3 bg-amber-500/10 rounded-xl mb-3 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300 shadow-sm animate-in fade-in">
+              <Sparkles className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
+              <div>
+                <p className="font-extrabold text-amber-800 dark:text-amber-200">
+                  Multi-Restaurant Cart
+                </p>
+                <p className="text-[11px] text-amber-700 dark:text-amber-300/90 mt-0.5 leading-tight">
+                  You have items from multiple restaurants. Separate orders will be automatically placed for each kitchen.
+                </p>
+              </div>
+            </div>
+          ) : restaurantName ? (
+            <div className="flex items-center gap-2 px-3.5 py-2.5 bg-primary/10 rounded-xl mb-3 border border-primary/20 text-xs font-bold text-primary shadow-sm">
+              <ShoppingBag className="w-4 h-4 shrink-0" />
+              <span>Ordering from: <strong className="font-extrabold">{restaurantName}</strong></span>
+            </div>
+          ) : null
         )}
 
-        {/* Cart Items List */}
+        {/* Cart Items List Grouped by Restaurant */}
         {cartItems.length > 0 ? (
-          <div className="flex flex-col gap-space-sm mb-space-lg">
-            {cartItems.map((cartItem, idx) => {
-              const foodId = Number(cartItem.food_id);
-              const imgUrl =
-                cartItem.food?.image_url ||
-                (cartItem.food as any)?.imageUrl ||
-                "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80";
-              const optionsKey = JSON.stringify(cartItem.options || {});
-              const hasOptions =
-                cartItem.options && Object.keys(cartItem.options).length > 0;
-
-              return (
-                <div
-                  key={`${cartItem.food_id}-${optionsKey}-${idx}`}
-                  className="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex gap-space-sm relative transition-all duration-200 border border-surface-container/60"
-                >
-                  <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
-                    <img
-                      src={imgUrl}
-                      alt={cartItem.name}
-                      className="w-full h-full object-cover"
-                    />
+          <div className="flex flex-col gap-4 mb-space-lg">
+            {Object.values(
+              cartItems.reduce((acc, item) => {
+                const rId = item.restaurant_id || item.food?.restaurant_id || 0;
+                const rName =
+                  item.restaurant_name ||
+                  item.food?.restaurant_name ||
+                  (item.food as any)?.restaurant_name ||
+                  restaurantName ||
+                  "Restaurant";
+                if (!acc[rId]) {
+                  acc[rId] = { restaurantId: rId, restaurantName: rName, items: [] };
+                }
+                acc[rId].items.push(item);
+                return acc;
+              }, {} as Record<number, { restaurantId: number; restaurantName: string; items: typeof cartItems }>)
+            ).map((group) => (
+              <div
+                key={group.restaurantId}
+                className="flex flex-col gap-space-sm bg-surface-container-lowest p-3 rounded-2xl border border-surface-container/80 shadow-sm"
+              >
+                {/* Kitchen Header */}
+                <div className="flex items-center justify-between pb-2 border-b border-surface-container/60 px-1">
+                  <div className="flex items-center gap-2 font-bold text-xs text-primary">
+                    <Utensils className="w-3.5 h-3.5 text-primary" />
+                    <span className="truncate max-w-[200px]">{group.restaurantName}</span>
                   </div>
-
-                  <div className="flex flex-col flex-1 min-w-0 justify-between">
-                    <div className="flex items-start justify-between gap-1">
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-sm text-on-surface truncate">
-                          {cartItem.name}
-                        </h4>
-
-                        {/* Selected Customization Options Badge Tags */}
-                        {hasOptions ? (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {Object.entries(cartItem.options!).map(
-                              ([grp, val]) => (
-                                <span
-                                  key={grp}
-                                  className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-surface-container-low text-on-surface-variant border border-surface-container-high"
-                                >
-                                  <span className="text-outline font-normal">
-                                    {grp}:
-                                  </span>
-                                  <span className="text-primary font-bold">
-                                    {val}
-                                  </span>
-                                </span>
-                              ),
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-on-surface-variant line-clamp-1">
-                            {cartItem.food?.description ||
-                              "Freshly cooked to order"}
-                          </p>
-                        )}
-
-                        {/* Customize / Edit Options Link */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const slug =
-                              cartItem.food?.slug ||
-                              (cartItem.food as any)?.id ||
-                              cartItem.food_id;
-                            router.push(`/items-detail/${slug}`);
-                          }}
-                          className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 mt-1.5 transition-colors"
-                        >
-                          <SlidersHorizontal className="w-3 h-3" />
-                          <span>Customize / Edit Options</span>
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        aria-label="Remove item"
-                        onClick={() => handleRemoveItem(foodId, optionsKey)}
-                        className="text-tertiary hover:text-error transition-colors p-1"
-                      >
-                        <Trash2 className="w-4 h-4 text-outline hover:text-red-500" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-space-2xs">
-                      <span className="font-extrabold text-base text-primary">
-                        $
-                        {(
-                          (typeof cartItem.price === "string"
-                            ? parseFloat(cartItem.price)
-                            : Number(cartItem.price || 0)) * cartItem.quantity
-                        ).toFixed(2)}
-                      </span>
-                      <div className="flex items-center bg-surface-container-low rounded-full px-1 py-0.5 border border-surface-container-high">
-                        <button
-                          type="button"
-                          aria-label="Decrease quantity"
-                          onClick={() =>
-                            handleUpdateQty(foodId, -1, optionsKey)
-                          }
-                          className="w-7 h-7 flex items-center justify-center rounded-full text-on-surface hover:bg-surface transition-transform active:scale-90"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="font-bold text-xs px-2 text-on-surface">
-                          {cartItem.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label="Increase quantity"
-                          onClick={() => handleUpdateQty(foodId, 1, optionsKey)}
-                          className="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface transition-transform active:scale-90"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <span className="text-[10px] font-extrabold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                    {group.items.length} {group.items.length === 1 ? "item" : "items"}
+                  </span>
                 </div>
-              );
-            })}
+
+                {/* Restaurant Items */}
+                {group.items.map((cartItem, idx) => {
+                  const foodId = Number(cartItem.food_id);
+                  const imgUrl =
+                    cartItem.food?.image_url ||
+                    (cartItem.food as any)?.imageUrl ||
+                    "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80";
+                  const optionsKey = JSON.stringify(cartItem.options || {});
+                  const hasOptions =
+                    cartItem.options && Object.keys(cartItem.options).length > 0;
+
+                  return (
+                    <div
+                      key={`${cartItem.food_id}-${optionsKey}-${idx}`}
+                      className="bg-surface p-space-sm rounded-xl shadow-xs flex gap-space-sm relative transition-all duration-200 border border-surface-container/60"
+                    >
+                      <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
+                        <img
+                          src={imgUrl}
+                          alt={cartItem.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="flex flex-col flex-1 min-w-0 justify-between">
+                        <div className="flex items-start justify-between gap-1">
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-sm text-on-surface truncate">
+                              {cartItem.name}
+                            </h4>
+
+                            {/* Selected Customization Options Badge Tags */}
+                            {hasOptions ? (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {Object.entries(cartItem.options!).map(
+                                  ([grp, val]) => (
+                                    <span
+                                      key={grp}
+                                      className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-surface-container-low text-on-surface-variant border border-surface-container-high"
+                                    >
+                                      <span className="text-outline font-normal">
+                                        {grp}:
+                                      </span>
+                                      <span className="text-primary font-bold">
+                                        {val}
+                                      </span>
+                                    </span>
+                                  ),
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-on-surface-variant line-clamp-1">
+                                {cartItem.food?.description ||
+                                  "Freshly cooked to order"}
+                              </p>
+                            )}
+
+                            {/* Customize / Edit Options Link */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const slug =
+                                  cartItem.food?.slug ||
+                                  (cartItem.food as any)?.id ||
+                                  cartItem.food_id;
+                                router.push(`/items-detail/${slug}`);
+                              }}
+                              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 mt-1.5 transition-colors"
+                            >
+                              <SlidersHorizontal className="w-3 h-3" />
+                              <span>Customize / Edit Options</span>
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            aria-label="Remove item"
+                            onClick={() => handleRemoveItem(foodId, optionsKey)}
+                            className="text-tertiary hover:text-error transition-colors p-1"
+                          >
+                            <Trash2 className="w-4 h-4 text-outline hover:text-red-500" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-space-2xs">
+                          <span className="font-extrabold text-base text-primary">
+                            $
+                            {(
+                              (typeof cartItem.price === "string"
+                                ? parseFloat(cartItem.price)
+                                : Number(cartItem.price || 0)) * cartItem.quantity
+                            ).toFixed(2)}
+                          </span>
+                          <div className="flex items-center bg-surface-container-low rounded-full px-1 py-0.5 border border-surface-container-high">
+                            <button
+                              type="button"
+                              aria-label="Decrease quantity"
+                              onClick={() =>
+                                handleUpdateQty(foodId, -1, optionsKey)
+                              }
+                              className="w-7 h-7 flex items-center justify-center rounded-full text-on-surface hover:bg-surface transition-transform active:scale-90"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="font-bold text-xs px-2 text-on-surface">
+                              {cartItem.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label="Increase quantity"
+                              onClick={() => handleUpdateQty(foodId, 1, optionsKey)}
+                              className="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface transition-transform active:scale-90"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         ) : (
           <div className="text-center py-12 bg-surface-container-lowest rounded-xl p-6 border border-surface-container mb-space-lg">

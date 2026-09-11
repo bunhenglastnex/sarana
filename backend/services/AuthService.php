@@ -204,7 +204,16 @@ class AuthService {
             jsonResponse(0, 'Validation Error: Phone/Email/Username and Password are required', null, 400);
         }
 
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE phone = ? OR email = ? OR name = ? LIMIT 1");
+        $roleFilter = '';
+        if ($requiredRole === 'admin') {
+            $roleFilter = " AND role IN ('admin', 'super_admin')";
+        } elseif ($requiredRole === 'super_admin') {
+            $roleFilter = " AND role = 'super_admin'";
+        } elseif ($requiredRole === 'delivery') {
+            $roleFilter = " AND role = 'delivery'";
+        }
+
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE (phone = ? OR email = ? OR name = ?){$roleFilter} ORDER BY (CASE WHEN role IN ('admin', 'super_admin') THEN 1 ELSE 2 END) ASC, id DESC LIMIT 1");
         $stmt->execute([$identifier, $identifier, $identifier]);
         $user = $stmt->fetch();
 
@@ -253,6 +262,8 @@ class AuthService {
             'email'            => $user['email'],
             'avatarUrl'        => $user['avatar_url'] ?? null,
             'role'             => $user['role'],
+            'restaurantId'     => !empty($user['restaurant_id']) ? (int)$user['restaurant_id'] : null,
+            'selectedTenantId' => !empty($user['restaurant_id']) ? (int)$user['restaurant_id'] : null,
             'telegramChatId'   => $user['telegram_chat_id'] ?? null,
             'telegramUsername' => $user['telegram_username'] ?? null,
             'status'           => $user['status'] ?? 'active'

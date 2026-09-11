@@ -80,15 +80,13 @@ export const KhqrPaymentView: React.FC<KhqrPaymentViewProps> = ({
     if (!displayBillId) return;
     try {
       const cleanBillId = displayBillId.replace(/^#/, "");
-      const res = await fetch(
-        `http://localhost:8000/api/customer-orders.php?order_id=${encodeURIComponent(cleanBillId)}`,
-      );
-      if (res.ok) {
-        const result = await res.json();
-        const rawData = result?.data;
-        const targetOrder = Array.isArray(rawData) ? rawData[0] : rawData;
-        if (targetOrder) {
-          setLiveOrder(targetOrder);
+      const res = await Api.get<any>("/customer-orders.php", {
+        order_id: cleanBillId,
+      });
+      const rawData = res.data?.data || res.data;
+      const targetOrder = Array.isArray(rawData) ? rawData[0] : rawData;
+      if (targetOrder) {
+        setLiveOrder(targetOrder);
 
           const status = (targetOrder.status || "pending").toLowerCase();
           const paymentStatus = (
@@ -114,7 +112,6 @@ export const KhqrPaymentView: React.FC<KhqrPaymentViewProps> = ({
             }, 1000);
           }
         }
-      }
     } catch (err) {
       console.warn("Error polling KHQR payment status:", err);
     }

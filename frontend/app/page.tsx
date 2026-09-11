@@ -11,6 +11,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { SearchBar } from "@/components/customer/SearchBar";
 import { PromoBanner } from "@/components/customer/PromoBanner";
 import { CategoryScroll } from "@/components/customer/CategoryScroll";
+import { RestaurantScroll, RestaurantItem } from "@/components/customer/RestaurantScroll";
 import { FoodCard, FoodItem } from "@/components/customer/FoodCard";
 import { AddProductPopup } from "@/components/customer/AddProductPopup";
 import { FloatingCartBar } from "@/components/customer/FloatingCartBar";
@@ -19,7 +20,7 @@ import { TelegramBotModal } from "@/components/customer/TelegramBotModal";
 import { RestaurantConflictModal } from "@/components/customer/RestaurantConflictModal";
 import { useAuthStore, useFavoritesStore, useCartStore } from "@/lib/store";
 import Api from "@/lib/api";
-import { Flame, ChevronRight, Loader2 } from "lucide-react";
+import { Flame, ChevronRight, Loader2, X } from "lucide-react";
 
 export default function CustomerPageLayout() {
   const router = useRouter();
@@ -30,6 +31,8 @@ export default function CustomerPageLayout() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [restaurantsList, setRestaurantsList] = useState<RestaurantItem[]>([]);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<string | number>("all");
 
   // Cart store integration (Persisted in IndexedDB)
   const cartItems = useCartStore((state) => state.items);
@@ -120,6 +123,18 @@ export default function CustomerPageLayout() {
     }
   };
 
+  // Fetch active public restaurants list
+  useEffect(() => {
+    Api.get("/restaurants.php", { active_only: 1 })
+      .then((res) => {
+        const list = res.data?.data || res.data || [];
+        if (Array.isArray(list)) {
+          setRestaurantsList(list);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch active restaurants:", err));
+  }, []);
+
   // Fetch paginated public menu from backend API (12 items per batch)
   const fetchMenuPage = useCallback(
     async (pageNum: number, isInitial = false) => {
@@ -136,6 +151,9 @@ export default function CustomerPageLayout() {
         };
         if (selectedCategory && selectedCategory !== "all") {
           params.category = selectedCategory;
+        }
+        if (selectedRestaurant && selectedRestaurant !== "all") {
+          params.restaurant_id = selectedRestaurant;
         }
         if (searchQuery.trim()) {
           params.search = searchQuery.trim();
@@ -172,7 +190,7 @@ export default function CustomerPageLayout() {
         setIsFetchingMore(false);
       }
     },
-    [selectedCategory, searchQuery],
+    [selectedCategory, selectedRestaurant, searchQuery],
   );
 
   // Initial fetch or filter change reset
@@ -180,7 +198,7 @@ export default function CustomerPageLayout() {
     setPage(1);
     setHasMore(true);
     fetchMenuPage(1, true);
-  }, [selectedCategory, searchQuery, fetchMenuPage]);
+  }, [selectedCategory, selectedRestaurant, searchQuery, fetchMenuPage]);
 
   // Load next page function
   const loadNextPage = useCallback(() => {
@@ -357,6 +375,12 @@ export default function CustomerPageLayout() {
     );
   }, [cartItems]);
 
+  const currentSelectedRestoName = useMemo(() => {
+    if (selectedRestaurant === "all" || !selectedRestaurant) return null;
+    const found = restaurantsList.find((r) => String(r.id) === String(selectedRestaurant));
+    return found ? found.name : null;
+  }, [selectedRestaurant, restaurantsList]);
+
   return (
     <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 pb-28 bg-surface min-h-screen">
       <div className="flex flex-col w-full">
@@ -364,6 +388,30 @@ export default function CustomerPageLayout() {
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
         <PromoBanner />
+
+        {/* Horizontal Scroll Restaurant Carousel */}
+        <RestaurantScroll
+          restaurants={restaurantsList}
+          selectedRestaurantId={selectedRestaurant}
+          onSelectRestaurant={setSelectedRestaurant}
+        />
+
+        {/* Active Restaurant Filter Indicator Banner */}
+        {currentSelectedRestoName && (
+          <div className="flex items-center justify-between bg-primary/10 border border-primary/30 text-primary px-3 py-2 rounded-xl mb-3 text-xs font-semibold">
+            <span className="truncate">
+              Showing menu for: <strong>{currentSelectedRestoName}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedRestaurant("all")}
+              className="p-1 rounded-full hover:bg-primary/20 transition-colors flex-shrink-0"
+              title="Show all restaurants"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Horizontal Scroll Categories */}
         <CategoryScroll
