@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Api } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 interface TelegramSettingsTabProps {
   formData: any;
@@ -36,6 +37,7 @@ export const TelegramSettingsTab: React.FC<TelegramSettingsTabProps> = ({
   formData,
   onChange,
 }) => {
+  const { role } = useAuthStore();
   const [showToken, setShowToken] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
@@ -115,36 +117,53 @@ export const TelegramSettingsTab: React.FC<TelegramSettingsTabProps> = ({
         </CardHeader>
         <CardContent className="p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Telegram Bot Token */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-on-surface">
-                Telegram Bot Token <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Input
-                  type={showToken ? "text" : "password"}
-                  value={formData.telegramBotToken || ""}
-                  onChange={(e) => onChange("telegramBotToken", e.target.value)}
-                  placeholder="e.g. 5849302114:AAH9x..."
-                  className="text-xs font-mono pr-10 border-border"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowToken(!showToken)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
-                >
-                  {showToken ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
+            {/* Telegram Bot Token (Super Admin Only) */}
+            {role === "super_admin" ? (
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-on-surface">
+                  Telegram Bot Token <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showToken ? "text" : "password"}
+                    value={formData.telegramBotToken || ""}
+                    onChange={(e) => onChange("telegramBotToken", e.target.value)}
+                    placeholder="e.g. 5849302114:AAH9x..."
+                    className="text-xs font-mono pr-10 border-border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowToken(!showToken)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+                  >
+                    {showToken ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-[11px] text-on-surface-variant">
+                  Obtained from Telegram&apos;s Official{" "}
+                  <span className="font-semibold text-sky-600">@BotFather</span>.
+                </p>
               </div>
-              <p className="text-[11px] text-on-surface-variant">
-                Obtained from Telegram&apos;s Official{" "}
-                <span className="font-semibold text-sky-600">@BotFather</span>.
-              </p>
-            </div>
+            ) : (
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-on-surface">
+                  Telegram Bot Token <span className="text-amber-600 font-normal">(Super Admin Restricted)</span>
+                </label>
+                <Input
+                  type="password"
+                  disabled
+                  value="••••••••••••••••••••••••••••••••"
+                  className="text-xs font-mono bg-surface-container-high border-border cursor-not-allowed opacity-75"
+                />
+                <p className="text-[11px] text-amber-600 font-medium">
+                  🔒 Global Bot Token is protected and accessible to <strong className="font-bold">Super Admin</strong> only.
+                </p>
+              </div>
+            )}
 
             {/* Main Orders Group Chat ID */}
             <div className="space-y-1.5">

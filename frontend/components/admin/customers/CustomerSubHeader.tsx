@@ -15,6 +15,7 @@ interface CustomerSubHeaderProps {
   totalCustomers: number;
   vipCount: number;
   totalRevenue: number;
+  khqrRatio?: number;
   onAddCustomerClick: () => void;
 }
 
@@ -22,8 +23,12 @@ export const CustomerSubHeader: React.FC<CustomerSubHeaderProps> = ({
   totalCustomers,
   vipCount,
   totalRevenue,
+  khqrRatio = 0,
   onAddCustomerClick,
 }) => {
+  const avgSpend = totalCustomers > 0 ? (totalRevenue / totalCustomers).toFixed(2) : "0.00";
+  const vipPct = totalCustomers > 0 ? Math.round((vipCount / totalCustomers) * 100) : 0;
+
   return (
     <div className="flex flex-col gap-space-md">
       {/* Header Bar */}
@@ -59,11 +64,11 @@ export const CustomerSubHeader: React.FC<CustomerSubHeaderProps> = ({
             <Users className="w-4 h-4 text-primary" />
           </div>
           <div className="font-display-lg text-2xl font-extrabold text-on-surface mt-2">
-            1,428
+            {totalCustomers.toLocaleString()}
           </div>
           <div className="font-body-sm text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-1">
             <TrendingUp className="w-3 h-3" />
-            <span>+12% this month</span>
+            <span>{totalCustomers > 0 ? "Active Account Roster" : "No Orders Yet"}</span>
           </div>
         </div>
 
@@ -76,7 +81,7 @@ export const CustomerSubHeader: React.FC<CustomerSubHeaderProps> = ({
             {vipCount} VIPs
           </div>
           <div className="font-body-sm text-[11px] text-on-surface-variant font-medium mt-1">
-            High retention rate (68%)
+            {totalCustomers > 0 ? `${vipPct}% VIP Ratio` : "No VIP Diners Yet"}
           </div>
         </div>
 
@@ -89,7 +94,7 @@ export const CustomerSubHeader: React.FC<CustomerSubHeaderProps> = ({
             ${totalRevenue.toFixed(2)}
           </div>
           <div className="font-body-sm text-[11px] text-on-surface-variant font-medium mt-1">
-            Avg order value: $32.40
+            {totalCustomers > 0 ? `Avg spend: $${avgSpend}` : "No Revenue Yet"}
           </div>
         </div>
 
@@ -99,11 +104,11 @@ export const CustomerSubHeader: React.FC<CustomerSubHeaderProps> = ({
             <QrCode className="w-4 h-4 text-secondary" />
           </div>
           <div className="font-display-lg text-2xl font-extrabold text-on-surface mt-2">
-            82% KHQR
+            {khqrRatio}% KHQR
           </div>
           <div className="font-body-sm text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-1">
             <CheckCircle2 className="w-3 h-3" />
-            <span>Instant settlement</span>
+            <span>{khqrRatio > 0 ? "Instant settlement" : "No KHQR Payments"}</span>
           </div>
         </div>
       </div>

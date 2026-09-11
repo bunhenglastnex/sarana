@@ -55,24 +55,32 @@ export const AdminSidebar: React.FC = () => {
         : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
     }`;
 
+  const { data: settingsData } = useApi<any>("/settings.php");
+  const storeName = settingsData?.data?.store_name || "Amber & Ember";
+  const logoUrl = settingsData?.data?.logo_url || "/logo.jpg";
+  const roleSubtitle = role === "super_admin" ? "Super Admin Portal" : "Restaurant Admin";
+
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-r border-border/40 selection:bg-primary/20">
       <div className="flex flex-col h-full overflow-hidden">
         {/* Brand Header */}
-        <div className="h-16 px-space-lg flex items-center gap-space-sm bg-surface-container-low shrink-0 border-b border-border/30">
+        <div className="h-16 px-space-md flex items-center gap-space-sm bg-surface-container-low shrink-0 border-b border-border/30">
           <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center shadow-sm overflow-hidden border border-primary/20 shrink-0">
             <img
-              src="/logo.jpg"
-              alt="Amber & Ember Logo"
+              src={logoUrl}
+              alt={`${storeName} Logo`}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/logo.jpg";
+              }}
             />
           </div>
-          <div className="flex flex-col">
-            <span className="font-headline-sm text-headline-sm text-on-surface leading-tight tracking-tight font-bold">
-              Amber &amp; Ember
+          <div className="flex flex-col min-w-0">
+            <span className="font-headline-sm text-sm text-on-surface leading-tight tracking-tight font-bold truncate" title={storeName}>
+              {storeName}
             </span>
-            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">
-              Bistro Admin
+            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px] truncate">
+              {roleSubtitle}
             </span>
           </div>
         </div>
@@ -178,6 +186,16 @@ export const AdminSidebar: React.FC = () => {
                 <Building2 className="w-5 h-5 shrink-0" />
                 <span className="font-label-lg text-label-lg">Restaurants</span>
               </Link>
+
+              <Link href="/admin/staff" className={navItemClass("/admin/staff")}>
+                <UserCheck className="w-5 h-5 shrink-0" />
+                <span className="font-label-lg text-label-lg">Staff</span>
+              </Link>
+
+              <Link href="/admin/logs" className={navItemClass("/admin/logs")}>
+                <ScrollText className="w-5 h-5 shrink-0" />
+                <span className="font-label-lg text-label-lg">System Logs</span>
+              </Link>
             </>
           )}
 
@@ -210,16 +228,6 @@ export const AdminSidebar: React.FC = () => {
             <span className="font-label-lg text-label-lg">
               Reports & Analytics
             </span>
-          </Link>
-
-          <Link href="/admin/staff" className={navItemClass("/admin/staff")}>
-            <UserCheck className="w-5 h-5 shrink-0" />
-            <span className="font-label-lg text-label-lg">Staff</span>
-          </Link>
-
-          <Link href="/admin/logs" className={navItemClass("/admin/logs")}>
-            <ScrollText className="w-5 h-5 shrink-0" />
-            <span className="font-label-lg text-label-lg">System Logs</span>
           </Link>
 
           <Link

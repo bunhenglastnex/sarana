@@ -102,7 +102,20 @@ export const DeliveryFleetRoster: React.FC<DeliveryFleetRosterProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-border/20">
-              {couriers.map((courier) => {
+              {couriers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-on-surface-variant">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Radio className="w-8 h-8 text-on-surface-variant/40 animate-pulse" />
+                      <span className="font-bold text-xs text-on-surface">No Active Couriers On Route</span>
+                      <span className="text-[11px] text-on-surface-variant max-w-sm">
+                        Delivery riders assigned to your restaurant will automatically appear on this live radar when en route with an order.
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                couriers.map((courier) => {
                 const isSelected = courier.id === selectedCourierId;
                 return (
                   <tr
@@ -209,7 +222,7 @@ export const DeliveryFleetRoster: React.FC<DeliveryFleetRosterProps> = ({
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>

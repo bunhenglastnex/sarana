@@ -20,14 +20,17 @@ class SettingsController {
         $method = $_SERVER['REQUEST_METHOD'];
 
         if ($method === 'GET') {
-            // Allow public read of settings for customer pages (delivery zone, general info)
             $group = $_GET['group'] ?? null;
-            $data = $this->settingsService->getSettings($group);
+            $tenantId = AuthMiddleware::getTenantFilter($this->pdo, ['admin']);
+            if (isset($_GET['restaurant_id']) && is_numeric($_GET['restaurant_id'])) {
+                $tenantId = (int)$_GET['restaurant_id'];
+            }
+
+            $data = $this->settingsService->getSettings($group, $tenantId);
             jsonResponse(1, 'Settings retrieved successfully', $data, 200);
         }
 
         if ($method === 'POST' || $method === 'PUT') {
-            // Require Admin role for updating admin settings
             $adminUser = AuthMiddleware::authenticate($this->pdo, ['admin']);
             $input = json_decode(file_get_contents('php://input'), true) ?? $_POST ?? [];
             $action = $_GET['action'] ?? $input['action'] ?? null;
@@ -43,7 +46,12 @@ class SettingsController {
                 }
             }
 
-            $data = $this->settingsService->saveSettings($input, $adminUser);
+            $tenantId = AuthMiddleware::getTenantFilter($this->pdo, ['admin']);
+            if (isset($input['restaurant_id']) && is_numeric($input['restaurant_id'])) {
+                $tenantId = (int)$input['restaurant_id'];
+            }
+
+            $data = $this->settingsService->saveSettings($input, $adminUser, $tenantId);
             jsonResponse(1, 'Settings updated successfully', $data, 200);
         }
 

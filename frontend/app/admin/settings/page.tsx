@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Bot,
   MapPin,
+  Building2,
 } from "lucide-react";
 import { GeneralSettingsTab } from "@/components/admin/settings/GeneralSettingsTab";
 import { AudioNotificationsTab } from "@/components/admin/settings/AudioNotificationsTab";
@@ -18,11 +19,13 @@ import { TelegramSettingsTab } from "@/components/admin/settings/TelegramSetting
 import { DeliveryZoneSettingsTab } from "@/components/admin/settings/DeliveryZoneSettingsTab";
 import { Button } from "@/components/ui/button";
 
-import { Api } from "@/lib/api";
+import Api, { useApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 type SettingTabKey = "general" | "audio" | "security" | "telegram" | "delivery";
 
 function SettingsPageContent() {
+  const { role } = useAuthStore();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -37,6 +40,14 @@ function SettingsPageContent() {
   const handleTabChange = (newTab: SettingTabKey) => {
     router.push(`/admin/settings?tab=${newTab}`, { scroll: false });
   };
+
+  const [selectedTenantId, setSelectedTenantId] = useState<number>(1);
+  const { data: restaurantsRes } = useApi<any>("/restaurants.php");
+  const rawRestaurants = Array.isArray(restaurantsRes?.data)
+    ? restaurantsRes.data
+    : Array.isArray(restaurantsRes)
+    ? restaurantsRes
+    : [];
 
   const [formData, setFormData] = useState({
     // General
@@ -86,10 +97,15 @@ function SettingsPageContent() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Fetch settings from live backend API on mount
+  // Fetch settings from live backend API on mount or tenant switch
   useEffect(() => {
     async function loadSettings() {
-      const res = await Api.get("/settings.php");
+      const getParams: Record<string, any> = {};
+      if (role === "super_admin" && selectedTenantId) {
+        getParams.restaurant_id = selectedTenantId;
+      }
+
+      const res = await Api.get("/settings.php", getParams, { forceRefresh: true });
       if (res.success && res.data) {
         setFormData((prev) => ({
           ...prev,
@@ -125,8 +141,8 @@ function SettingsPageContent() {
           telegramNotifyCancelled: res.data.telegram_notify_cancelled ?? prev.telegramNotifyCancelled,
 
           // Delivery
-          storeLatitude: res.data.store_latitude ?? prev.storeLatitude,
-          storeLongitude: res.data.store_longitude ?? prev.storeLongitude,
+          storeLatitude: res.data.store_latitude ? String(res.data.store_latitude) : prev.storeLatitude,
+          storeLongitude: res.data.store_longitude ? String(res.data.store_longitude) : prev.storeLongitude,
           maxDeliveryRadiusKm: res.data.max_delivery_radius_km ?? prev.maxDeliveryRadiusKm,
           enableZoneBlocker: res.data.enable_zone_blocker ?? prev.enableZoneBlocker,
           outOfZoneMessage: res.data.out_of_zone_message ?? prev.outOfZoneMessage,
@@ -138,7 +154,7 @@ function SettingsPageContent() {
       }
     }
     loadSettings();
-  }, []);
+  }, [role, selectedTenantId]);
 
   const handleFieldChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -146,7 +162,7 @@ function SettingsPageContent() {
 
   const handleSaveSettings = async () => {
     setSaving(true);
-    const res = await Api.post("/settings.php", {
+    const payload: Record<string, any> = {
       store_name: formData.storeName,
       store_phone: formData.storePhone,
       store_address: formData.storeAddress,
@@ -183,7 +199,13 @@ function SettingsPageContent() {
       base_included_km: formData.baseIncludedKm,
       extra_fee_per_km: formData.extraFeePerKm,
       free_delivery_min_subtotal: formData.freeDeliveryMinSubtotal,
-    });
+    };
+
+    if (role === "super_admin" && selectedTenantId) {
+      payload.restaurant_id = selectedTenantId;
+    }
+
+    const res = await Api.post("/settings.php", payload);
     setSaving(false);
     if (res.success) {
       setSaveSuccess(true);
@@ -193,6 +215,30 @@ function SettingsPageContent() {
 
   return (
     <div className="flex flex-col w-full min-h-screen pb-space-2xl space-y-space-lg">
+      {/* 1. Super Admin Tenant Switcher Bar */}
+      {role === "super_admin" && rawRestaurants.length > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/30 p-3 px-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-xs">
+          <div className="flex items-center gap-2 text-on-surface font-bold">
+            <Building2 className="w-4 h-4 text-amber-600" />
+            <span>Super Admin Tenant Target:</span>
+            <span className="text-on-surface-variant font-normal hidden sm:inline">
+              (Viewing &amp; Editing settings for selected restaurant profile)
+            </span>
+          </div>
+          <select
+            value={selectedTenantId}
+            onChange={(e) => setSelectedTenantId(Number(e.target.value))}
+            className="p-2 px-3 rounded-xl bg-surface-container-lowest border border-amber-500/40 text-xs font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer shadow-xs"
+          >
+            {rawRestaurants.map((r: any) => (
+              <option key={r.id} value={r.id}>
+                {r.name} (ID #{r.id})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* 2. Horizontal Tab Navigation Bar with URL Query Synchronization (?tab=...) */}
       <div className="bg-surface-container-lowest p-1.5 rounded-2xl shadow-sm border border-border/40 flex flex-wrap items-center gap-1.5 overflow-x-auto">
         <button
@@ -234,18 +280,20 @@ function SettingsPageContent() {
           <span>Audio &amp; Notifications</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => handleTabChange("security")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === "security"
-              ? "bg-primary text-on-primary shadow-xs"
-              : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4" />
-          <span>Security &amp; Backup</span>
-        </button>
+        {role === "super_admin" && (
+          <button
+            type="button"
+            onClick={() => handleTabChange("security")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              activeTab === "security"
+                ? "bg-primary text-on-primary shadow-xs"
+                : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Security &amp; Backup</span>
+          </button>
+        )}
 
         <button
           type="button"
@@ -282,10 +330,24 @@ function SettingsPageContent() {
           />
         )}
         {activeTab === "security" && (
-          <SecuritySettingsTab
-            formData={formData}
-            onChange={handleFieldChange}
-          />
+          role === "super_admin" ? (
+            <SecuritySettingsTab
+              formData={formData}
+              onChange={handleFieldChange}
+            />
+          ) : (
+            <div className="w-full min-h-[50vh] flex flex-col items-center justify-center text-center p-space-xl bg-surface-container-lowest rounded-2xl border border-border/40 shadow-xs animate-fadeIn">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4 border border-amber-500/20">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+              <h2 className="text-xl font-bold text-on-surface mb-2">
+                Super Admin Access Required
+              </h2>
+              <p className="text-sm text-on-surface-variant max-w-md leading-relaxed">
+                System security settings, database snapshots, auto-lock timeouts, and backup restoration controls are restricted to <strong className="text-on-surface">Super Platform Administrators</strong>.
+              </p>
+            </div>
+          )
         )}
         {activeTab === "telegram" && (
           <TelegramSettingsTab

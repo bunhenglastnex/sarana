@@ -22,6 +22,9 @@ if ($method === 'GET') {
         $channel      = $_GET['channel'] ?? 'all';
         $selectedDate = $_GET['selected_date'] ?? $_GET['date'] ?? null;
 
+        $tenantId = AuthMiddleware::getTenantFilter($pdo, ['admin']);
+        $tenantCondition = $tenantId !== null ? "o.restaurant_id = " . (int)$tenantId : "1=1";
+
         // 1. Build Date Filter SQL Condition & Zero-Filled Timeline Slots
         $dateCondition = "1=1";
         $prevDateCondition = "1=1";
@@ -83,7 +86,7 @@ if ($method === 'GET') {
                         COALESCE(SUM(total_amount), 0.00) as gross_sales,
                         COALESCE(SUM(CASE WHEN payment_method = 'khqr' THEN 1 ELSE 0 END), 0) as khqr_orders
                     FROM orders o
-                    WHERE {$dateCondition} AND {$channelCondition}
+                    WHERE {$dateCondition} AND {$channelCondition} AND {$tenantCondition}
                       AND o.payment_status IN ('paid', 'verified')
                       AND o.status != 'cancelled'";
 
@@ -100,7 +103,7 @@ if ($method === 'GET') {
         // 4. Previous Period Sales for Growth Calculation
         $prevSql = "SELECT COALESCE(SUM(total_amount), 0.00) as prev_sales
                     FROM orders o
-                    WHERE {$prevDateCondition} AND {$channelCondition}
+                    WHERE {$prevDateCondition} AND {$channelCondition} AND {$tenantCondition}
                       AND o.payment_status IN ('paid', 'verified')
                       AND o.status != 'cancelled'";
         $prevStmt = $pdo->query($prevSql);
@@ -118,7 +121,7 @@ if ($method === 'GET') {
                         COUNT(id) as cancel_count,
                         COALESCE(SUM(total_amount), 0.00) as cancel_amount
                       FROM orders o
-                      WHERE {$dateCondition} AND {$channelCondition}
+                      WHERE {$dateCondition} AND {$channelCondition} AND {$tenantCondition}
                         AND (o.status = 'cancelled' OR o.payment_status IN ('flagged', 'refunded', 'rejected'))";
         $cancelStmt = $pdo->query($cancelSql);
         $cancelData = $cancelStmt->fetch();
@@ -148,7 +151,7 @@ if ($method === 'GET') {
                             COUNT(o.id) as orders,
                             COALESCE(SUM(o.total_amount), 0.00) as revenue
                           FROM orders o
-                          WHERE {$dateCondition} AND {$channelCondition}
+                          WHERE {$dateCondition} AND {$channelCondition} AND {$tenantCondition}
                             AND o.payment_status IN ('paid', 'verified')
                           GROUP BY HOUR(o.created_at), raw_slot
                           ORDER BY HOUR(o.created_at) ASC";
@@ -176,7 +179,7 @@ if ($method === 'GET') {
                             COUNT(o.id) as orders,
                             COALESCE(SUM(o.total_amount), 0.00) as revenue
                           FROM orders o
-                          WHERE {$dateCondition} AND {$channelCondition}
+                          WHERE {$dateCondition} AND {$channelCondition} AND {$tenantCondition}
                             AND o.payment_status IN ('paid', 'verified')
                           GROUP BY DATE(o.created_at), time_slot
                           ORDER BY DATE(o.created_at) ASC";
@@ -201,16 +204,13 @@ if ($method === 'GET') {
 
         $rhythmData = array_values($rhythmSlots);
 
-        // Fallback: If empty, rhythmData remains empty []
-        // (Do NOT inject dummy mock data)
-
         // 7. Order Mix Data (Delivery vs Pickup Channel Split)
         $mixSql = "SELECT 
                     o.fulfillment_type,
                     COUNT(o.id) as cnt,
                     COALESCE(SUM(o.total_amount), 0.00) as rev
                    FROM orders o
-                   WHERE {$dateCondition} AND o.payment_status IN ('paid', 'verified')
+                   WHERE {$dateCondition} AND {$tenantCondition} AND o.payment_status IN ('paid', 'verified')
                    GROUP BY o.fulfillment_type";
 
         $mixStmt = $pdo->query($mixSql);
@@ -262,7 +262,7 @@ if ($method === 'GET') {
                       INNER JOIN orders o ON oi.order_id = o.id
                       LEFT JOIN foods f ON oi.food_id = f.id
                       LEFT JOIN categories c ON f.category_id = c.id
-                      WHERE {$dateCondition} AND {$channelCondition}
+                      WHERE {$dateCondition} AND {$channelCondition} AND {$tenantCondition}
                         AND o.payment_status IN ('paid', 'verified')
                       GROUP BY oi.food_name, c.name, f.image_url
                       ORDER BY quantity_sold DESC

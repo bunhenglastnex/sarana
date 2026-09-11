@@ -8,14 +8,33 @@ import { StaffMemberCard } from "@/components/admin/staff/StaffMemberCard";
 import { StaffDetailModal } from "@/components/admin/staff/StaffDetailModal";
 import { CreateStaffModal } from "@/components/admin/staff/CreateStaffModal";
 import { Api } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { UserCheck } from "lucide-react";
 
 export default function StaffPage() {
+  const { role } = useAuthStore();
   const [staffList, setStaffList] = useState<StaffRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StaffStatus>("all");
   const [selectedStaff, setSelectedStaff] = useState<StaffRecord | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  if (role !== "super_admin") {
+    return (
+      <div className="w-full min-h-[70vh] flex flex-col items-center justify-center text-center p-space-xl animate-fadeIn">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4 border border-amber-500/20">
+          <UserCheck className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-on-surface mb-2">
+          Super Admin Access Required
+        </h2>
+        <p className="text-sm text-on-surface-variant max-w-md leading-relaxed">
+          Platform staff management and global delivery fleet administration are restricted to <strong className="text-on-surface">Super Platform Administrators</strong>.
+        </p>
+      </div>
+    );
+  }
 
   const fetchDrivers = async () => {
     setIsLoading(true);

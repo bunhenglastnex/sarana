@@ -29,7 +29,7 @@ export default function PaymentsPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
-  const [datePreset, setDatePreset] = useState<"today" | "week" | "month" | "all" | "custom">("today");
+  const [datePreset, setDatePreset] = useState<"today" | "week" | "month" | "all" | "custom">("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [selectedTxnForProof, setSelectedTxnForProof] = useState<TransactionRecord | null>(null);

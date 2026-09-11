@@ -22,11 +22,15 @@ if ($method === 'GET') {
         $dateFrom = $_GET['date_from'] ?? null;
         $dateTo = $_GET['date_to'] ?? null;
 
-        // Fetch all order records with payment information
+        $tenantId = AuthMiddleware::getTenantFilter($pdo, ['admin']);
+        $tenantCondition = $tenantId !== null ? "WHERE restaurant_id = " . (int)$tenantId : "";
+
+        // Fetch all order records for tenant with payment information
         $sql = "SELECT id, order_number, customer_name, customer_phone, fulfillment_type, 
                        total_amount, amount_khr, payment_method, payment_status, 
                        payment_proof_url, payment_txn_ref, status, created_at 
                 FROM orders 
+                {$tenantCondition}
                 ORDER BY id DESC";
 
         $stmt = $pdo->prepare($sql);
@@ -191,7 +195,7 @@ if ($method === 'GET') {
             if ($filter === 'pending_audit' && $rec['status'] !== 'pending_review') return false;
             if ($filter === 'cod' && $rec['method'] !== 'cod') return false;
             if ($filter === 'counter' && $rec['method'] !== 'counter_cash') return false;
-            if ($filter === 'cancelled' && !in_array($rec['status'], ['refunded', 'flagged'])) return false;
+            if ($filter === 'cancelled' && !in_array($rec['status'], ['refunded', 'flagged']) && $rec['rawOrderStatus'] !== 'cancelled') return false;
 
             // Search Query filter check
             if (!empty($search)) {

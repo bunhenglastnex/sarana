@@ -263,7 +263,7 @@ export const DeliveryRealMap: React.FC<DeliveryRealMapProps> = ({
                   Live Delivery &amp; Fleet GPS Radar Map (Fullscreen)
                 </h3>
                 <p className="text-xs text-on-surface-variant">
-                  Tracking <strong className="text-amber-600">{activeCouriers.length} Active Couriers</strong> · Primary Corridor: <strong className="text-amber-600">{focusedCourier.name}</strong>
+                  Tracking <strong className="text-amber-600">{activeCouriers.length} Active Couriers</strong>{focusedCourier ? <> · Primary Corridor: <strong className="text-amber-600">{focusedCourier.name}</strong></> : null}
                 </p>
               </div>
             </div>
@@ -460,26 +460,49 @@ export const DeliveryRealMap: React.FC<DeliveryRealMapProps> = ({
           </div>
 
           {/* Bottom Active Corridor Bar */}
-          <div className="absolute bottom-3 left-3 right-3 bg-slate-900/95 backdrop-blur-md rounded-2xl p-3 shadow-xl flex items-center justify-between z-[1000] gap-2 flex-wrap border border-slate-700/50 text-white">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-600/30 text-amber-400 border border-amber-500/40 flex items-center justify-center font-bold">
-                <Navigation className="w-4 h-4" />
+          {focusedCourier ? (
+            <div className="absolute bottom-3 left-3 right-3 bg-slate-900/95 backdrop-blur-md rounded-2xl p-3 shadow-xl flex items-center justify-between z-[1000] gap-2 flex-wrap border border-slate-700/50 text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-600/30 text-amber-400 border border-amber-500/40 flex items-center justify-center font-bold">
+                  <Navigation className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-sans text-xs text-white font-bold">
+                    Active Route Corridor: Oakridge Bypass ({focusedCourier.name})
+                  </span>
+                  <span className="font-sans text-[11px] text-slate-300">
+                    Speed: {focusedCourier.speedKmH} km/h · Remaining: {focusedCourier.remainingKm} km · Light traffic
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="font-sans text-xs text-white font-bold">
-                  Active Route Corridor: Oakridge Bypass ({focusedCourier.name})
-                </span>
-                <span className="font-sans text-[11px] text-slate-300">
-                  Speed: {focusedCourier.speedKmH} km/h · Remaining: {focusedCourier.remainingKm} km · Light traffic
+              <div className="flex items-center gap-2">
+                <span className="font-sans text-xs bg-amber-600 text-white font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+                  <Clock className="w-3.5 h-3.5" /> {focusedCourier.etaLabel} ({focusedCourier.remainingMinutes} mins)
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-sans text-xs bg-amber-600 text-white font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
-                <Clock className="w-3.5 h-3.5" /> {focusedCourier.etaLabel} ({focusedCourier.remainingMinutes} mins)
-              </span>
+          ) : (
+            <div className="absolute bottom-3 left-3 right-3 bg-slate-900/95 backdrop-blur-md rounded-2xl p-3 shadow-xl flex items-center justify-between z-[1000] gap-2 flex-wrap border border-slate-700/50 text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
+                  <Navigation className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-sans text-xs text-white font-bold">
+                    Station HQ Dispatch Radar ({storeName})
+                  </span>
+                  <span className="font-sans text-[11px] text-slate-300">
+                    No active delivery couriers currently on route for this restaurant.
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-sans text-xs bg-slate-800 text-slate-300 border border-slate-700 font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400" /> Dispatch Standby
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

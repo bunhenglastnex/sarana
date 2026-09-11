@@ -76,6 +76,10 @@ export default function CustomersPage() {
   const totalRevenue = customers.reduce((sum, c) => sum + (c.totalSpend || 0), 0);
   const vipCount = counts?.vip ?? customers.filter((c) => c.tag === "VIP").length;
   const totalCustomersCount = counts?.all ?? pagination?.total ?? customers.length;
+  const khqrCount = customers.filter(
+    (c) => c.paymentPreference === "KHQR" || String(c.paymentPreference).toUpperCase().includes("KHQR")
+  ).length;
+  const khqrRatio = totalCustomersCount > 0 ? Math.round((khqrCount / Math.max(1, customers.length)) * 100) : 0;
 
   return (
     <div className="flex flex-col w-full min-h-screen pb-space-2xl gap-space-lg">
@@ -83,6 +87,7 @@ export default function CustomersPage() {
         totalCustomers={totalCustomersCount}
         vipCount={vipCount}
         totalRevenue={totalRevenue}
+        khqrRatio={khqrRatio}
         onAddCustomerClick={() => setShowAddModal(true)}
       />
 

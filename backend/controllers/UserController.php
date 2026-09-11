@@ -23,7 +23,7 @@ class UserController {
             $role   = $_GET['role'] ?? null;
             $status = $_GET['status'] ?? null;
             if ($role !== 'delivery') {
-                $adminUser = AuthMiddleware::authenticate($this->pdo, ['admin']);
+                $adminUser = AuthMiddleware::authenticate($this->pdo, ['super_admin']);
             }
             $users  = $this->userService->getUsers($role, $status);
             jsonResponse(1, 'Users retrieved successfully', $users, 200);
@@ -31,7 +31,7 @@ class UserController {
 
         if ($method === 'POST') {
             $input = json_decode(file_get_contents('php://input'), true) ?? $_POST ?? [];
-            $adminUser = AuthMiddleware::authenticate($this->pdo, ['admin']);
+            $adminUser = AuthMiddleware::authenticate($this->pdo, ['super_admin']);
             $result = $this->userService->createUser($input, $adminUser);
             jsonResponse(1, 'User created successfully', $result, 201);
         }
@@ -41,7 +41,7 @@ class UserController {
             if (!$id) {
                 jsonResponse(0, 'User ID is required', null, 400);
             }
-            $adminUser = AuthMiddleware::authenticate($this->pdo, ['admin']);
+            $adminUser = AuthMiddleware::authenticate($this->pdo, ['super_admin']);
             $result = $this->userService->deleteUser($id, $adminUser);
             jsonResponse(1, "User ID #{$id} deleted successfully", $result, 200);
         }

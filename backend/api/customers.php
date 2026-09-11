@@ -24,9 +24,12 @@ if ($method === 'GET') {
             $targetId = (int)str_replace('CUST-', '', $targetId);
         }
 
+        $tenantId = AuthMiddleware::getTenantFilter($pdo, ['admin']);
+        $orderTenantJoin = $tenantId !== null ? " AND o.restaurant_id = " . (int)$tenantId : "";
+
         // Helper to format order history for a user
-        $fetchUserOrders = function(PDO $pdo, int $userId): array {
-            $stmt = $pdo->prepare("
+        $fetchUserOrders = function(PDO $pdo, int $userId, ?int $tenantId): array {
+            $sql = "
                 SELECT o.id, o.order_number, o.created_at, o.fulfillment_type as channel,
                        o.total_amount as totalPrice, o.payment_method, o.payment_status,
                        o.payment_proof_url as proofImageUrl,
@@ -37,10 +40,18 @@ if ($method === 'GET') {
                        ) as itemsSummary
                 FROM orders o
                 WHERE o.user_id = ?
-                ORDER BY o.id DESC
-                LIMIT 10
-            ");
-            $stmt->execute([$userId]);
+            ";
+            $params = [$userId];
+
+            if ($tenantId !== null) {
+                $sql .= " AND o.restaurant_id = ?";
+                $params[] = $tenantId;
+            }
+
+            $sql .= " ORDER BY o.id DESC LIMIT 10";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             $rawOrders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             return array_map(function($ord) {
@@ -98,7 +109,7 @@ if ($method === 'GET') {
                        COALESCE(SUM(CASE WHEN o.payment_status IN ('paid', 'verified') THEN o.total_amount ELSE 0 END), 0.00) as totalSpend,
                        MAX(o.created_at) as lastOrderDateRaw
                 FROM users u
-                LEFT JOIN orders o ON o.user_id = u.id
+                LEFT JOIN orders o ON o.user_id = u.id {$orderTenantJoin}
                 WHERE u.id = ? AND u.role = 'customer'
                 GROUP BY u.id
                 LIMIT 1
@@ -111,7 +122,7 @@ if ($method === 'GET') {
             }
 
             $formattedId = "CUST-" . sprintf('%03d', $cust['id']);
-            $orders = $fetchUserOrders($pdo, (int)$cust['id']);
+            $orders = $fetchUserOrders($pdo, (int)$cust['id'], $tenantId);
 
             $custData = [
                 'id' => $formattedId,
@@ -160,9 +171,16 @@ if ($method === 'GET') {
             $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm, $searchTerm]);
         }
 
+        // Filter customers for restaurant admin to only those who have ordered at their restaurant
+        $tenantCustomerCondition = "";
+        if ($tenantId !== null) {
+            $tenantCustomerCondition = " AND EXISTS (SELECT 1 FROM orders o_sub WHERE o_sub.user_id = u.id AND o_sub.restaurant_id = " . (int)$tenantId . ")";
+            $whereConditions[] = "EXISTS (SELECT 1 FROM orders o_sub WHERE o_sub.user_id = u.id AND o_sub.restaurant_id = " . (int)$tenantId . ")";
+        }
+
         $whereClause = " WHERE " . implode(" AND ", $whereConditions);
 
-        // Calculate Stats Counts across all customers
+        // Calculate Stats Counts across customers
         $statsSql = "
             SELECT 
                 COUNT(*) as totalAll,
@@ -171,7 +189,7 @@ if ($method === 'GET') {
                 SUM(CASE WHEN u.customer_tag = 'High Spend' THEN 1 ELSE 0 END) as totalHighSpend,
                 SUM(CASE WHEN u.customer_tag = 'New' THEN 1 ELSE 0 END) as totalNew
             FROM users u
-            WHERE u.role = 'customer'
+            WHERE u.role = 'customer' {$tenantCustomerCondition}
         ";
         $statsStmt = $pdo->query($statsSql);
         $statsData = $statsStmt->fetch(PDO::FETCH_ASSOC);
@@ -198,7 +216,7 @@ if ($method === 'GET') {
                    COALESCE(SUM(CASE WHEN o.payment_status IN ('paid', 'verified') THEN o.total_amount ELSE 0 END), 0.00) as totalSpend,
                    MAX(o.created_at) as lastOrderDateRaw
             FROM users u
-            LEFT JOIN orders o ON o.user_id = u.id
+            LEFT JOIN orders o ON o.user_id = u.id {$orderTenantJoin}
             {$whereClause}
             GROUP BY u.id
             ORDER BY u.id DESC
@@ -207,9 +225,9 @@ if ($method === 'GET') {
         $result = paginateQuery($pdo, $baseSql, $params, $pageParam, $limitParam);
         $rawCustomers = $result['data'];
 
-        $formattedCustomers = array_map(function($cust) use ($pdo, $fetchUserOrders) {
+        $formattedCustomers = array_map(function($cust) use ($pdo, $fetchUserOrders, $tenantId) {
             $formattedId = "CUST-" . sprintf('%03d', $cust['id']);
-            $orders = $fetchUserOrders($pdo, (int)$cust['id']);
+            $orders = $fetchUserOrders($pdo, (int)$cust['id'], $tenantId);
 
             $lastDate = 'No orders yet';
             if (!empty($cust['lastOrderDateRaw'])) {

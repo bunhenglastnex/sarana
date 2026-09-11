@@ -30,7 +30,9 @@ if ($method === 'GET') {
 
     if ($action === 'fleet_radar') {
         try {
-            // Fetch All Store & System Configuration
+            $tenantId = AuthMiddleware::getTenantFilter($pdo, ['admin', 'staff']);
+
+            // Fetch Store & System Configuration
             $settingsStmt = $pdo->prepare("SELECT setting_key, setting_value FROM settings");
             $settingsStmt->execute();
             $rawSettings = $settingsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -55,13 +57,32 @@ if ($method === 'GET') {
                 'lng'      => $storeLng,
             ];
 
-            // Fetch all active delivery staff + telemetry + active order
-            $stmt = $pdo->prepare("
+            // If scoped to a specific tenant restaurant, pull exact store location & name
+            if ($tenantId !== null) {
+                $rStmt = $pdo->prepare("SELECT name, address, lat, lng FROM restaurants WHERE id = ?");
+                $rStmt->execute([$tenantId]);
+                $rInfo = $rStmt->fetch();
+                if ($rInfo) {
+                    $storeConfig['name'] = $rInfo['name'];
+                    $storeConfig['subtitle'] = 'Dedicated Kitchen Dispatch';
+                    if (!empty($rInfo['address'])) {
+                        $storeConfig['address'] = $rInfo['address'];
+                    }
+                    if ($rInfo['lat'] !== null && $rInfo['lng'] !== null) {
+                        $storeConfig['lat'] = (float)$rInfo['lat'];
+                        $storeConfig['lng'] = (float)$rInfo['lng'];
+                    }
+                }
+            }
+
+            // Fetch active delivery staff assigned to this restaurant (or with active tenant orders) + telemetry
+            $staffSql = "
                 SELECT 
                     u.id,
                     u.name,
                     u.avatar_url,
                     u.role,
+                    u.restaurant_id,
                     t.vehicle_type,
                     t.vehicle_label,
                     t.lat,
@@ -72,17 +93,31 @@ if ($method === 'GET') {
                 FROM users u
                 LEFT JOIN courier_telemetry t ON u.id = t.user_id
                 WHERE u.role = 'delivery' AND u.status = 'active'
-                ORDER BY u.id ASC
-            ");
-            $stmt->execute();
+            ";
+            $staffParams = [];
+
+            if ($tenantId !== null) {
+                $staffSql .= " AND (u.restaurant_id = ? OR u.id IN (
+                    SELECT delivery_staff_id FROM orders 
+                    WHERE restaurant_id = ? 
+                      AND delivery_staff_id IS NOT NULL 
+                      AND status IN ('on_the_way', 'preparing', 'ready_for_delivery')
+                ))";
+                $staffParams[] = $tenantId;
+                $staffParams[] = $tenantId;
+            }
+
+            $staffSql .= " ORDER BY u.id ASC";
+            $stmt = $pdo->prepare($staffSql);
+            $stmt->execute($staffParams);
             $staffList = $stmt->fetchAll();
 
             $couriers = [];
             foreach ($staffList as $staff) {
                 $staffId = (int)$staff['id'];
 
-                // Find active in-transit order assigned to this staff
-                $orderStmt = $pdo->prepare("
+                // Find active in-transit order assigned to this staff (scoped by tenant if applicable)
+                $orderSql = "
                     SELECT 
                         id, order_number, customer_name, delivery_address,
                         delivery_lat, delivery_lng, payment_method, total_amount,
@@ -90,10 +125,16 @@ if ($method === 'GET') {
                     FROM orders
                     WHERE delivery_staff_id = ?
                       AND status IN ('on_the_way', 'preparing', 'ready_for_delivery')
-                    ORDER BY id DESC
-                    LIMIT 1
-                ");
-                $orderStmt->execute([$staffId]);
+                ";
+                $orderParams = [$staffId];
+                if ($tenantId !== null) {
+                    $orderSql .= " AND restaurant_id = ?";
+                    $orderParams[] = $tenantId;
+                }
+                $orderSql .= " ORDER BY id DESC LIMIT 1";
+
+                $orderStmt = $pdo->prepare($orderSql);
+                $orderStmt->execute($orderParams);
                 $activeOrder = $orderStmt->fetch();
 
                 // Lat/Lng Fallbacks if telemetry missing
@@ -118,7 +159,7 @@ if ($method === 'GET') {
                     'vehicleLabel'       => $staff['vehicle_label'] ?: 'Motorbike #' . $staffId,
                     'orderId'            => $activeOrder ? $activeOrder['order_number'] : '#NONE',
                     'customerName'       => $activeOrder ? $activeOrder['customer_name'] : 'No active order',
-                    'destinationAddress' => $activeOrder ? $activeOrder['delivery_address'] : 'Stationed at HQ',
+                    'destinationAddress' => $activeOrder ? $activeOrder['delivery_address'] : 'Stationed at ' . $storeConfig['name'],
                     'speedKmH'           => $speedKmH,
                     'tempCelsius'        => $staff['temp_celsius'] ? (int)$staff['temp_celsius'] : 65,
                     'remainingKm'        => $remainingKm,
@@ -137,15 +178,22 @@ if ($method === 'GET') {
                     'destName'           => $activeOrder ? $activeOrder['customer_name'] : $storeConfig['name'],
                 ];
             }
+
             $totalCodOnRoad = 0.00;
-            $codStmt = $pdo->prepare("
+            $codSql = "
                 SELECT COALESCE(SUM(total_amount), 0) as total_cod
                 FROM orders
                 WHERE fulfillment_type = 'delivery'
                   AND status IN ('on_the_way', 'preparing', 'ready_for_delivery')
                   AND payment_method IN ('cod', 'cash_on_delivery')
-            ");
-            if ($codStmt && $codStmt->execute()) {
+            ";
+            $codParams = [];
+            if ($tenantId !== null) {
+                $codSql .= " AND restaurant_id = ?";
+                $codParams[] = $tenantId;
+            }
+            $codStmt = $pdo->prepare($codSql);
+            if ($codStmt && $codStmt->execute($codParams)) {
                 $codRow = $codStmt->fetch();
                 if ($codRow && isset($codRow['total_cod'])) {
                     $totalCodOnRoad = (float)$codRow['total_cod'];
@@ -153,19 +201,26 @@ if ($method === 'GET') {
             }
 
             $avgFulfillmentMinutes = 18.4;
-            $avgFulfillStmt = $pdo->prepare("
+            $avgSql = "
                 SELECT COALESCE(ROUND(AVG(TIMESTAMPDIFF(MINUTE, created_at, NOW())), 1), 18.4) as avg_mins
                 FROM orders
                 WHERE fulfillment_type = 'delivery'
                   AND status IN ('on_the_way', 'completed', 'delivered')
                   AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-            ");
-            if ($avgFulfillStmt && $avgFulfillStmt->execute()) {
+            ";
+            $avgParams = [];
+            if ($tenantId !== null) {
+                $avgSql .= " AND restaurant_id = ?";
+                $avgParams[] = $tenantId;
+            }
+            $avgFulfillStmt = $pdo->prepare($avgSql);
+            if ($avgFulfillStmt && $avgFulfillStmt->execute($avgParams)) {
                 $avgFulfillRow = $avgFulfillStmt->fetch();
                 if ($avgFulfillRow && !empty($avgFulfillRow['avg_mins'])) {
                     $avgFulfillmentMinutes = (float)$avgFulfillRow['avg_mins'];
                 }
             }
+
             $activeOnRoute = count(array_filter($couriers, function($c) {
                 return $c['orderId'] !== '#NONE';
             }));

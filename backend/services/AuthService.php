@@ -278,14 +278,16 @@ class AuthService {
         }
 
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+        $restaurantId = !empty($adminUser['restaurant_id']) ? (int)$adminUser['restaurant_id'] : null;
 
-        $stmt = $this->pdo->prepare("INSERT INTO users (name, phone, email, avatar_url, role, password, status) VALUES (?, ?, ?, ?, ?, ?, 'active')");
+        $stmt = $this->pdo->prepare("INSERT INTO users (name, phone, email, avatar_url, role, restaurant_id, password, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'active')");
         $stmt->execute([
             $name,
             $phone,
             !empty($email) ? $email : null,
             !empty($avatarUrl) ? $avatarUrl : null,
             $targetRole,
+            $restaurantId,
             $hashedPassword
         ]);
 

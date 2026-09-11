@@ -11,8 +11,8 @@ require_once __DIR__ . '/../lib/logger.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $pdo = getDB();
 
-// Require Admin Role Authentication
-$adminUser = AuthMiddleware::authenticate($pdo, ['admin']);
+// Require Super Admin Role Authentication
+$adminUser = AuthMiddleware::authenticate($pdo, ['super_admin']);
 
 if ($method === 'GET') {
     try {
