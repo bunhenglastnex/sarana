@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Store, Utensils, CheckCircle2, ChevronRight } from "lucide-react";
 
 export interface RestaurantItem {
@@ -44,9 +45,13 @@ export const RestaurantScroll: React.FC<RestaurantScrollProps> = ({
             Restaurants & Kitchens
           </h3>
         </div>
-        <span className="text-[11px] text-on-surface-variant font-medium">
-          {activeRestaurantsWithItems.length} Available
-        </span>
+        <Link
+          href="/all-restaurant"
+          className="text-[11px] font-bold text-primary hover:underline flex items-center gap-0.5"
+        >
+          <span>View All ({activeRestaurantsWithItems.length})</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {/* Horizontal Scrollable Container */}

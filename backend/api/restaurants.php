@@ -52,6 +52,9 @@ if ($method === 'GET') {
         $stmt->execute($params);
         $restaurants = $stmt->fetchAll();
 
+        $includeFoods = isset($_GET['include_foods']) || isset($_GET['with_foods']);
+        $foodsLimit = isset($_GET['foods_limit']) ? max(1, min(20, (int)$_GET['foods_limit'])) : 6;
+
         foreach ($restaurants as &$r) {
             $r['id'] = (int)$r['id'];
             $r['is_active'] = (bool)$r['is_active'];
@@ -62,7 +65,46 @@ if ($method === 'GET') {
             $fStmt = $pdo->prepare("SELECT COUNT(*) FROM foods WHERE restaurant_id = ? AND status = 'public'");
             $fStmt->execute([$r['id']]);
             $r['total_foods_count'] = (int)$fStmt->fetchColumn();
+
+            if ($includeFoods) {
+                $foodStmt = $pdo->prepare("
+                    SELECT f.id, f.restaurant_id, f.category_id, c.name as category_name,
+                           f.name, f.slug, f.price, f.description, f.image_url,
+                           f.badge_text, f.badge_type, f.is_top_seller, f.prep_time_minutes,
+                           f.options, f.is_available, f.stock_quantity, f.is_featured, f.status
+                    FROM foods f
+                    LEFT JOIN categories c ON f.category_id = c.id
+                    WHERE f.restaurant_id = ? AND f.status = 'public' AND f.is_available = 1
+                    ORDER BY f.is_featured DESC, f.is_top_seller DESC, f.id DESC
+                    LIMIT {$foodsLimit}
+                ");
+                $foodStmt->execute([$r['id']]);
+                $foods = $foodStmt->fetchAll();
+                foreach ($foods as &$food) {
+                    $food['id'] = (int)$food['id'];
+                    $food['restaurant_id'] = (int)$food['restaurant_id'];
+                    $food['category_id'] = (int)$food['category_id'];
+                    $food['price'] = (float)$food['price'];
+                    $food['is_top_seller'] = (bool)$food['is_top_seller'];
+                    $food['is_available'] = (bool)$food['is_available'];
+                    $food['is_featured'] = (bool)$food['is_featured'];
+                    $food['stock_quantity'] = (int)$food['stock_quantity'];
+                    $food['prep_time_minutes'] = $food['prep_time_minutes'] !== null ? (int)$food['prep_time_minutes'] : null;
+                    if (!empty($food['options']) && is_string($food['options'])) {
+                        $food['options'] = json_decode($food['options'], true);
+                    }
+                }
+                $r['foods'] = $foods;
+            }
         }
+
+        // Sort restaurants by total_foods_count DESC so restaurants with more data display first
+        usort($restaurants, function ($a, $b) {
+            if ($b['total_foods_count'] !== $a['total_foods_count']) {
+                return $b['total_foods_count'] <=> $a['total_foods_count'];
+            }
+            return $a['id'] <=> $b['id'];
+        });
 
         jsonResponse(1, 'Restaurants fetched successfully', $restaurants);
     } catch (PDOException $e) {

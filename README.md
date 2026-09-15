@@ -39,6 +39,7 @@ restaurant-ordering-system/
 From the project root directory (`D:\learning\Sarana\Online-Ordering`):
 
 1. **Install dependencies once**:
+
    ```bash
    npm install
    cd frontend && npm install && cd ..
@@ -50,6 +51,7 @@ From the project root directory (`D:\learning\Sarana\Online-Ordering`):
    ```
 
 This launches:
+
 - **Backend API**: `http://localhost:8000` (PHP Server)
 - **Frontend App**: `http://localhost:3001` (Next.js App)
 
@@ -57,7 +59,7 @@ This launches:
 
 ### 🛠️ Individual Commands
 
-- **Setup Database**: `npm run setup:db` *(or `php backend/database/setup.php`)*
-- **Start Backend Only**: `npm run backend` *(or `php -S localhost:8000 -t backend`)*
-- **Start Frontend Only**: `npm run frontend` *(or `npm run dev --prefix frontend`)*
-- **Start Telegram Bot Listener**: `npm run telegram:poll` *(or `php backend/telegram-poll.php`)*
+- **Setup Database**: `npm run setup:db` _(or `php backend/database/setup.php`)_
+- **Start Backend Only**: `npm run backend` _(or `php -S localhost:8000 -t backend`)_
+- **Start Frontend Only**: `npm run frontend` _(or `npm run dev --prefix frontend`)_
+- **Start Telegram Bot Listener**: `npm run telegram:poll` _(or `php backend/telegram-poll.php`)_

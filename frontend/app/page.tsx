@@ -9,9 +9,11 @@ import React, {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SearchBar } from "@/components/customer/SearchBar";
-import { PromoBanner } from "@/components/customer/PromoBanner";
 import { CategoryScroll } from "@/components/customer/CategoryScroll";
-import { RestaurantScroll, RestaurantItem } from "@/components/customer/RestaurantScroll";
+import {
+  RestaurantScroll,
+  RestaurantItem,
+} from "@/components/customer/RestaurantScroll";
 import { FoodCard, FoodItem } from "@/components/customer/FoodCard";
 import { AddProductPopup } from "@/components/customer/AddProductPopup";
 import { FloatingCartBar } from "@/components/customer/FloatingCartBar";
@@ -32,7 +34,9 @@ export default function CustomerPageLayout() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [restaurantsList, setRestaurantsList] = useState<RestaurantItem[]>([]);
-  const [selectedRestaurant, setSelectedRestaurant] = useState<string | number>("all");
+  const [selectedRestaurant, setSelectedRestaurant] = useState<string | number>(
+    "all",
+  );
 
   // Cart store integration (Persisted in IndexedDB)
   const cartItems = useCartStore((state) => state.items);
@@ -65,10 +69,16 @@ export default function CustomerPageLayout() {
   const [totalItemsCount, setTotalItemsCount] = useState(0);
 
   // Favorites state (Database + IndexedDB fallback for guests)
-  const [userFavoriteIds, setUserFavoriteIds] = useState<Set<string>>(new Set());
+  const [userFavoriteIds, setUserFavoriteIds] = useState<Set<string>>(
+    new Set(),
+  );
   const localFavoriteIds = useFavoritesStore((state) => state.localFavoriteIds);
-  const toggleLocalFavorite = useFavoritesStore((state) => state.toggleLocalFavorite);
-  const syncFavoritesToDatabase = useFavoritesStore((state) => state.syncFavoritesToDatabase);
+  const toggleLocalFavorite = useFavoritesStore(
+    (state) => state.toggleLocalFavorite,
+  );
+  const syncFavoritesToDatabase = useFavoritesStore(
+    (state) => state.syncFavoritesToDatabase,
+  );
 
   const observerTargetRef = useRef<HTMLDivElement>(null);
 
@@ -80,7 +90,9 @@ export default function CustomerPageLayout() {
           .then((res) => {
             const favs = res.data?.data || res.data || [];
             if (Array.isArray(favs)) {
-              const ids = new Set<string>(favs.map((f: any) => String(f.food_id || f.id)));
+              const ids = new Set<string>(
+                favs.map((f: any) => String(f.food_id || f.id)),
+              );
               setUserFavoriteIds(ids);
             }
           })
@@ -113,7 +125,11 @@ export default function CustomerPageLayout() {
       });
 
       try {
-        await Api.post("/favorites.php", { food_id: numId, phone, user_id: userId });
+        await Api.post("/favorites.php", {
+          food_id: numId,
+          phone,
+          user_id: userId,
+        });
       } catch (err) {
         console.error("Failed to toggle favorite:", err);
       }
@@ -132,7 +148,9 @@ export default function CustomerPageLayout() {
           setRestaurantsList(list);
         }
       })
-      .catch((err) => console.error("Failed to fetch active restaurants:", err));
+      .catch((err) =>
+        console.error("Failed to fetch active restaurants:", err),
+      );
   }, []);
 
   // Fetch paginated public menu from backend API (12 items per batch)
@@ -317,13 +335,14 @@ export default function CustomerPageLayout() {
       foodPayload as any,
       newItem.quantity,
       newItem.selectedOptions,
-      newItem.specialInstructions
+      newItem.specialInstructions,
     );
 
     if (res.isConflict) {
       setConflictModalState({
         isOpen: true,
-        currentRestaurantName: res.currentRestaurantName || "Current Restaurant",
+        currentRestaurantName:
+          res.currentRestaurantName || "Current Restaurant",
         newRestaurantName: res.newRestaurantName || "New Restaurant",
         pendingFood: foodPayload,
         pendingQuantity: newItem.quantity,
@@ -351,7 +370,8 @@ export default function CustomerPageLayout() {
     if (res.isConflict) {
       setConflictModalState({
         isOpen: true,
-        currentRestaurantName: res.currentRestaurantName || "Current Restaurant",
+        currentRestaurantName:
+          res.currentRestaurantName || "Current Restaurant",
         newRestaurantName: res.newRestaurantName || "New Restaurant",
         pendingFood: foodPayload,
         pendingQuantity: 1,
@@ -371,13 +391,15 @@ export default function CustomerPageLayout() {
           ? parseFloat(item.price)
           : Number(item.price || 0)) *
           item.quantity,
-      0
+      0,
     );
   }, [cartItems]);
 
   const currentSelectedRestoName = useMemo(() => {
     if (selectedRestaurant === "all" || !selectedRestaurant) return null;
-    const found = restaurantsList.find((r) => String(r.id) === String(selectedRestaurant));
+    const found = restaurantsList.find(
+      (r) => String(r.id) === String(selectedRestaurant),
+    );
     return found ? found.name : null;
   }, [selectedRestaurant, restaurantsList]);
 
@@ -386,9 +408,6 @@ export default function CustomerPageLayout() {
       <div className="flex flex-col w-full">
         {/* Search & Quick Filter Bar */}
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
-
-        <PromoBanner />
-
         {/* Horizontal Scroll Restaurant Carousel */}
         <RestaurantScroll
           restaurants={restaurantsList}
@@ -548,7 +567,7 @@ export default function CustomerPageLayout() {
               conflictModalState.pendingFood,
               conflictModalState.pendingQuantity || 1,
               conflictModalState.pendingOptions || {},
-              conflictModalState.pendingNotes || ""
+              conflictModalState.pendingNotes || "",
             );
           }
         }}
