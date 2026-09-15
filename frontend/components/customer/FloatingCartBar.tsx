@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/lib/store/useCartStore';
 
@@ -15,6 +16,7 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({
   totalPrice: propTotalPrice,
   onViewCart,
 }) => {
+  const router = useRouter();
   const items = useCartStore((state) => state.items);
 
   const realItemCount = useMemo(() => {
@@ -35,10 +37,18 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({
     );
   }, [items, propTotalPrice]);
 
+  const handleCartClick = () => {
+    if (onViewCart) {
+      onViewCart();
+    } else {
+      router.push('/cart');
+    }
+  };
+
   if (realItemCount <= 0) return null;
 
   return (
-    <aside className="sticky bottom-20 z-30 w-full max-w-md mx-auto mt-auto px-2 pointer-events-auto">
+    <aside className="sticky bottom-20 z-30 w-full max-w-md mx-auto mt-auto px-2 pointer-events-auto cursor-pointer" onClick={handleCartClick}>
       <div className="bg-inverse-surface text-inverse-on-surface rounded-full px-space-md py-3 shadow-xl flex items-center justify-between mx-1 backdrop-blur-md border border-white/10 animate-in slide-in-from-bottom-4 duration-300">
         <div className="flex items-center gap-space-sm">
           <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-xs shadow-inner">
@@ -56,7 +66,10 @@ export const FloatingCartBar: React.FC<FloatingCartBarProps> = ({
 
         <button
           type="button"
-          onClick={onViewCart}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCartClick();
+          }}
           className="flex items-center gap-1.5 bg-primary text-on-primary px-space-md py-2 rounded-full font-bold text-xs hover:bg-primary-container active:scale-95 transition-all shadow-sm"
         >
           <span>View Cart</span>

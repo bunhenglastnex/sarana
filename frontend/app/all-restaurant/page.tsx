@@ -519,8 +519,8 @@ export default function AllRestaurantsPage() {
         />
 
         {/* Floating Cart & Navigation */}
-        <FloatingCartBar />
-        <BottomNav />
+        <FloatingCartBar onViewCart={() => router.push("/cart")} />
+        <BottomNav activeTab="home" cartBadgeCount={totalCartCount} />
       </main>
     </div>
   );
