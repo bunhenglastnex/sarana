@@ -38,10 +38,34 @@ try {
     $pdo = new PDO("mysql:host=$host;port=$port", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // 2. Create Database
+    // 2. Create Database & Reset if requested
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     $pdo->exec("USE `{$dbName}`");
     echo "✅ Database '{$dbName}' checked/created.\n\n";
+
+    $isReset = in_array('--fresh', $argv ?? []) || in_array('--reset', $argv ?? []) || isset($_GET['fresh']) || isset($_GET['reset']);
+    if ($isReset) {
+        echo "⚠️ RESET REQUESTED: Dropping existing tables...\n";
+        $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+        $tables = [
+            'user_addresses',
+            'courier_telemetry',
+            'settings',
+            'rate_limits',
+            'system_logs',
+            'order_items',
+            'orders',
+            'foods',
+            'categories',
+            'users',
+            'restaurants'
+        ];
+        foreach ($tables as $t) {
+            $pdo->exec("DROP TABLE IF EXISTS `{$t}`");
+        }
+        $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+        echo "✅ Tables wiped cleanly.\n\n";
+    }
 
     // 3. Create Tables in dependency order
     echo "📦 Creating database tables...\n";

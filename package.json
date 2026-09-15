@@ -12,6 +12,7 @@
     "backend": "php -S localhost:8000 -t backend",
     "frontend": "npm run dev --prefix frontend",
     "setup:db": "php backend/database/setup.php",
+    "db:reset": "php backend/database/setup.php --fresh",
     "telegram:poll": "php backend/telegram-poll.php"
   },
   "devDependencies": {

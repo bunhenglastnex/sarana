@@ -1,42 +1,12 @@
-# 🍔 Restaurant Online Ordering & In-House Delivery System (Cash Only)
+# 🍔 Restaurant Online Ordering & Multi-Tenant Delivery System
 
-A production-ready architecture and implementation for a single-brand restaurant with online menu ordering, in-house delivery dispatch, in-store pickup, and cash settlement.
-
----
-
-## 📁 System Architecture
-
-```
-restaurant-ordering-system/
-  ├── flow-my-system/        # Business logic specifications & architecture diagrams
-  │     ├── Actors.md        # Roles: Restaurant Admin, Customer, Delivery Staff
-  │     ├── Order.md         # Order flow & pricing (Delivery vs Pickup)
-  │     ├── Restaurant.md    # Kitchen preparation lifecycle
-  │     ├── Delivery.md      # In-house delivery dispatch & cash collection (COD)
-  │     ├── Customer.md      # Customer tracking progression
-  │     ├── Money.md         # 100% direct revenue model (Zero 3rd-party commission)
-  │     └── importain-cash.md# End-of-shift COD remittance & cash settlement
-  │
-  ├── backend/               # Pure PHP REST API (Runs via: php -S localhost:8000)
-  │     ├── database/
-  │     │     └── setup.php  # Self-contained MySQL migration & seed script
-  │     ├── config/          # DB connection (PDO) & CORS configuration
-  │     └── api/             # Endpoints: foods.php, orders.php, delivery.php, order-status.php
-  │
-  └── frontend/              # Next.js 14 + React + TypeScript + Tailwind CSS
-        ├── app/page.tsx     # Customer menu browsing & checkout example
-        ├── app/admin/       # Kitchen admin order management example
-        ├── app/delivery/    # Delivery staff dispatch & cash collection example
-        └── app/track/       # Live order timeline tracking example
-```
+A production-ready architecture and implementation for online menu ordering, kitchen management, multi-tenant restaurant catalog, shared delivery dispatch, live tracking, and cash settlement.
 
 ---
 
-## 🚀 Running Frontend & Backend with ONE Command
+## ⚡ Quick Start
 
-### ⚡ Quick Start (Single Command)
-
-From the project root directory (`D:\learning\Sarana\Online-Ordering`):
+From the project root directory:
 
 1. **Install dependencies once**:
 
@@ -53,13 +23,73 @@ From the project root directory (`D:\learning\Sarana\Online-Ordering`):
 This launches:
 
 - **Backend API**: `http://localhost:8000` (PHP Server)
-- **Frontend App**: `http://localhost:3001` (Next.js App)
+- **Frontend App**: `http://localhost:3000` (Next.js App)
 
 ---
 
-### 🛠️ Individual Commands
+## 🗄️ Database Setup & Reset Data
 
-- **Setup Database**: `npm run setup:db` _(or `php backend/database/setup.php`)_
-- **Start Backend Only**: `npm run backend` _(or `php -S localhost:8000 -t backend`)_
-- **Start Frontend Only**: `npm run frontend` _(or `npm run dev --prefix frontend`)_
-- **Start Telegram Bot Listener**: `npm run telegram:poll` _(or `php backend/telegram-poll.php`)_
+### 1. Initial Database Setup & Migration
+Creates all database tables and seeds initial data:
+```bash
+npm run setup:db
+# or
+php backend/database/setup.php
+```
+
+### 2. Reset & Re-Seed Database (Fresh Clean Data)
+To completely wipe all existing tables and re-seed sample multi-tenant restaurants, categories, dishes, users, and couriers from scratch:
+```bash
+npm run db:reset
+# or
+php backend/database/setup.php --fresh
+```
+
+### 3. Reset via Browser (Web Interface)
+While the PHP backend server is running (`http://localhost:8000`), open in browser:
+- **Initial Setup**: `http://localhost:8000/database/setup.php`
+- **Fresh Reset & Re-Seed**: `http://localhost:8000/database/setup.php?fresh=1`
+
+---
+
+## 🔐 Default Demo Accounts & Login Credentials
+
+| Role | Email | Phone | Password | Access Route & Scope |
+| :--- | :--- | :--- | :--- | :--- |
+| 🛡️ **Super Platform Admin** | `superadmin@system.com` | `012000000` | `admin123` | Full Multi-Tenant Platform Admin (`/admin`) |
+| 🏪 **Tenant Admin (Amber Bistro)** | `admin@restaurant.com` | `012111222` | `admin123` | Amber Bistro Kitchen & Orders (`/admin`) |
+| 🏪 **Tenant Admin (Spice Route)** | `admin2@restaurant.com` | `012222333` | `admin123` | Spice Route Kitchen & Orders (`/admin`) |
+| 🛵 **Delivery Courier #1** | `delivery1@restaurant.com` | `098333444` | `driver123` | Shared Fleet Dispatch & GPS Telemetry (`/delivery`) |
+| 🛵 **Delivery Courier #2** | `delivery2@restaurant.com` | `099555666` | `driver123` | Shared Fleet Dispatch & GPS Telemetry (`/delivery`) |
+| 👤 **Customer (VIP)** | `david.chen@example.com` | `+1 (555) 234-9912` | `customer123` | Customer Online Ordering & Tracking (`/login`) |
+
+---
+
+## 🏗️ Production Build & Run
+
+To build and run the optimized production bundle for both Frontend and Backend:
+
+```bash
+npm run prod
+# or
+npm start
+```
+
+This performs:
+1. Compiles and optimizes Next.js frontend assets (`npm run build:frontend`).
+2. Launches both the **PHP Backend Server** and **Next.js Production Node Server**.
+
+---
+
+## 🛠️ CLI Commands Cheat Sheet
+
+| Action | Command |
+| :--- | :--- |
+| **Run Fullstack Dev Servers** | `npm run dev` |
+| **Run Fullstack Production (Build & Start)** | `npm run prod` _(or `npm start`)_ |
+| **Build Frontend Only** | `npm run build:frontend` |
+| **Setup & Seed Database** | `npm run setup:db` |
+| **Reset & Re-Seed Database** | `npm run db:reset` |
+| **Backend API Only** | `npm run backend` |
+| **Frontend App Only** | `npm run frontend` |
+| **Telegram Bot Polling** | `npm run telegram:poll` |
