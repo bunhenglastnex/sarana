@@ -47,8 +47,8 @@ export const useCartStore = create<CartState>()(
 
       addItem: (food, quantity = 1, options = {}, notes = '') => {
         const currentItems = get().items;
-        const targetRestoId = food.restaurant_id || 1;
-        const targetRestoName = food.restaurant_name || 'Restaurant';
+        const targetRestoId = Number(food.restaurant_id || (food as any).restaurantId || 1);
+        const targetRestoName = food.restaurant_name || (food as any).restaurantName || 'Restaurant';
 
         const foodId = Number(food.id);
         const optionsKey = JSON.stringify(options || {});
@@ -70,6 +70,8 @@ export const useCartStore = create<CartState>()(
               ...currentItems,
               {
                 food_id: foodId,
+                restaurant_id: targetRestoId,
+                restaurant_name: targetRestoName,
                 name: food.name,
                 price: typeof food.price === 'string' ? parseFloat(food.price) : Number(food.price || 0),
                 quantity,
@@ -90,13 +92,15 @@ export const useCartStore = create<CartState>()(
 
       forceAddItem: (food, quantity = 1, options = {}, notes = '') => {
         const foodId = Number(food.id);
-        const targetRestoId = food.restaurant_id || 1;
-        const targetRestoName = food.restaurant_name || 'Restaurant';
+        const targetRestoId = Number(food.restaurant_id || (food as any).restaurantId || 1);
+        const targetRestoName = food.restaurant_name || (food as any).restaurantName || 'Restaurant';
 
         set({
           items: [
             {
               food_id: foodId,
+              restaurant_id: targetRestoId,
+              restaurant_name: targetRestoName,
               name: food.name,
               price: typeof food.price === 'string' ? parseFloat(food.price) : Number(food.price || 0),
               quantity,
@@ -104,6 +108,8 @@ export const useCartStore = create<CartState>()(
               notes: notes || '',
               food: {
                 ...food,
+                restaurant_id: targetRestoId,
+                restaurant_name: targetRestoName,
                 image_url: food.image_url || (food as any).imageUrl || '',
               },
             },

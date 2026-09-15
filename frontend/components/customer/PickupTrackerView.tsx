@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -23,7 +23,7 @@ import {
   Layers,
   CheckCheck,
 } from 'lucide-react';
-
+import { Api, useApi } from '@/lib/api';
 
 interface PickupTrackerViewProps {
   orderRef?: string;
@@ -38,6 +38,33 @@ export const PickupTrackerView: React.FC<PickupTrackerViewProps> = ({
   const [isCopied, setIsCopied] = useState(false);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
+
+  const cleanOrderRef = useMemo(() => orderRef.replace('#', ''), [orderRef]);
+
+  // Fetch live order data to get exact fulfilling restaurant location, address & phone
+  const { data: orderRes } = useApi<any>('/customer-orders.php', {
+    order_id: cleanOrderRef,
+  });
+
+  const orderData = useMemo(() => {
+    if (Array.isArray(orderRes?.data)) return orderRes.data[0];
+    if (Array.isArray(orderRes)) return orderRes[0];
+    return null;
+  }, [orderRes]);
+
+  const restaurantName = orderData?.restaurant_name || 'Amber & Ember Bistro';
+  const restaurantAddress =
+    orderData?.restaurant_address || '520 N Michigan Ave, Suite 14F, Siem Reap';
+  const restaurantPhone = orderData?.restaurant_phone || '+855 23 888 999';
+  const restaurantLat = orderData?.restaurant_lat
+    ? Number(orderData.restaurant_lat)
+    : 13.35227;
+  const restaurantLng = orderData?.restaurant_lng
+    ? Number(orderData.restaurant_lng)
+    : 103.955116;
+  const totalAmount = orderData?.total_amount
+    ? Number(orderData.total_amount).toFixed(2)
+    : '28.50';
 
   const triggerNotice = (msg: string) => {
     setNoticeMessage(msg);
@@ -332,15 +359,15 @@ export const PickupTrackerView: React.FC<PickupTrackerViewProps> = ({
                   Pickup Destination
                 </span>
                 <h3 className="font-bold text-sm text-on-surface">
-                  Amber & Ember Bistro
+                  {restaurantName}
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-0.5">
-                  244 Oak Street, Central Dining Quarter
+                  {restaurantAddress}
                 </p>
               </div>
               <div className="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant flex items-center gap-1 flex-shrink-0">
                 <Navigation className="w-3.5 h-3.5 text-primary" />
-                <span className="text-[10px] font-bold">~6 min (450m)</span>
+                <span className="text-[10px] font-bold">Store Counter</span>
               </div>
             </div>
 
@@ -349,35 +376,36 @@ export const PickupTrackerView: React.FC<PickupTrackerViewProps> = ({
               className="w-full h-36 bg-surface-container rounded-xl relative overflow-hidden bg-cover bg-center shadow-inner border border-surface-container-high"
               style={{
                 backgroundImage:
-                  "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCklNexH6yUkjGIxhLcF-a0YQk2FPg95zxOapOPZe3hiM8wfw_slYsnt3cBE7ryAVKL6Avp05iH6KiMp0sCMufRL4iiLMSs0lpt2mc46RiWNTh9qbWPhc5PPX-BVVQNFhn0mgZURccE3HOgWnIJpUXSTjZllSk5GOJL5BhVLO1mgmPCymL4qXulo5IAxVULMh352uWW3-c6x7jjHXqrvH7EgShardQ73oYqViSgwXsIjBuBEw9r2dDz')",
+                  "url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80')",
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="px-3 py-1.5 rounded-full bg-surface text-on-surface shadow-lg flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-                  <span className="text-xs font-bold">Store Front Entrance</span>
+                <div className="px-3 py-1.5 rounded-full bg-surface text-on-surface shadow-lg flex items-center gap-1.5 border border-surface-container-high">
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs font-bold">{restaurantName} Counter</span>
                 </div>
               </div>
               <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-surface/90 text-on-surface text-[10px] font-bold backdrop-blur-sm">
-                Bistro Counter • Ground Level
+                Pickup Counter • Ground Level
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => triggerNotice('Opening Google Maps Directions...')}
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${restaurantLat},${restaurantLng}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="h-11 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-sm hover:bg-primary-container"
               >
                 <Navigation className="w-4 h-4" /> Get Directions
-              </button>
+              </a>
               <a
-                href="tel:+15550198234"
+                href={`tel:${restaurantPhone}`}
                 className="h-11 rounded-xl bg-surface-container text-on-surface font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-transform hover:bg-surface-container-high"
               >
-                <Phone className="w-4 h-4 text-tertiary" /> Call Bistro
+                <Phone className="w-4 h-4 text-tertiary" /> Call Store
               </a>
             </div>
           </div>
@@ -396,12 +424,12 @@ export const PickupTrackerView: React.FC<PickupTrackerViewProps> = ({
                   {paymentMethod}
                 </span>
                 <span className="text-[11px] text-on-surface-variant truncate">
-                  Transaction #QR-9428 • No balance due
+                  Order Ticket {orderRef}
                 </span>
               </div>
             </div>
             <div className="px-3 py-1 rounded-full bg-surface-container text-secondary font-extrabold text-xs">
-              $28.50
+              ${totalAmount}
             </div>
           </div>
 

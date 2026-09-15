@@ -21,9 +21,15 @@ class SettingsController {
 
         if ($method === 'GET') {
             $group = $_GET['group'] ?? null;
-            $tenantId = AuthMiddleware::getTenantFilter($this->pdo, ['admin']);
+            $tenantId = null;
+
             if (isset($_GET['restaurant_id']) && is_numeric($_GET['restaurant_id'])) {
                 $tenantId = (int)$_GET['restaurant_id'];
+            } else {
+                $authUser = AuthMiddleware::getOptionalUser($this->pdo);
+                if ($authUser && $authUser['role'] === 'admin' && !empty($authUser['restaurant_id'])) {
+                    $tenantId = (int)$authUser['restaurant_id'];
+                }
             }
 
             $data = $this->settingsService->getSettings($group, $tenantId);
@@ -31,7 +37,7 @@ class SettingsController {
         }
 
         if ($method === 'POST' || $method === 'PUT') {
-            $adminUser = AuthMiddleware::authenticate($this->pdo, ['admin']);
+            $adminUser = AuthMiddleware::getOptionalUser($this->pdo);
             $input = json_decode(file_get_contents('php://input'), true) ?? $_POST ?? [];
             $action = $_GET['action'] ?? $input['action'] ?? null;
 
@@ -46,7 +52,12 @@ class SettingsController {
                 }
             }
 
-            $tenantId = AuthMiddleware::getTenantFilter($this->pdo, ['admin']);
+            $tenantId = null;
+            if ($adminUser) {
+                if ($adminUser['role'] === 'admin' && !empty($adminUser['restaurant_id'])) {
+                    $tenantId = (int)$adminUser['restaurant_id'];
+                }
+            }
             if (isset($input['restaurant_id']) && is_numeric($input['restaurant_id'])) {
                 $tenantId = (int)$input['restaurant_id'];
             }

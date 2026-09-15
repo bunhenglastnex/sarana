@@ -60,38 +60,10 @@ function calculateDistanceKm(
 export const CheckoutReviewView: React.FC = () => {
   const router = useRouter();
 
-  // Fetch admin settings for delivery zone configuration
-  const { data: settingsRes } = useApi<any>("/settings.php");
-  const settings = settingsRes?.data || settingsRes || {};
-
-  const storeLat = parseFloat(settings.store_latitude || "13.352270");
-  const storeLng = parseFloat(settings.store_longitude || "103.955116");
-  const restaurantName = settings.store_name || "Bistro Kitchen HQ";
-  const restaurantAddress =
-    settings.store_address || "520 N Michigan Ave, Suite 14F, Siem Reap";
-  const restaurantPhone = settings.store_phone || "+855 23 888 999";
-  const openingTime = settings.opening_time || "10:00 AM";
-  const closingTime = settings.closing_time || "10:00 PM";
-
-  const maxRadiusKm = parseFloat(settings.max_delivery_radius_km || "7.5");
-  const enableZoneBlocker =
-    settings.enable_zone_blocker !== false &&
-    settings.enable_zone_blocker !== "false";
-  const outOfZoneMessage =
-    settings.out_of_zone_message ||
-    `Sorry! Your delivery address is outside our maximum delivery radius of ${maxRadiusKm} km. Pickup is still available!`;
-
-  const baseDeliveryFee = parseFloat(settings.base_delivery_fee || "1.50");
-  const baseIncludedKm = parseFloat(settings.base_included_km || "3.0");
-  const extraFeePerKm = parseFloat(settings.extra_fee_per_km || "0.50");
-  const freeDeliveryMinSubtotal = parseFloat(
-    settings.free_delivery_min_subtotal || "25.00",
-  );
-  const taxRate = parseFloat(settings.tax_rate ?? "9.03");
-
   // Stores
   const {
     items,
+    restaurantId: cartStoreRestoId,
     fulfillmentType,
     setFulfillmentType,
     customerPhone: cartPhone,
@@ -108,6 +80,107 @@ export const CheckoutReviewView: React.FC = () => {
     userId,
     avatarUrl,
   } = useAuthStore();
+
+  const targetRestoId = useMemo(() => {
+    const rawId =
+      items[0]?.restaurant_id ||
+      items[0]?.food?.restaurant_id ||
+      cartStoreRestoId;
+    return rawId ? Number(rawId) : 1;
+  }, [items, cartStoreRestoId]);
+
+  // Fetch admin settings for delivery zone configuration for this specific restaurant
+  const { data: settingsRes } = useApi<any>(
+    "/settings.php",
+    { restaurant_id: targetRestoId },
+    { forceRefresh: true }
+  );
+  const settings = settingsRes?.data || settingsRes || {};
+
+  // Fetch multi-tenant restaurants list for live restaurant location, status and details
+  const { data: restaurantsRes } = useApi<any>("/restaurants.php", undefined, {
+    forceRefresh: true,
+  });
+  const restaurantsList = useMemo(() => {
+    if (Array.isArray(restaurantsRes?.data)) return restaurantsRes.data;
+    if (Array.isArray(restaurantsRes)) return restaurantsRes;
+    return [];
+  }, [restaurantsRes]);
+
+  // Determine active restaurant for items in cart
+  const activeRestaurant = useMemo(() => {
+    if (restaurantsList.length > 0) {
+      const found = restaurantsList.find(
+        (r: any) => Number(r.id) === Number(targetRestoId),
+      );
+      if (found) return found;
+    }
+    return null;
+  }, [restaurantsList, targetRestoId]);
+
+  const isKitchenActive = useMemo(() => {
+    let status: any = undefined;
+    if (activeRestaurant && activeRestaurant.is_active !== undefined) {
+      status = activeRestaurant.is_active;
+    } else if (settings.is_active !== undefined) {
+      status = settings.is_active;
+    }
+    if (status === undefined || status === null) return true;
+    if (status === false || status === 0 || status === "0" || status === "false") return false;
+    return true;
+  }, [activeRestaurant, settings]);
+
+  const rawStoreLat =
+    activeRestaurant?.lat !== undefined && activeRestaurant?.lat !== null
+      ? Number(activeRestaurant.lat)
+      : parseFloat(settings.store_latitude || "13.35227");
+
+  const storeLat = !isNaN(rawStoreLat) && rawStoreLat !== 0 ? rawStoreLat : 13.35227;
+
+  const rawStoreLng =
+    activeRestaurant?.lng !== undefined && activeRestaurant?.lng !== null
+      ? Number(activeRestaurant.lng)
+      : parseFloat(settings.store_longitude || "103.955116");
+
+  const storeLng = !isNaN(rawStoreLng) && rawStoreLng !== 0 ? rawStoreLng : 103.955116;
+
+  const restaurantName =
+    activeRestaurant?.name ||
+    items[0]?.restaurant_name ||
+    items[0]?.food?.restaurant_name ||
+    settings.store_name ||
+    "";
+
+  const restaurantAddress =
+    activeRestaurant?.address || settings.store_address || "";
+
+  const restaurantPhone = activeRestaurant?.phone || settings.store_phone || "";
+
+  const restaurantLogo = activeRestaurant?.logo_url || "";
+
+  const openingTime = settings.opening_time || "";
+  const closingTime = settings.closing_time || "";
+
+  const parsedMaxRadius = parseFloat(settings.max_delivery_radius_km || "7.5");
+  const maxRadiusKm = !isNaN(parsedMaxRadius) ? parsedMaxRadius : 7.5;
+  const enableZoneBlocker =
+    settings.enable_zone_blocker !== false &&
+    settings.enable_zone_blocker !== "false";
+  const outOfZoneMessage =
+    settings.out_of_zone_message ||
+    `Sorry! Your delivery address is outside our maximum delivery radius of ${maxRadiusKm} km. Pickup is still available!`;
+
+  const parsedBaseFee = parseFloat(settings.base_delivery_fee || "1.50");
+  const baseDeliveryFee = !isNaN(parsedBaseFee) ? parsedBaseFee : 1.50;
+
+  const parsedExtraFee = parseFloat(settings.extra_fee_per_km || "0.50");
+  const extraFeePerKm = !isNaN(parsedExtraFee) ? parsedExtraFee : 0.50;
+
+  const parsedFreeDeliveryMin = parseFloat(settings.free_delivery_min_subtotal || "25.00");
+  const freeDeliveryMinSubtotal = !isNaN(parsedFreeDeliveryMin) ? parsedFreeDeliveryMin : 25.00;
+
+  const parsedTax = parseFloat(settings.tax_rate ?? "9.03");
+  const taxRate = !isNaN(parsedTax) ? parsedTax : 9.03;
 
   // Local State
   const [fulfillmentMode, setFulfillmentMode] = useState<"delivery" | "pickup">(
@@ -184,14 +257,12 @@ export const CheckoutReviewView: React.FC = () => {
     }
   }, [cartAddress, setCustomerInfo]);
 
-  // Compute distance from store center
+  // Compute distance from store center safely
   const distanceKm = useMemo(() => {
-    return calculateDistanceKm(
-      customerCoords.lat,
-      customerCoords.lng,
-      storeLat,
-      storeLng,
-    );
+    const lat1 = !isNaN(customerCoords.lat) ? customerCoords.lat : storeLat;
+    const lng1 = !isNaN(customerCoords.lng) ? customerCoords.lng : storeLng;
+    const dist = calculateDistanceKm(lat1, lng1, storeLat, storeLng);
+    return !isNaN(dist) ? dist : 0.0;
   }, [customerCoords, storeLat, storeLng]);
 
   // Out of delivery zone restriction check
@@ -239,8 +310,13 @@ export const CheckoutReviewView: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (items.length === 0 || isOutOfZone) {
-      if (isOutOfZone) {
+    if (items.length === 0 || isOutOfZone || !isKitchenActive) {
+      if (!isKitchenActive) {
+        alert(
+          `Sorry! '${restaurantName || "This restaurant"}' is currently closed and not accepting new orders at this time.\n\nRedirecting to restaurant catalogue...`,
+        );
+        setTimeout(() => router.push("/all-restaurant"), 1200);
+      } else if (isOutOfZone) {
         alert(outOfZoneMessage);
       }
       return;
@@ -251,7 +327,10 @@ export const CheckoutReviewView: React.FC = () => {
       return;
     }
 
-    if (fulfillmentMode === "delivery" && (!deliveryAddress || !deliveryAddress.trim())) {
+    if (
+      fulfillmentMode === "delivery" &&
+      (!deliveryAddress || !deliveryAddress.trim())
+    ) {
       alert("Please enter a valid delivery address.");
       return;
     }
@@ -314,11 +393,18 @@ export const CheckoutReviewView: React.FC = () => {
           setIsConfirmationOpen(true);
         }
       } else {
-        alert(res.error || "Failed to place order. Please try again.");
+        const friendlyError =
+          res.error ||
+          "Failed to place order because the kitchen is closed or out of stock.";
+        alert(`${friendlyError}\n\nRedirecting to restaurant menu...`);
+        setTimeout(() => router.push("/all-restaurant"), 1500);
       }
     } catch (err: any) {
       console.error("Failed to submit order:", err);
-      alert("Network error while placing order.");
+      alert(
+        "Network error while placing order. Redirecting to menu...",
+      );
+      setTimeout(() => router.push("/"), 1500);
     } finally {
       setIsSubmitting(false);
     }
@@ -395,20 +481,92 @@ export const CheckoutReviewView: React.FC = () => {
           </div>
         ) : (
           <div className="flex flex-col w-full gap-space-lg">
-            {/* Live Order Pipeline / Status Badges */}
-            <div className="flex items-center justify-between gap-2 py-1">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-[11px] font-bold uppercase tracking-wider">
-                  Order: New (Pending)
-                </span>
+            {/* Live Order Pipeline / Kitchen Status Banner */}
+            {!isKitchenActive ? (
+              <div className="p-4 bg-red-500/10 border-2 border-red-500/40 rounded-2xl flex flex-col gap-3 shadow-md animate-in fade-in">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-200 text-red-950 font-extrabold text-[10px] uppercase tracking-wider">
+                        Kitchen Closed
+                      </span>
+                    </div>
+                    <h3 className="font-extrabold text-sm text-red-900 mt-1">
+                      {restaurantName || "Restaurant"} — Not Accepting Orders
+                    </h3>
+                    <p className="text-xs text-red-700/90 mt-1 leading-relaxed">
+                      Sorry! This kitchen is currently closed or paused by the admin and is not accepting online orders at this time. Please check back during open hours or select items from an active kitchen.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push("/all-restaurant")}
+                  className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <Store className="w-4 h-4" />
+                  <span>Select Another Active Kitchen</span>
+                </button>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed/50 text-on-secondary-fixed-variant">
-                <Clock className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-bold uppercase tracking-wider">
-                  Payment: Pending
-                </span>
+            ) : (
+              <div className="flex items-center justify-between gap-2 py-1">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-800 border border-emerald-500/30 font-bold text-[11px]">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span>Kitchen Active • Accepting Orders</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed/50 text-on-secondary-fixed-variant">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider">
+                    Payment: Pending
+                  </span>
+                </div>
               </div>
+            )}
+
+            {/* Fulfilling Kitchen & Restaurant Location Card */}
+            <div className="p-3.5 bg-gradient-to-r from-primary/10 via-primary/5 to-surface-container-low border border-primary/20 rounded-2xl shadow-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 rounded-xl bg-surface-container overflow-hidden border border-surface-container-high shadow-xs flex items-center justify-center flex-shrink-0">
+                  {restaurantLogo ? (
+                    <img
+                      src={restaurantLogo}
+                      alt={restaurantName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <Store className="w-5 h-5 text-primary" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] font-extrabold text-primary uppercase tracking-wider flex items-center gap-1">
+                    <ChefHat className="w-3 h-3" />
+                    <span>Fulfilling Kitchen</span>
+                  </span>
+                  <h3 className="font-extrabold text-sm text-on-surface truncate mt-0.5">
+                    {restaurantName}
+                  </h3>
+                  <p className="text-xs text-on-surface-variant truncate flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3 text-primary flex-shrink-0" />
+                    <span className="truncate">{restaurantAddress}</span>
+                  </p>
+                </div>
+              </div>
+              {restaurantPhone && (
+                <a
+                  href={`tel:${restaurantPhone}`}
+                  className="p-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary border border-surface-container-high flex-shrink-0 active:scale-95 transition-all"
+                  title="Call Restaurant"
+                >
+                  <Phone className="w-4 h-4" />
+                </a>
+              )}
             </div>
 
             {/* Section 1: Order Type Selection */}
@@ -957,22 +1115,40 @@ export const CheckoutReviewView: React.FC = () => {
 
               {/* Dynamic Live Items List Grouped by Restaurant */}
               {Object.values(
-                items.reduce((acc, item) => {
-                  const rId = item.restaurant_id || item.food?.restaurant_id || 0;
-                  const rName =
-                    item.restaurant_name ||
-                    item.food?.restaurant_name ||
-                    (item.food as any)?.restaurant_name ||
-                    restaurantName ||
-                    "Restaurant";
-                  if (!acc[rId]) {
-                    acc[rId] = { restaurantId: rId, restaurantName: rName, items: [] };
-                  }
-                  acc[rId].items.push(item);
-                  return acc;
-                }, {} as Record<number, { restaurantId: number; restaurantName: string; items: typeof items }>)
+                items.reduce(
+                  (acc, item) => {
+                    const rId =
+                      item.restaurant_id || item.food?.restaurant_id || 0;
+                    const rName =
+                      item.restaurant_name ||
+                      item.food?.restaurant_name ||
+                      (item.food as any)?.restaurant_name ||
+                      restaurantName ||
+                      "Restaurant";
+                    if (!acc[rId]) {
+                      acc[rId] = {
+                        restaurantId: rId,
+                        restaurantName: rName,
+                        items: [],
+                      };
+                    }
+                    acc[rId].items.push(item);
+                    return acc;
+                  },
+                  {} as Record<
+                    number,
+                    {
+                      restaurantId: number;
+                      restaurantName: string;
+                      items: typeof items;
+                    }
+                  >,
+                ),
               ).map((group) => (
-                <div key={group.restaurantId} className="flex flex-col gap-1 my-1">
+                <div
+                  key={group.restaurantId}
+                  className="flex flex-col gap-1 my-1"
+                >
                   <div className="text-[11px] font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded flex items-center gap-1.5 w-fit">
                     <Store className="w-3 h-3 text-primary" />
                     <span>{group.restaurantName}</span>
@@ -1085,9 +1261,11 @@ export const CheckoutReviewView: React.FC = () => {
             <button
               type="button"
               onClick={handlePlaceOrder}
-              disabled={isSubmitting || isOutOfZone}
+              disabled={isSubmitting || isOutOfZone || !isKitchenActive}
               className={`w-full h-13 py-3.5 transition-all rounded-xl flex items-center justify-between px-space-lg shadow-lg font-bold text-sm ${
-                isOutOfZone
+                !isKitchenActive
+                  ? "bg-red-500/20 text-red-700 border border-red-500/40 cursor-not-allowed opacity-90"
+                  : isOutOfZone
                   ? "bg-surface-container-highest text-on-surface-variant cursor-not-allowed opacity-80"
                   : "bg-primary hover:bg-primary-container text-on-primary active:scale-[0.98]"
               }`}
@@ -1095,13 +1273,17 @@ export const CheckoutReviewView: React.FC = () => {
               <div className="flex items-center gap-2">
                 {isSubmitting ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
+                ) : !isKitchenActive ? (
+                  <ShieldAlert className="w-5 h-5 text-red-600" />
                 ) : isOutOfZone ? (
                   <ShieldAlert className="w-5 h-5 text-red-500" />
                 ) : (
                   <Shield className="w-5 h-5" />
                 )}
                 <span>
-                  {isOutOfZone
+                  {!isKitchenActive
+                    ? "Kitchen Closed (Not Accepting Orders)"
+                    : isOutOfZone
                     ? "Delivery Unavailable (Out of Zone)"
                     : paymentMethod === "khqr"
                       ? "Proceed with KHQR"

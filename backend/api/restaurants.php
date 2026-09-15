@@ -205,16 +205,27 @@ if ($method === 'GET') {
         jsonResponse(0, 'Failed to create restaurant: ' . $e->getMessage(), null, 500);
     }
 } elseif ($method === 'PUT' || $method === 'PATCH') {
-    $superUser = AuthMiddleware::authenticate($pdo, ['super_admin']);
+    $authUser = AuthMiddleware::authenticate($pdo, ['super_admin', 'admin']);
     $input = json_decode(file_get_contents('php://input'), true);
 
     $id = (int)($input['id'] ?? $_GET['id'] ?? 0);
     if ($id <= 0) {
-        jsonResponse(0, 'Validation Error: Restaurant ID is required', null, 400);
+        if ($authUser['role'] === 'admin' && !empty($authUser['restaurant_id'])) {
+            $id = (int)$authUser['restaurant_id'];
+        } else {
+            jsonResponse(0, 'Validation Error: Restaurant ID is required', null, 400);
+        }
+    }
+
+    if ($authUser['role'] === 'admin' && (int)$authUser['restaurant_id'] !== $id) {
+        jsonResponse(0, 'Unauthorized: Restaurant admins can only modify their assigned restaurant', null, 403);
     }
 
     try {
         if ((isset($input['action']) && $input['action'] === 'reset_password') || !empty($input['new_password'])) {
+            if ($authUser['role'] !== 'super_admin') {
+                jsonResponse(0, 'Unauthorized: Only Super Admin can reset admin passwords', null, 403);
+            }
             $newPassword = trim($input['new_password'] ?? $input['password'] ?? '');
             if (empty($newPassword) || strlen($newPassword) < 4) {
                 jsonResponse(0, 'Validation Error: Password must be at least 4 characters long', null, 400);
@@ -247,8 +258,8 @@ if ($method === 'GET') {
                 'RESTAURANT',
                 "Super Admin reset password for Restaurant ID #{$id} owner (User #{$ownerId}).",
                 'info',
-                $superUser['id'],
-                $superUser['name']
+                $authUser['id'],
+                $authUser['name']
             );
 
             jsonResponse(1, "Password for Restaurant ID #{$id} admin reset successfully", [
@@ -267,9 +278,10 @@ if ($method === 'GET') {
                 $pdo,
                 'TOGGLE_RESTAURANT_STATUS',
                 'RESTAURANT',
-                "Super Admin toggled restaurant ID #{$id} status to active={$isActive}.",
+                "User '{$authUser['name']}' ({$authUser['role']}) toggled restaurant ID #{$id} status to active={$isActive}.",
                 'info',
-                $superUser['id']
+                $authUser['id'],
+                $authUser['name']
             );
 
             jsonResponse(1, "Restaurant status updated to active={$isActive}", ['id' => $id, 'is_active' => (bool)$isActive]);

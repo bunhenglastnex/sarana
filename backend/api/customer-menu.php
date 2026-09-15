@@ -27,7 +27,8 @@ try {
         SELECT DISTINCT c.id, c.name, c.slug, c.icon, c.image_url
         FROM categories c
         JOIN foods f ON f.category_id = c.id
-        WHERE f.status = 'public' AND f.is_available = 1
+        LEFT JOIN restaurants r ON f.restaurant_id = r.id
+        WHERE f.status = 'public' AND f.is_available = 1 AND (f.stock_quantity IS NULL OR f.stock_quantity > 0) AND (r.is_active = 1 OR r.is_active IS NULL)
         ORDER BY c.sort_order ASC, c.id ASC
     ");
     $rawCategories = $catStmt ? $catStmt->fetchAll() : [];
@@ -45,7 +46,7 @@ try {
     $restaurantParam = $_GET['restaurant_id'] ?? $_GET['restaurant'] ?? null;
 
     // Build base WHERE clauses & parameters
-    $whereSql = " WHERE f.status = 'public' AND f.is_available = 1";
+    $whereSql = " WHERE f.status = 'public' AND f.is_available = 1 AND (f.stock_quantity IS NULL OR f.stock_quantity > 0) AND (r.is_active = 1 OR r.is_active IS NULL)";
     $params   = [];
 
     if (!empty($restaurantParam) && $restaurantParam !== 'all') {
@@ -81,6 +82,7 @@ try {
     $countQuery = "
         SELECT COUNT(*) as total
         FROM foods f
+        LEFT JOIN restaurants r ON f.restaurant_id = r.id
         LEFT JOIN categories c ON f.category_id = c.id
         {$whereSql}
     ";

@@ -288,8 +288,10 @@ async function executeRequest<T = any>(
       // Handle non-2xx responses
       if (!response.ok) {
         const errorMsg =
+          parsedData?.msg ||
           parsedData?.message ||
           parsedData?.error ||
+          (typeof parsedData === "string" ? parsedData : null) ||
           `Request failed with status ${response.status} (${response.statusText})`;
 
         return {

@@ -23,6 +23,8 @@ import {
 import { LiveOrderTrackerView } from "./LiveOrderTrackerView";
 import { PickupTrackerView } from "./PickupTrackerView";
 
+import { useApi } from "@/lib/api";
+
 interface OrderSuccessViewProps {
   orderRef?: string;
   paymentMethod?: "khqr" | "cod" | "counter";
@@ -42,11 +44,26 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
     searchParams.get("order_number") ||
     orderRef;
 
+  // Fetch live order details to get exact fulfillment_type & restaurant data
+  const { data: orderRes } = useApi<any>(
+    targetOrderId ? "/customer-orders.php" : null,
+    targetOrderId ? { order_id: targetOrderId } : undefined
+  );
+
+  const fetchedOrder = React.useMemo(() => {
+    if (Array.isArray(orderRes?.data)) return orderRes.data[0];
+    if (Array.isArray(orderRes)) return orderRes[0];
+    if (orderRes?.data && typeof orderRes.data === "object") return orderRes.data;
+    return null;
+  }, [orderRes]);
+
   // Query param fallbacks
   const paymentParam =
     paymentMethod || (searchParams.get("payment") as "khqr" | "cod" | "counter") || "khqr";
   const modeParam =
     fulfillmentMode || (searchParams.get("mode") as "delivery" | "pickup") || "delivery";
+
+  const effectiveMode = fetchedOrder?.fulfillment_type || modeParam;
 
   const rawTip = searchParams.get("tip");
   const tipParam = rawTip !== null ? parseFloat(rawTip) : 2.50;
@@ -56,17 +73,17 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
   const totalAmount = subtotal + packagingAndTax + deliveryFee + tipParam;
 
   // If Pickup, render PickupTrackerView directly!
-  if (modeParam === "pickup") {
+  if (effectiveMode === "pickup") {
     return (
       <PickupTrackerView
         orderRef={targetOrderId}
-        paymentMethod={paymentParam === "khqr" ? "Paid via KHQR" : "Pay at Counter"}
+        paymentMethod={paymentParam === "khqr" ? "Paid via KHQR" : paymentParam === "cod" ? "Cash on Delivery" : "Pay at Counter"}
       />
     );
   }
 
   // Render LiveOrderTrackerView for live delivery tracking!
-  if (targetOrderId || (paymentParam === "khqr" && modeParam === "delivery")) {
+  if (targetOrderId || (paymentParam === "khqr" && effectiveMode === "delivery")) {
     return <LiveOrderTrackerView orderRef={targetOrderId} />;
   }
 

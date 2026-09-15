@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Calendar, Power } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Calendar, Power, Loader2 } from "lucide-react";
+import { Api, useApi } from "@/lib/api";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 
 interface HearthStatusStripProps {
   selectedRange?: "today" | "week" | "month" | "custom";
@@ -14,16 +16,74 @@ export const HearthStatusStrip: React.FC<HearthStatusStripProps> = ({
   onRangeChange,
   onRefresh,
 }) => {
+  const { role, selectedTenantId } = useAuthStore();
   const [internalRange, setInternalRange] = useState<
     "today" | "week" | "month" | "custom"
   >("today");
   const [isKitchenActive, setIsKitchenActive] = useState<boolean>(true);
+  const [isToggling, setIsToggling] = useState<boolean>(false);
 
   const selectedRange = externalRange || internalRange;
+
+  // Fetch live settings on mount or tenant switch
+  const getParams: Record<string, any> = {};
+  if (role === "super_admin" && selectedTenantId) {
+    getParams.restaurant_id = selectedTenantId;
+  }
+
+  const { data: settingsRes, loading: settingsLoading } = useApi<any>(
+    "/settings.php",
+    getParams,
+    { forceRefresh: true }
+  );
+
+  useEffect(() => {
+    if (settingsRes) {
+      const status = settingsRes?.data?.is_active ?? settingsRes?.is_active;
+      if (status !== undefined && status !== null) {
+        setIsKitchenActive(
+          status === true || status === 1 || status === "1" || status === "true"
+        );
+      }
+    }
+  }, [settingsRes]);
 
   const handleSelectRange = (range: "today" | "week" | "month" | "custom") => {
     setInternalRange(range);
     if (onRangeChange) onRangeChange(range);
+  };
+
+  const handleToggleKitchenStatus = async () => {
+    if (isToggling) return;
+    const nextStatus = !isKitchenActive;
+    setIsToggling(true);
+
+    try {
+      const payload: Record<string, any> = {
+        is_active: nextStatus,
+      };
+      if (role === "super_admin" && selectedTenantId) {
+        payload.restaurant_id = selectedTenantId;
+      }
+
+      // 1. Post to /settings.php
+      const res = await Api.post("/settings.php", payload);
+      
+      // 2. Put to /restaurants.php to ensure multi-tenant DB table is updated
+      await Api.put("/restaurants.php", { is_active: nextStatus, id: selectedTenantId || undefined });
+
+      if (res.success) {
+        setIsKitchenActive(nextStatus);
+        Api.cache.clear();
+        if (onRefresh) onRefresh();
+      } else {
+        alert("Failed to update kitchen status: " + (res.error || "Unknown error"));
+      }
+    } catch (err: any) {
+      alert("Error updating kitchen status: " + (err.message || "Network error"));
+    } finally {
+      setIsToggling(false);
+    }
   };
 
   return (
@@ -98,33 +158,59 @@ export const HearthStatusStrip: React.FC<HearthStatusStripProps> = ({
         {/* Hearth Switcher Toggle */}
         <div className="flex items-center gap-space-xs px-space-sm py-1.5 rounded-lg bg-surface-container-lowest shadow-sm border border-border/40">
           <span className="relative flex h-2.5 w-2.5">
-            {isKitchenActive && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+            {isKitchenActive && !settingsLoading && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             )}
             <span
               className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
-                isKitchenActive
-                  ? "bg-secondary-container"
-                  : "bg-muted-foreground"
+                settingsLoading
+                  ? "bg-amber-400 animate-pulse"
+                  : isKitchenActive
+                  ? "bg-emerald-500"
+                  : "bg-red-500"
               }`}
             ></span>
           </span>
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-[100px]">
             <span className="font-label-sm text-xs text-on-surface leading-tight font-semibold">
-              {isKitchenActive ? "Kitchen Active" : "Kitchen Paused"}
+              {settingsLoading
+                ? "Checking..."
+                : isKitchenActive
+                ? "Kitchen Active"
+                : "Kitchen Paused"}
             </span>
-            <span className="font-body-sm text-[10px] leading-tight text-on-surface-variant">
-              {isKitchenActive ? "Accepting Orders" : "Orders On Hold"}
+            <span
+              className={`font-body-sm text-[10px] leading-tight font-medium ${
+                isKitchenActive ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              {settingsLoading
+                ? "Connecting..."
+                : isKitchenActive
+                ? "Accepting Orders"
+                : "Orders On Hold"}
             </span>
           </div>
           <button
-            onClick={() => setIsKitchenActive(!isKitchenActive)}
-            title="Toggle Kitchen Acceptance"
-            className="ml-space-xs p-1 hover:bg-surface-container rounded transition-colors text-on-surface-variant"
+            type="button"
+            onClick={handleToggleKitchenStatus}
+            disabled={isToggling || settingsLoading}
+            title={isKitchenActive ? "Pause Kitchen (Hold Orders)" : "Activate Kitchen (Accept Orders)"}
+            className={`ml-space-xs p-1.5 hover:bg-surface-container rounded-lg transition-all flex items-center justify-center border ${
+              isKitchenActive
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/20"
+                : "bg-red-500/10 border-red-500/30 text-red-600 hover:bg-red-500/20"
+            } disabled:opacity-50 active:scale-95`}
           >
-            <Power
-              className={`w-4 h-4 ${isKitchenActive ? "text-primary font-bold" : "text-muted-foreground"}`}
-            />
+            {isToggling ? (
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            ) : (
+              <Power
+                className={`w-4 h-4 font-bold ${
+                  isKitchenActive ? "text-emerald-600" : "text-red-600"
+                }`}
+              />
+            )}
           </button>
         </div>
       </div>

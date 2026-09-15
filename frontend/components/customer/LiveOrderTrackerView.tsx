@@ -50,14 +50,24 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
   const [hasAutoOpenedCompletion, setHasAutoOpenedCompletion] = useState(false);
 
   // Fetch store settings for store HQ coordinates
-  const { data: settingsRes } = useApi<any>("/settings.php");
+  const { data: settingsRes } = useApi<any>(
+    "/settings.php",
+    liveOrder?.restaurant_id ? { restaurant_id: liveOrder.restaurant_id } : undefined
+  );
   const settings = settingsRes?.data || settingsRes || {};
 
-  const storeLat = parseFloat(settings.store_latitude || "13.352270");
-  const storeLng = parseFloat(settings.store_longitude || "103.955116");
-  const storeName = settings.store_name || "Amber & Ember Bistro";
+  const storeLat = liveOrder?.restaurant_lat
+    ? parseFloat(liveOrder.restaurant_lat)
+    : parseFloat(settings.store_latitude || "13.352270");
+  const storeLng = liveOrder?.restaurant_lng
+    ? parseFloat(liveOrder.restaurant_lng)
+    : parseFloat(settings.store_longitude || "103.955116");
+  const storeName =
+    liveOrder?.restaurant_name || settings.store_name || "Amber & Ember Bistro";
   const storeAddress =
-    settings.store_address || "520 N Michigan Ave, Siem Reap";
+    liveOrder?.restaurant_address ||
+    settings.store_address ||
+    "520 N Michigan Ave, Siem Reap";
 
   const triggerNotice = (msg: string) => {
     setNoticeMessage(msg);

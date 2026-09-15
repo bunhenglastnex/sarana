@@ -42,7 +42,7 @@ class SettingsService {
 
         // 2. If tenantId is specified, fetch restaurant store profile & override settings
         if ($tenantId !== null && $tenantId > 0) {
-            $restoStmt = $this->pdo->prepare("SELECT id, name, phone, address, lat, lng FROM restaurants WHERE id = ?");
+            $restoStmt = $this->pdo->prepare("SELECT id, name, phone, address, lat, lng, is_active FROM restaurants WHERE id = ?");
             $restoStmt->execute([$tenantId]);
             $resto = $restoStmt->fetch();
 
@@ -52,6 +52,7 @@ class SettingsService {
                 if (!empty($resto['address'])) $settings['store_address'] = $resto['address'];
                 if (!empty($resto['lat'])) $settings['store_latitude'] = (string)$resto['lat'];
                 if (!empty($resto['lng'])) $settings['store_longitude'] = (string)$resto['lng'];
+                if (isset($resto['is_active'])) $settings['is_active'] = (bool)$resto['is_active'];
             }
 
             $tQuery = "SELECT setting_key, setting_value FROM settings WHERE restaurant_id = ?";
@@ -94,32 +95,43 @@ class SettingsService {
             }
         }
 
-        // 1. Update core restaurant profile in `restaurants` table if tenantId is set
-        if ($tenantId !== null && $tenantId > 0) {
-            $storeName    = $input['store_name'] ?? $input['storeName'] ?? null;
-            $storePhone   = $input['store_phone'] ?? $input['storePhone'] ?? null;
-            $storeAddress = $input['store_address'] ?? $input['storeAddress'] ?? null;
-            $storeLat     = $input['store_latitude'] ?? $input['storeLatitude'] ?? null;
-            $storeLng     = $input['store_longitude'] ?? $input['storeLongitude'] ?? null;
+        // Determine target tenant ID (fallback to 1 if not specified)
+        $targetRestoId = ($tenantId !== null && $tenantId > 0) ? $tenantId : 1;
 
-            if ($storeName !== null || $storePhone !== null || $storeAddress !== null || $storeLat !== null || $storeLng !== null) {
-                $upSql = "UPDATE restaurants SET 
-                            name = COALESCE(:name, name),
-                            phone = COALESCE(:phone, phone),
-                            address = COALESCE(:address, address),
-                            lat = COALESCE(:lat, lat),
-                            lng = COALESCE(:lng, lng)
-                          WHERE id = :id";
-                $upStmt = $this->pdo->prepare($upSql);
-                $upStmt->execute([
-                    'name'    => $storeName,
-                    'phone'   => $storePhone,
-                    'address' => $storeAddress,
-                    'lat'     => $storeLat !== null ? (float)$storeLat : null,
-                    'lng'     => $storeLng !== null ? (float)$storeLng : null,
-                    'id'      => $tenantId,
-                ]);
+        // 1. Update core restaurant profile in `restaurants` table
+        $storeName    = $input['store_name'] ?? $input['storeName'] ?? null;
+        $storePhone   = $input['store_phone'] ?? $input['storePhone'] ?? null;
+        $storeAddress = $input['store_address'] ?? $input['storeAddress'] ?? null;
+        $storeLat     = $input['store_latitude'] ?? $input['storeLatitude'] ?? null;
+        $storeLng     = $input['store_longitude'] ?? $input['storeLongitude'] ?? null;
+        $isActive     = isset($input['is_active']) ? (int)(bool)$input['is_active'] : (isset($input['isActive']) ? (int)(bool)$input['isActive'] : null);
+
+        if ($isActive !== null) {
+            $upResto = $this->pdo->prepare("UPDATE restaurants SET is_active = ? WHERE id = ?");
+            $upResto->execute([$isActive, $targetRestoId]);
+            if ($tenantId === null) {
+                $upAllResto = $this->pdo->prepare("UPDATE restaurants SET is_active = ?");
+                $upAllResto->execute([$isActive]);
             }
+        }
+
+        if ($storeName !== null || $storePhone !== null || $storeAddress !== null || $storeLat !== null || $storeLng !== null) {
+            $upSql = "UPDATE restaurants SET 
+                        name = COALESCE(:name, name),
+                        phone = COALESCE(:phone, phone),
+                        address = COALESCE(:address, address),
+                        lat = COALESCE(:lat, lat),
+                        lng = COALESCE(:lng, lng)
+                      WHERE id = :id";
+            $upStmt = $this->pdo->prepare($upSql);
+            $upStmt->execute([
+                'name'      => $storeName,
+                'phone'     => $storePhone,
+                'address'   => $storeAddress,
+                'lat'       => $storeLat !== null ? (float)$storeLat : null,
+                'lng'       => $storeLng !== null ? (float)$storeLng : null,
+                'id'        => $targetRestoId,
+            ]);
         }
 
         // 2. Save settings key-values

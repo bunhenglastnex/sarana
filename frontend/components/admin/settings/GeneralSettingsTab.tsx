@@ -14,8 +14,63 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
   formData,
   onChange,
 }) => {
+  const isActive = formData.isActive !== false;
+
   return (
     <div className="space-y-space-md">
+      {/* 1. Kitchen Active / Order Acceptance Control Card */}
+      <Card className={isActive ? "border-emerald-500/40 bg-emerald-500/5 shadow-xs" : "border-amber-500/40 bg-amber-500/5 shadow-xs"}>
+        <CardHeader className="border-b border-border/30 pb-3">
+          <CardTitle className="text-base font-bold flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Store className={`w-5 h-5 ${isActive ? "text-emerald-600" : "text-amber-600"}`} />
+              <span>Kitchen Status &amp; Order Acceptance</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 ${
+                isActive
+                  ? "bg-emerald-500/15 text-emerald-800 border border-emerald-500/30"
+                  : "bg-amber-500/15 text-amber-900 border border-amber-500/30"
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${isActive ? "bg-emerald-500 animate-pulse" : "bg-amber-600"}`} />
+                {isActive ? "Kitchen Active • Accepting Orders" : "Kitchen Closed • Orders Paused"}
+              </span>
+            </div>
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Toggle kitchen status to accept or pause online customer orders. When deactivated, customers cannot place checkout orders.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between p-3.5 bg-surface-container-lowest rounded-xl border border-border/40 shadow-xs">
+            <div className="space-y-0.5">
+              <p className="font-bold text-xs text-on-surface">
+                Online Ordering System Access
+              </p>
+              <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                {isActive
+                  ? "Active — Customers can view menu, add items to cart, and checkout orders."
+                  : "Closed — Checkout is locked; customers will see a friendly kitchen closed notice."}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isActive}
+              onClick={() => onChange("isActive", !isActive)}
+              className={`w-12 h-6 rounded-full transition-colors relative flex items-center p-0.5 cursor-pointer flex-shrink-0 ${
+                isActive ? "bg-emerald-600" : "bg-surface-container-highest"
+              }`}
+            >
+              <span
+                className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
+                  isActive ? "translate-x-6" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader className="border-b border-border/30 pb-3">
           <CardTitle className="text-base font-bold flex items-center gap-2">

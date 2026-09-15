@@ -91,7 +91,7 @@ if ($method === 'POST') {
 
     // Group order items by restaurant_id for multi-restaurant automatic splitting
     $itemsByRestaurant = [];
-    $foodCheckStmt = $pdo->prepare("SELECT id, restaurant_id, name, price, is_available, image_url FROM foods WHERE id = ? LIMIT 1");
+    $foodCheckStmt = $pdo->prepare("SELECT id, restaurant_id, name, price, is_available, stock_quantity, image_url FROM foods WHERE id = ? LIMIT 1");
 
     foreach ($input['items'] as $item) {
         $foodId = !empty($item['food_id']) ? (int)$item['food_id'] : (!empty($item['foodId']) ? (int)$item['foodId'] : null);
@@ -110,6 +110,11 @@ if ($method === 'POST') {
             if ($dbFood) {
                 if (isset($dbFood['is_available']) && (int)$dbFood['is_available'] === 0) {
                     jsonResponse(0, "Item '{$dbFood['name']}' is currently out of stock", null, 400);
+                    return;
+                }
+                if (isset($dbFood['stock_quantity']) && $dbFood['stock_quantity'] !== null && (int)$dbFood['stock_quantity'] <= 0) {
+                    jsonResponse(0, "Item '{$dbFood['name']}' is currently out of stock", null, 400);
+                    return;
                 }
                 $realPrice = (float)$dbFood['price'];
                 $realFoodName = $dbFood['name'];
@@ -145,6 +150,33 @@ if ($method === 'POST') {
             'image_url' => $imageUrl,
             'notes' => $itemNotes,
         ];
+    }
+
+    // Check if fulfilling restaurant(s) are active in restaurants table AND settings table
+    $restoCheckStmt = $pdo->prepare("SELECT id, name, is_active FROM restaurants WHERE id = ?");
+    $settingsCheckStmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = 'is_active' AND (restaurant_id = ? OR restaurant_id IS NULL)");
+
+    foreach (array_keys($itemsByRestaurant) as $checkRestoId) {
+        $restoCheckStmt->execute([$checkRestoId]);
+        $rRow = $restoCheckStmt->fetch();
+        $restoName = $rRow['name'] ?? "Restaurant #{$checkRestoId}";
+
+        // 1. Check restaurants table
+        if ($rRow && isset($rRow['is_active']) && ((int)$rRow['is_active'] === 0 || $rRow['is_active'] === '0' || $rRow['is_active'] === false)) {
+            jsonResponse(0, "Sorry! '{$restoName}' is currently closed and not accepting new orders at this time.", null, 400);
+            return;
+        }
+
+        // 2. Check settings table (both tenant-specific and global)
+        $settingsCheckStmt->execute([$checkRestoId]);
+        $sRows = $settingsCheckStmt->fetchAll();
+        foreach ($sRows as $sRow) {
+            $val = strtolower(trim((string)$sRow['setting_value']));
+            if ($val === 'false' || $val === '0' || $val === 'off') {
+                jsonResponse(0, "Sorry! '{$restoName}' is currently closed and not accepting new orders at this time.", null, 400);
+                return;
+            }
+        }
     }
 
     // Fetch Settings from database for dynamic fee & tax calculations
@@ -329,6 +361,8 @@ try {
                    r.logo_url as restaurant_logo, 
                    r.address as restaurant_address, 
                    r.phone as restaurant_phone,
+                   r.lat as restaurant_lat,
+                   r.lng as restaurant_lng,
                    u.name as delivery_staff_name, 
                    u.phone as delivery_staff_phone
             FROM orders o
@@ -372,6 +406,8 @@ try {
                r.logo_url as restaurant_logo, 
                r.address as restaurant_address, 
                r.phone as restaurant_phone,
+               r.lat as restaurant_lat,
+               r.lng as restaurant_lng,
                u.name as delivery_staff_name
         FROM orders o
         LEFT JOIN restaurants r ON o.restaurant_id = r.id
