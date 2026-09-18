@@ -9,72 +9,66 @@
 ## 🗺️ 1. Master System Flow Diagram (Mermaid)
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    actor C as Customer
-    actor K as Kitchen / Restaurant Admin
-    actor D as Delivery Staff
-    actor SA as Super Admin
-    participant FE as Frontend (Next.js 14)
-    participant BE as Backend API (PHP REST)
-    participant DB as Database (MySQL)
-    participant RT as Real-time Broadcaster
+flowchart TD
+    %% Node Styling
+    classDef customer fill:#DBEAFE,stroke:#2563EB,stroke-width:2px,color:#1E3A8A;
+    classDef kitchen fill:#FFEDD5,stroke:#EA580C,stroke-width:2px,color:#7C2D12;
+    classDef delivery fill:#DCFCE7,stroke:#16A34A,stroke-width:2px,color:#14532D;
+    classDef backend fill:#F3E8FF,stroke:#9333EA,stroke-width:2px,color:#581C87;
+    classDef decision fill:#FEF08A,stroke:#CA8A04,stroke-width:2px,color:#713F12;
+    classDef success fill:#BBF7D0,stroke:#16A34A,stroke-width:2px,color:#14532D;
 
-    %% Phase 1
-    Note over C, FE: 🔹 Phase 1: Browse Catalog & Authentication
-    C->>FE: 1. Browse Menu & Select Food Items
-    C->>FE: 2. Click "Add to Cart" / "Checkout"
-    FE->>FE: 3. Check Auth Token / Login Session
-    alt Not Logged In
-        FE-->>C: Prompt Login / Quick Registration Modal
-        C->>FE: Input Phone Number & Password
-        FE->>BE: POST /api/auth/login.php
-        BE->>DB: Verify User Credentials & Role ('customer')
-        BE-->>FE: Return JWT / Session Token
-    end
+    %% 1. Customer Entry & Browse
+    Start([👤 Customer Enters Website]):::customer --> Browse[Browse Categories & Select Food Items]:::customer
+    Browse --> Cart[Click Add to Cart / Checkout]:::customer
+    
+    %% Auth Decision
+    Cart --> AuthCheck{Is Customer Logged In?}:::decision
+    AuthCheck -- ❌ No --> LoginModal[Show Quick Login / Registration Modal]:::backend
+    LoginModal --> AuthAPI[POST /api/auth/login.php]:::backend
+    AuthAPI --> AuthCheck
+    AuthCheck -- ✅ Yes --> Fulfillment{Select Fulfillment Option}:::decision
 
-    %% Phase 2
-    Note over C, BE: 🔹 Phase 2: Checkout & Order Placement
-    C->>FE: 4. Select Delivery / Pickup & Payment Method (KHQR / COD)
-    FE->>BE: 5. POST /api/orders.php (Order Payload)
-    BE->>DB: 6. Insert Into 'orders' & 'order_items' (Transaction)
-    BE->>RT: 7. Broadcast Event ('new-order')
-    RT-->>FE: 8. Real-time Sound Alert & Banner on Kitchen App
-    BE-->>FE: 9. Return Order Confirmation (#1001)
+    %% Fulfillment Branches
+    Fulfillment -- 🛍️ Pickup --> PickupDetails[Select Pickup Time Slot<br/>Delivery Fee: $0.00]:::customer
+    Fulfillment -- 🚚 Delivery --> DeliveryDetails[Select Address / Pin Map<br/>Calculate Delivery Fee]:::customer
 
-    %% Phase 3
-    Note over K, RT: 🔹 Phase 3: Kitchen Order Acceptance & Prep
-    K->>FE: 10. Click [ Accept Order ]
-    FE->>BE: 11. PATCH /api/order-status.php (Status: 'accepted')
-    BE->>DB: Update orders.status = 'accepted'
-    BE->>RT: Broadcast Event ('order-updated') -> Customer
-    RT-->>FE: Update Progress Bar on Customer Screen
-    K->>FE: 12. Mark [ Preparing ] -> [ Ready for Delivery ]
-    FE->>BE: 13. PATCH /api/order-status.php (Status: 'ready_for_delivery')
-    BE->>RT: Broadcast Event ('delivery-dispatch') -> Driver App
+    PickupDetails --> Payment[Select Payment Method: KHQR / Cash]:::customer
+    DeliveryDetails --> Payment
 
-    %% Phase 4
-    Note over D, C: 🔹 Phase 4: Delivery Dispatch & Live GPS Telemetry
-    D->>FE: 14. View Available Orders & Tap [ Accept / Pickup ]
-    FE->>BE: 15. POST /api/delivery.php (Assign Driver ID)
-    D->>FE: 16. Tap [ Start Delivery ] (Status: 'on_the_way')
-    loop Live Telemetry (Every 5 sec)
-        D->>BE: POST /api/telemetry.php (Lat, Lng, Speed)
-        BE->>DB: Update 'courier_telemetry' Table
-        BE->>RT: Broadcast Live Coordinates -> Customer Map
-    end
-    D->>C: 17. Arrive at Customer Address & Collect COD Cash ($12.00)
-    D->>FE: 18. Tap [ Confirm Delivered ]
-    FE->>BE: 19. POST /api/delivery-confirm.php
-    BE->>DB: Update orders.status = 'delivered', payment_status = 'paid'
-    BE->>RT: Broadcast Event ('order-completed') -> Customer & Kitchen
-    RT-->>FE: Customer Screen: "Order Completed! 🎉"
+    %% Order Submission & Backend Processing
+    Payment --> SubmitOrder[POST /api/orders.php<br/>DB: Save 'orders' & 'order_items']:::backend
+    SubmitOrder --> BroadcastNew[Broadcast 'new-order' Real-time Event]:::backend
+    SubmitOrder --> CustomerTrack[Customer Screen: Live Progress Bar]:::customer
 
-    %% Phase 5
-    Note over SA, DB: 🔹 Phase 5: Super Admin Platform Oversight
-    SA->>FE: 20. View Multi-tenant Dashboard, Telemetry & Audit Logs
-    FE->>BE: GET /api/admin/system_logs.php & rate_limits.php
-    BE-->>FE: Return Tenant Performance & Audit Reports
+    %% 2. Kitchen & Restaurant Processing
+    BroadcastNew --> KitchenAlert[Kitchen Dashboard: Loud Sound Chime & Visual Alert]:::kitchen
+    KitchenAlert --> KitchenDecision{Kitchen Action}:::decision
+    KitchenDecision -- ❌ Reject --> CancelOrder[Update status: 'cancelled'<br/>Notify Customer]:::kitchen
+    KitchenDecision -- ✅ Accept --> AcceptOrder[PATCH /api/order-status.php<br/>Status: 'accepted']:::kitchen
+
+    AcceptOrder --> Cooking[Status: 'preparing'<br/>Chef Cooks Food]:::kitchen
+    Cooking --> FoodReady{Fulfillment Type?}:::decision
+
+    %% Kitchen Ready Destinations
+    FoodReady -- 🛍️ Pickup --> ReadyPickup[Status: 'ready_for_pickup'<br/>Notify Customer to Collect]:::kitchen
+    ReadyPickup --> CustomerCollect[Customer Arrives at Counter & Pays Cash]:::customer
+    CustomerCollect --> KitchenComplete[Counter Staff Marks 'completed']:::kitchen
+
+    FoodReady -- 🚚 Delivery --> ReadyDelivery[Status: 'ready_for_delivery'<br/>Broadcast 'delivery-dispatch']:::kitchen
+
+    %% 3. Delivery Staff & GPS Telemetry Flow
+    ReadyDelivery --> DriverAlert[Delivery Driver Dashboard Receives Job Alert]:::delivery
+    DriverAlert --> DriverAccept[Driver Taps Accept & Pickup<br/>Assign orders.delivery_staff_id]:::delivery
+    DriverAccept --> DriverStart[Driver Taps Start Delivery<br/>Status: 'on_the_way']:::delivery
+
+    DriverStart --> GPSTelemetry[Background GPS Updates courier_telemetry<br/>Stream Live Coordinates to Customer Map]:::delivery
+    GPSTelemetry --> ArriveCustomer[Driver Arrives at Customer Address]:::delivery
+    ArriveCustomer --> CollectCOD[Hand Over Food Package & Collect Cash COD]:::delivery
+    CollectCOD --> ConfirmDelivered[Driver Taps Confirm Delivered<br/>Status: 'delivered', payment_status: 'paid']:::delivery
+
+    ConfirmDelivered --> OrderEnd([🎉 Order Completed!]):::success
+    KitchenComplete --> OrderEnd
 ```
 
 ---
