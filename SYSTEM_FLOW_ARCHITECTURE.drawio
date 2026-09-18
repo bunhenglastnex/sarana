@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2026-09-18T08:41:32.000Z" agent="Antigravity AI" version="21.6.8" type="device">
+<mxfile host="app.diagrams.net" modified="2026-09-18T08:44:42.000Z" agent="Antigravity AI" version="21.6.8" type="device">
   <diagram id="system_flow_architecture" name="System Flow Architecture">
     <mxGraphModel dx="1600" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
       <root>
@@ -6,153 +6,153 @@
         <mxCell id="1" parent="0" />
 
         <!-- TITLE HEADER -->
-        <mxCell id="title" value="&lt;b&gt;ONLINE ORDERING SYSTEM - FLOW ARCHITECTURE &amp;amp; USER JOURNEYS&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#1A2530;" vertex="1" parent="1">
-          <mxGeometry x="300" y="20" width="1000" height="40" as="geometry" />
+        <mxCell id="title" value="&lt;b style=&quot;color:#0F172A; font-size:22px;&quot;&gt;ONLINE ORDERING SYSTEM - FLOW ARCHITECTURE &amp;amp; USER JOURNEYS&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontColor=#0F172A;" vertex="1" parent="1">
+          <mxGeometry x="250" y="20" width="1100" height="40" as="geometry" />
         </mxCell>
 
         <!-- SWIMLANE 1: CUSTOMER -->
-        <mxCell id="lane_customer" value="&lt;b&gt;👤 CUSTOMER USER JOURNEY&lt;/b&gt;" style="swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="40" y="80" width="1500" height="170" as="geometry" />
+        <mxCell id="lane_customer" value="&lt;b style=&quot;color:#1E3A8A; font-size:14px;&quot;&gt;👤 CUSTOMER USER JOURNEY&lt;/b&gt;" style="swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#DBEAFE;strokeColor=#3B82F6;strokeWidth=2;fontColor=#1E3A8A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="1520" height="170" as="geometry" />
         </mxCell>
 
-        <mxCell id="c1" value="&lt;b&gt;1. Browse Catalog&lt;/b&gt;&lt;br/&gt;Filter categories, foods, prices, badges &amp;amp; options" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;shadow=1;" vertex="1" parent="lane_customer">
-          <mxGeometry x="60" y="50" width="200" height="70" as="geometry" />
+        <mxCell id="c1" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#1E40AF; font-size:13px;&quot;&gt;1. Browse Catalog&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Filter categories, foods, prices, badges &amp;amp; options&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_customer">
+          <mxGeometry x="60" y="50" width="210" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="c2" value="&lt;b&gt;2. Add to Cart / Checkout&lt;/b&gt;&lt;br/&gt;Check auth session token. If not logged in ➔ Modal" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;shadow=1;" vertex="1" parent="lane_customer">
-          <mxGeometry x="320" y="50" width="220" height="70" as="geometry" />
+        <mxCell id="c2" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#1E40AF; font-size:13px;&quot;&gt;2. Add to Cart / Checkout&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Check auth token. If not logged in ➔ Show Login Modal&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_customer">
+          <mxGeometry x="330" y="50" width="230" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="c3" value="&lt;b&gt;3. Select Fulfillment&lt;/b&gt;&lt;br/&gt;🛍️ Pickup (Fee: $0) OR&lt;br/&gt;🚚 Delivery (Pin Map / Address)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;shadow=1;" vertex="1" parent="lane_customer">
-          <mxGeometry x="600" y="50" width="220" height="70" as="geometry" />
+        <mxCell id="c3" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#1E40AF; font-size:13px;&quot;&gt;3. Select Fulfillment&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;🛍️ Pickup (Fee: $0) OR&lt;br/&gt;🚚 Delivery (Pin Map Address)&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_customer">
+          <mxGeometry x="620" y="50" width="230" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="c4" value="&lt;b&gt;4. Payment &amp;amp; Submit&lt;/b&gt;&lt;br/&gt;Bakong KHQR Scan OR Cash on Delivery (COD)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;shadow=1;" vertex="1" parent="lane_customer">
-          <mxGeometry x="880" y="50" width="220" height="70" as="geometry" />
+        <mxCell id="c4" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#1E40AF; font-size:13px;&quot;&gt;4. Payment &amp;amp; Submit&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Bakong KHQR Scan OR Cash on Delivery (COD)&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_customer">
+          <mxGeometry x="910" y="50" width="230" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="c5" value="&lt;b&gt;5. Real-Time Tracker&lt;/b&gt;&lt;br/&gt;Live progress bar &amp;amp; interactive driver GPS map" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;shadow=1;" vertex="1" parent="lane_customer">
-          <mxGeometry x="1160" y="50" width="240" height="70" as="geometry" />
+        <mxCell id="c5" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#1E40AF; font-size:13px;&quot;&gt;5. Real-Time Tracker&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Live progress bar &amp;amp; interactive driver GPS map&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_customer">
+          <mxGeometry x="1200" y="50" width="250" height="75" as="geometry" />
         </mxCell>
 
         <!-- SWIMLANE 2: BACKEND & REALTIME -->
-        <mxCell id="lane_backend" value="&lt;b&gt;⚙️ BACKEND &amp;amp; REALTIME&lt;/b&gt;" style="swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="40" y="270" width="1500" height="170" as="geometry" />
+        <mxCell id="lane_backend" value="&lt;b style=&quot;color:#581C87; font-size:14px;&quot;&gt;⚙️ BACKEND &amp;amp; REALTIME&lt;/b&gt;" style="swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#F3E8FF;strokeColor=#9333EA;strokeWidth=2;fontColor=#581C87;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="270" width="1520" height="170" as="geometry" />
         </mxCell>
 
-        <mxCell id="b1" value="&lt;b&gt;Auth Controller&lt;/b&gt;&lt;br/&gt;POST /api/auth/login.php&lt;br/&gt;(Rate limit active)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=12;shadow=1;" vertex="1" parent="lane_backend">
-          <mxGeometry x="320" y="50" width="220" height="70" as="geometry" />
+        <mxCell id="b1" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#6B21A8; font-size:13px;&quot;&gt;Auth Controller&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;POST /api/auth/login.php&lt;br/&gt;(Rate limit check active)&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9333EA;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_backend">
+          <mxGeometry x="330" y="50" width="230" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="b2" value="&lt;b&gt;Create Order API&lt;/b&gt;&lt;br/&gt;POST /api/orders.php&lt;br/&gt;DB Transaction (`orders` &amp;amp; `order_items`)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=12;shadow=1;" vertex="1" parent="lane_backend">
-          <mxGeometry x="880" y="50" width="220" height="70" as="geometry" />
+        <mxCell id="b2" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#6B21A8; font-size:13px;&quot;&gt;Create Order API&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;POST /api/orders.php&lt;br/&gt;DB Transaction (`orders` &amp;amp; `order_items`)&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9333EA;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_backend">
+          <mxGeometry x="910" y="50" width="230" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="b3" value="&lt;b&gt;Broadcaster Service&lt;/b&gt;&lt;br/&gt;Pusher / SSE Helper&lt;br/&gt;Broadcast `new-order` &amp;amp; `order-updated`" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=12;shadow=1;" vertex="1" parent="lane_backend">
-          <mxGeometry x="1160" y="50" width="240" height="70" as="geometry" />
+        <mxCell id="b3" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#6B21A8; font-size:13px;&quot;&gt;Broadcaster Service&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Pusher / SSE Helper&lt;br/&gt;Broadcast `new-order` &amp;amp; `order-updated`&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9333EA;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_backend">
+          <mxGeometry x="1200" y="50" width="250" height="75" as="geometry" />
         </mxCell>
 
         <!-- SWIMLANE 3: KITCHEN & RESTAURANT -->
-        <mxCell id="lane_kitchen" value="&lt;b&gt;🏪 KITCHEN / ADMIN&lt;/b&gt;" style="swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d79b00;fontColor=#000000;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="40" y="460" width="1500" height="170" as="geometry" />
+        <mxCell id="lane_kitchen" value="&lt;b style=&quot;color:#7C2D12; font-size:14px;&quot;&gt;🏪 KITCHEN / ADMIN&lt;/b&gt;" style="swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFEDD5;strokeColor=#EA580C;strokeWidth=2;fontColor=#7C2D12;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="460" width="1520" height="170" as="geometry" />
         </mxCell>
 
-        <mxCell id="k1" value="&lt;b&gt;1. Receive Order Alert&lt;/b&gt;&lt;br/&gt;Loud sound chime &amp;amp; visual popup banner modal" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=12;shadow=1;" vertex="1" parent="lane_kitchen">
-          <mxGeometry x="1160" y="50" width="240" height="70" as="geometry" />
+        <mxCell id="k1" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#C2410C; font-size:13px;&quot;&gt;1. Receive Order Alert&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Loud sound chime &amp;amp; visual popup banner modal&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#EA580C;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_kitchen">
+          <mxGeometry x="1200" y="50" width="250" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="k2" value="&lt;b&gt;2. Review &amp;amp; Accept Order&lt;/b&gt;&lt;br/&gt;Tap [ Accept ] ➔ `accepted` status sent to customer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=12;shadow=1;" vertex="1" parent="lane_kitchen">
-          <mxGeometry x="880" y="50" width="220" height="70" as="geometry" />
+        <mxCell id="k2" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#C2410C; font-size:13px;&quot;&gt;2. Review &amp;amp; Accept Order&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Tap [ Accept ] ➔ `accepted` status to customer&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#EA580C;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_kitchen">
+          <mxGeometry x="910" y="50" width="230" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="k3" value="&lt;b&gt;3. Cook &amp;amp; Dispatch&lt;/b&gt;&lt;br/&gt;Mark `preparing` ➔ `ready_for_delivery` or `ready_for_pickup`" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=12;shadow=1;" vertex="1" parent="lane_kitchen">
-          <mxGeometry x="600" y="50" width="220" height="70" as="geometry" />
+        <mxCell id="k3" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#C2410C; font-size:13px;&quot;&gt;3. Cook &amp;amp; Dispatch&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Mark `preparing` ➔ `ready_for_delivery` or `ready_for_pickup`&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#EA580C;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_kitchen">
+          <mxGeometry x="620" y="50" width="230" height="75" as="geometry" />
         </mxCell>
 
         <!-- SWIMLANE 4: DELIVERY COURIER -->
-        <mxCell id="lane_delivery" value="&lt;b&gt;🚚 DELIVERY COURIER&lt;/b&gt;" style="swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="40" y="650" width="1500" height="170" as="geometry" />
+        <mxCell id="lane_delivery" value="&lt;b style=&quot;color:#14532D; font-size:14px;&quot;&gt;🚚 DELIVERY COURIER&lt;/b&gt;" style="swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#DCFCE7;strokeColor=#16A34A;strokeWidth=2;fontColor=#14532D;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="650" width="1520" height="170" as="geometry" />
         </mxCell>
 
-        <mxCell id="d1" value="&lt;b&gt;1. Job Dispatch Alert&lt;/b&gt;&lt;br/&gt;See available orders marked `ready_for_delivery`" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=12;shadow=1;" vertex="1" parent="lane_delivery">
-          <mxGeometry x="600" y="50" width="220" height="70" as="geometry" />
+        <mxCell id="d1" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#15803D; font-size:13px;&quot;&gt;1. Job Dispatch Alert&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;See available orders marked `ready_for_delivery`&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_delivery">
+          <mxGeometry x="620" y="50" width="230" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="d2" value="&lt;b&gt;2. Pickup &amp;amp; Start Delivery&lt;/b&gt;&lt;br/&gt;Tap [ Pickup ] ➔ `on_the_way`. GPS telemetry starts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=12;shadow=1;" vertex="1" parent="lane_delivery">
-          <mxGeometry x="880" y="50" width="220" height="70" as="geometry" />
+        <mxCell id="d2" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#15803D; font-size:13px;&quot;&gt;2. Pickup &amp;amp; Start Delivery&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Tap [ Pickup ] ➔ `on_the_way`. GPS telemetry starts&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_delivery">
+          <mxGeometry x="910" y="50" width="230" height="75" as="geometry" />
         </mxCell>
 
-        <mxCell id="d3" value="&lt;b&gt;3. Handover &amp;amp; Collect COD&lt;/b&gt;&lt;br/&gt;Handover food package, collect cash, tap [ Confirm Delivered ]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=12;shadow=1;" vertex="1" parent="lane_delivery">
-          <mxGeometry x="1160" y="50" width="240" height="70" as="geometry" />
+        <mxCell id="d3" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#15803D; font-size:13px;&quot;&gt;3. Handover &amp;amp; Collect COD&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#334155; font-size:11px;&quot;&gt;Handover food package, collect cash, tap [ Confirm Delivered ]&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_delivery">
+          <mxGeometry x="1200" y="50" width="250" height="75" as="geometry" />
         </mxCell>
 
         <!-- SWIMLANE 5: SUPER ADMIN -->
-        <mxCell id="lane_admin" value="&lt;b&gt;🛡️ SUPER ADMIN&lt;/b&gt;" style="swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="40" y="840" width="1500" height="150" as="geometry" />
+        <mxCell id="lane_admin" value="&lt;b style=&quot;color:#0F172A; font-size:14px;&quot;&gt;🛡️ SUPER ADMIN&lt;/b&gt;" style="swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#F1F5F9;strokeColor=#64748B;strokeWidth=2;fontColor=#0F172A;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="840" width="1520" height="150" as="geometry" />
         </mxCell>
 
-        <mxCell id="a1" value="&lt;b&gt;Multi-Tenant Management&lt;/b&gt;&lt;br/&gt;Manage `restaurants` &amp;amp; admin accounts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=12;shadow=1;" vertex="1" parent="lane_admin">
-          <mxGeometry x="60" y="45" width="220" height="65" as="geometry" />
+        <mxCell id="a1" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#334155; font-size:13px;&quot;&gt;Multi-Tenant Management&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#475569; font-size:11px;&quot;&gt;Manage `restaurants` &amp;amp; admin accounts&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_admin">
+          <mxGeometry x="60" y="45" width="230" height="65" as="geometry" />
         </mxCell>
 
-        <mxCell id="a2" value="&lt;b&gt;Fleet GPS Telemetry Map&lt;/b&gt;&lt;br/&gt;Live tracking of all active couriers (`courier_telemetry`)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=12;shadow=1;" vertex="1" parent="lane_admin">
-          <mxGeometry x="320" y="45" width="240" height="65" as="geometry" />
+        <mxCell id="a2" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#334155; font-size:13px;&quot;&gt;Fleet GPS Telemetry Map&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#475569; font-size:11px;&quot;&gt;Live tracking of all active couriers (`courier_telemetry`)&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_admin">
+          <mxGeometry x="330" y="45" width="250" height="65" as="geometry" />
         </mxCell>
 
-        <mxCell id="a3" value="&lt;b&gt;Security &amp;amp; Audit Logs&lt;/b&gt;&lt;br/&gt;Inspect `rate_limits` &amp;amp; `system_logs`" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=12;shadow=1;" vertex="1" parent="lane_admin">
-          <mxGeometry x="600" y="45" width="220" height="65" as="geometry" />
+        <mxCell id="a3" value="&lt;div style=&quot;color:#0F172A; text-align:center;&quot;&gt;&lt;b style=&quot;color:#334155; font-size:13px;&quot;&gt;Security &amp;amp; Audit Logs&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;color:#475569; font-size:11px;&quot;&gt;Inspect `rate_limits` &amp;amp; `system_logs`&lt;/span&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;strokeWidth=2;fontSize=12;fontColor=#0F172A;shadow=1;" vertex="1" parent="lane_admin">
+          <mxGeometry x="620" y="45" width="230" height="65" as="geometry" />
         </mxCell>
 
-        <!-- CONNECTIONS / ARROWS -->
-        <mxCell id="e1" value="Checkout" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="c1" target="c2">
+        <!-- CONNECTIONS / ARROWS WITH HIGH CONTRAST LABEL STYLING -->
+        <mxCell id="e1" value="&lt;span style=&quot;color:#1E3A8A; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Checkout&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2.5;fontColor=#1E3A8A;fontSize=11;fontStyle=1;" edge="1" parent="1" source="c1" target="c2">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e2" value="Need Auth" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fontSize=11;entryX=0.5;entryY=0;" edge="1" parent="1" source="c2" target="b1">
+        <mxCell id="e2" value="&lt;span style=&quot;color:#581C87; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Need Auth&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9333EA;strokeWidth=2.5;fontColor=#581C87;fontSize=11;fontStyle=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="c2" target="b1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e3" value="Fulfillment" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="c2" target="c3">
+        <mxCell id="e3" value="&lt;span style=&quot;color:#1E3A8A; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Fulfillment&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2.5;fontColor=#1E3A8A;fontSize=11;fontStyle=1;" edge="1" parent="1" source="c2" target="c3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e4" value="Payment" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="c3" target="c4">
+        <mxCell id="e4" value="&lt;span style=&quot;color:#1E3A8A; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Payment&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2.5;fontColor=#1E3A8A;fontSize=11;fontStyle=1;" edge="1" parent="1" source="c3" target="c4">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e5" value="Submit Order" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fontSize=11;entryX=0.5;entryY=0;" edge="1" parent="1" source="c4" target="b2">
+        <mxCell id="e5" value="&lt;span style=&quot;color:#581C87; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Submit Order&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9333EA;strokeWidth=2.5;fontColor=#581C87;fontSize=11;fontStyle=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="c4" target="b2">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e6" value="Trigger Broadcast" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="b2" target="b3">
+        <mxCell id="e6" value="&lt;span style=&quot;color:#581C87; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Trigger Broadcast&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9333EA;strokeWidth=2.5;fontColor=#581C87;fontSize=11;fontStyle=1;" edge="1" parent="1" source="b2" target="b3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e7" value="`new-order` alert" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fontSize=11;entryX=0.5;entryY=0;" edge="1" parent="1" source="b3" target="k1">
+        <mxCell id="e7" value="&lt;span style=&quot;color:#7C2D12; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;`new-order` alert&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;strokeWidth=2.5;fontColor=#7C2D12;fontSize=11;fontStyle=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="b3" target="k1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e8" value="Accept" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="k1" target="k2">
+        <mxCell id="e8" value="&lt;span style=&quot;color:#7C2D12; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Accept&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;strokeWidth=2.5;fontColor=#7C2D12;fontSize=11;fontStyle=1;" edge="1" parent="1" source="k1" target="k2">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e9" value="Food Ready" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="k2" target="k3">
+        <mxCell id="e9" value="&lt;span style=&quot;color:#7C2D12; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Food Ready&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;strokeWidth=2.5;fontColor=#7C2D12;fontSize=11;fontStyle=1;" edge="1" parent="1" source="k2" target="k3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e10" value="Dispatch" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fontSize=11;entryX=0.5;entryY=0;" edge="1" parent="1" source="k3" target="d1">
+        <mxCell id="e10" value="&lt;span style=&quot;color:#14532D; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Dispatch&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;strokeWidth=2.5;fontColor=#14532D;fontSize=11;fontStyle=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="k3" target="d1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e11" value="Pickup" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="d1" target="d2">
+        <mxCell id="e11" value="&lt;span style=&quot;color:#14532D; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Pickup&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;strokeWidth=2.5;fontColor=#14532D;fontSize=11;fontStyle=1;" edge="1" parent="1" source="d1" target="d2">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e12" value="Deliver &amp; COD" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="d2" target="d3">
+        <mxCell id="e12" value="&lt;span style=&quot;color:#14532D; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Deliver &amp;amp; COD&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;strokeWidth=2.5;fontColor=#14532D;fontSize=11;fontStyle=1;" edge="1" parent="1" source="d2" target="d3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="e13" value="Completed!" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=11;entryX=0.5;entryY=1;" edge="1" parent="1" source="d3" target="c5">
+        <mxCell id="e13" value="&lt;span style=&quot;color:#1E3A8A; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Completed!&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2.5;fontColor=#1E3A8A;fontSize=11;fontStyle=1;entryX=0.5;entryY=1;" edge="1" parent="1" source="d3" target="c5">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 

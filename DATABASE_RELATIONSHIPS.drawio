@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2026-09-18T08:41:32.000Z" agent="Antigravity AI" version="21.6.8" type="device">
+<mxfile host="app.diagrams.net" modified="2026-09-18T08:44:42.000Z" agent="Antigravity AI" version="21.6.8" type="device">
   <diagram id="database_relationships" name="Database Entity Relationships">
     <mxGraphModel dx="1600" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
       <root>
@@ -6,103 +6,95 @@
         <mxCell id="1" parent="0" />
 
         <!-- TITLE -->
-        <mxCell id="title" value="&lt;b&gt;ONLINE ORDERING SYSTEM - DATABASE ENTITY RELATIONSHIP DIAGRAM (ERD)&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#1A2530;" vertex="1" parent="1">
-          <mxGeometry x="250" y="20" width="1000" height="40" as="geometry" />
+        <mxCell id="title" value="&lt;b style=&quot;color:#0F172A; font-size:22px;&quot;&gt;ONLINE ORDERING SYSTEM - DATABASE ENTITY RELATIONSHIP DIAGRAM (ERD)&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontColor=#0F172A;" vertex="1" parent="1">
+          <mxGeometry x="250" y="20" width="1100" height="40" as="geometry" />
         </mxCell>
 
         <!-- TABLE 1: RESTAURANTS -->
-        <mxCell id="t_restaurants" value="&lt;b&gt;🏪 restaurants&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;• name: VARCHAR(150)&lt;br/&gt;• slug: VARCHAR(150) UNIQUE&lt;br/&gt;• address, lat, lng, phone&lt;br/&gt;• is_active: TINYINT(1)" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="60" y="80" width="240" height="180" as="geometry" />
+        <mxCell id="t_restaurants" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#1E3A8A; font-size:14px;&quot;&gt;🏪 restaurants&lt;/b&gt;&lt;hr style=&quot;border-color:#3B82F6;&quot;/&gt;🔑 &lt;b style=&quot;color:#1E40AF;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;• name: VARCHAR(150)&lt;br/&gt;• slug: VARCHAR(150) UNIQUE&lt;br/&gt;• address, lat, lng, phone&lt;br/&gt;• is_active: TINYINT(1)&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="250" height="190" as="geometry" />
         </mxCell>
 
         <!-- TABLE 2: USERS -->
-        <mxCell id="t_users" value="&lt;b&gt;👤 users&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;• name, phone (UNIQUE), email&lt;br/&gt;• role: ENUM('admin','delivery','customer')&lt;br/&gt;🔗 &lt;b&gt;restaurant_id&lt;/b&gt;: INT (FK)&lt;br/&gt;• status, customer_tag, preferred_channel" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="400" y="80" width="260" height="200" as="geometry" />
+        <mxCell id="t_users" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#14532D; font-size:14px;&quot;&gt;👤 users&lt;/b&gt;&lt;hr style=&quot;border-color:#16A34A;&quot;/&gt;🔑 &lt;b style=&quot;color:#15803D;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;• name, phone (UNIQUE), email&lt;br/&gt;• role: ENUM('admin','delivery','customer')&lt;br/&gt;🔗 &lt;b style=&quot;color:#15803D;&quot;&gt;restaurant_id&lt;/b&gt;: INT (FK)&lt;br/&gt;• status, customer_tag, preferred_channel&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="80" width="270" height="210" as="geometry" />
         </mxCell>
 
         <!-- TABLE 3: CATEGORIES -->
-        <mxCell id="t_categories" value="&lt;b&gt;📁 categories&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b&gt;restaurant_id&lt;/b&gt;: INT (FK)&lt;br/&gt;• name, slug, icon, image_url&lt;br/&gt;• description, sort_order" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="60" y="320" width="240" height="170" as="geometry" />
+        <mxCell id="t_categories" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#1E3A8A; font-size:14px;&quot;&gt;📁 categories&lt;/b&gt;&lt;hr style=&quot;border-color:#3B82F6;&quot;/&gt;🔑 &lt;b style=&quot;color:#1E40AF;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b style=&quot;color:#1E40AF;&quot;&gt;restaurant_id&lt;/b&gt;: INT (FK)&lt;br/&gt;• name, slug, icon, image_url&lt;br/&gt;• description, sort_order&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#3B82F6;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="320" width="250" height="180" as="geometry" />
         </mxCell>
 
         <!-- TABLE 4: FOODS -->
-        <mxCell id="t_foods" value="&lt;b&gt;🍔 foods&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b&gt;restaurant_id&lt;/b&gt;: INT (FK)&lt;br/&gt;🔗 &lt;b&gt;category_id&lt;/b&gt;: INT (FK)&lt;br/&gt;• name, price, badge_text, badge_type&lt;br/&gt;• options (JSON), stock_quantity, status" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="60" y="530" width="240" height="210" as="geometry" />
+        <mxCell id="t_foods" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#854D0E; font-size:14px;&quot;&gt;🍔 foods&lt;/b&gt;&lt;hr style=&quot;border-color:#CA8A04;&quot;/&gt;🔑 &lt;b style=&quot;color:#A16207;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b style=&quot;color:#A16207;&quot;&gt;restaurant_id&lt;/b&gt;: INT (FK)&lt;br/&gt;🔗 &lt;b style=&quot;color:#A16207;&quot;&gt;category_id&lt;/b&gt;: INT (FK)&lt;br/&gt;• name, price, badge_text, badge_type&lt;br/&gt;• options (JSON), stock_quantity, status&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#CA8A04;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="540" width="250" height="220" as="geometry" />
         </mxCell>
 
         <!-- TABLE 5: ORDERS -->
-        <mxCell id="t_orders" value="&lt;b&gt;🛒 orders&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;• order_number: VARCHAR(50) UNIQUE&lt;br/&gt;🔗 &lt;b&gt;restaurant_id&lt;/b&gt;: INT (FK)&lt;br/&gt;🔗 &lt;b&gt;user_id&lt;/b&gt;: INT (FK - Customer)&lt;br/&gt;🔗 &lt;b&gt;delivery_staff_id&lt;/b&gt;: INT (FK - Courier)&lt;br/&gt;• fulfillment_type, payment_method, status&lt;br/&gt;• total_amount (USD &amp;amp; KHR)" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="400" y="340" width="280" height="240" as="geometry" />
+        <mxCell id="t_orders" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#7C2D12; font-size:14px;&quot;&gt;🛒 orders&lt;/b&gt;&lt;hr style=&quot;border-color:#EA580C;&quot;/&gt;🔑 &lt;b style=&quot;color:#C2410C;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;• order_number: VARCHAR(50) UNIQUE&lt;br/&gt;🔗 &lt;b style=&quot;color:#C2410C;&quot;&gt;restaurant_id&lt;/b&gt;: INT (FK)&lt;br/&gt;🔗 &lt;b style=&quot;color:#C2410C;&quot;&gt;user_id&lt;/b&gt;: INT (FK - Customer)&lt;br/&gt;🔗 &lt;b style=&quot;color:#C2410C;&quot;&gt;delivery_staff_id&lt;/b&gt;: INT (FK - Courier)&lt;br/&gt;• fulfillment_type, payment_method, status&lt;br/&gt;• total_amount (USD &amp;amp; KHR)&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#EA580C;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="340" width="290" height="250" as="geometry" />
         </mxCell>
 
         <!-- TABLE 6: ORDER ITEMS -->
-        <mxCell id="t_order_items" value="&lt;b&gt;📦 order_items&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b&gt;order_id&lt;/b&gt;: INT (FK - CASCADE)&lt;br/&gt;🔗 &lt;b&gt;food_id&lt;/b&gt;: INT (FK - SET NULL)&lt;br/&gt;• food_name, price, quantity, subtotal&lt;br/&gt;• image_url, notes" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="400" y="630" width="280" height="190" as="geometry" />
+        <mxCell id="t_order_items" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#7C2D12; font-size:14px;&quot;&gt;📦 order_items&lt;/b&gt;&lt;hr style=&quot;border-color:#EA580C;&quot;/&gt;🔑 &lt;b style=&quot;color:#C2410C;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b style=&quot;color:#C2410C;&quot;&gt;order_id&lt;/b&gt;: INT (FK - CASCADE)&lt;br/&gt;🔗 &lt;b style=&quot;color:#C2410C;&quot;&gt;food_id&lt;/b&gt;: INT (FK - SET NULL)&lt;br/&gt;• food_name, price, quantity, subtotal&lt;br/&gt;• image_url, notes&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#EA580C;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="630" width="290" height="200" as="geometry" />
         </mxCell>
 
         <!-- TABLE 7: USER ADDRESSES -->
-        <mxCell id="t_user_addresses" value="&lt;b&gt;📍 user_addresses&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b&gt;user_id&lt;/b&gt;: INT (FK)&lt;br/&gt;• label, address, lat, lng, tag&lt;br/&gt;• is_default: TINYINT(1)" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="740" y="80" width="240" height="170" as="geometry" />
+        <mxCell id="t_user_addresses" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#14532D; font-size:14px;&quot;&gt;📍 user_addresses&lt;/b&gt;&lt;hr style=&quot;border-color:#16A34A;&quot;/&gt;🔑 &lt;b style=&quot;color:#15803D;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b style=&quot;color:#15803D;&quot;&gt;user_id&lt;/b&gt;: INT (FK)&lt;br/&gt;• label, address, lat, lng, tag&lt;br/&gt;• is_default: TINYINT(1)&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="80" width="250" height="180" as="geometry" />
         </mxCell>
 
         <!-- TABLE 8: COURIER TELEMETRY -->
-        <mxCell id="t_courier_telemetry" value="&lt;b&gt;🛵 courier_telemetry&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b&gt;user_id&lt;/b&gt;: INT (FK - UNIQUE)&lt;br/&gt;• vehicle_type, vehicle_label&lt;br/&gt;• lat, lng, speed_kmh, temp_celsius&lt;br/&gt;• status: ENUM('active','on_delivery')" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="740" y="280" width="240" height="200" as="geometry" />
+        <mxCell id="t_courier_telemetry" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#14532D; font-size:14px;&quot;&gt;🛵 courier_telemetry&lt;/b&gt;&lt;hr style=&quot;border-color:#16A34A;&quot;/&gt;🔑 &lt;b style=&quot;color:#15803D;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b style=&quot;color:#15803D;&quot;&gt;user_id&lt;/b&gt;: INT (FK - UNIQUE)&lt;br/&gt;• vehicle_type, vehicle_label&lt;br/&gt;• lat, lng, speed_kmh, temp_celsius&lt;br/&gt;• status: ENUM('active','on_delivery')&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="290" width="250" height="210" as="geometry" />
         </mxCell>
 
         <!-- TABLE 9: SETTINGS -->
-        <mxCell id="t_settings" value="&lt;b&gt;⚙️ settings&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b&gt;restaurant_id&lt;/b&gt;: INT (Indexed)&lt;br/&gt;• setting_key, setting_value, setting_group" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="740" y="510" width="240" height="140" as="geometry" />
+        <mxCell id="t_settings" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#581C87; font-size:14px;&quot;&gt;⚙️ settings&lt;/b&gt;&lt;hr style=&quot;border-color:#9333EA;&quot;/&gt;🔑 &lt;b style=&quot;color:#6B21A8;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;🔗 &lt;b style=&quot;color:#6B21A8;&quot;&gt;restaurant_id&lt;/b&gt;: INT (Indexed)&lt;br/&gt;• setting_key, setting_value, setting_group&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#9333EA;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="530" width="250" height="150" as="geometry" />
         </mxCell>
 
         <!-- TABLE 10: SYSTEM LOGS -->
-        <mxCell id="t_system_logs" value="&lt;b&gt;📋 system_logs&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: BIGINT (PK)&lt;br/&gt;• action, category, level, description&lt;br/&gt;• user_id, user_name, ip_address" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="740" y="680" width="240" height="140" as="geometry" />
+        <mxCell id="t_system_logs" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#0F172A; font-size:14px;&quot;&gt;📋 system_logs&lt;/b&gt;&lt;hr style=&quot;border-color:#64748B;&quot;/&gt;🔑 &lt;b style=&quot;color:#334155;&quot;&gt;id&lt;/b&gt;: BIGINT (PK)&lt;br/&gt;• action, category, level, description&lt;br/&gt;• user_id, user_name, ip_address&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#64748B;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="700" width="250" height="150" as="geometry" />
         </mxCell>
 
         <!-- TABLE 11: RATE LIMITS -->
-        <mxCell id="t_rate_limits" value="&lt;b&gt;🔒 rate_limits&lt;/b&gt;&lt;hr/&gt;🔑 &lt;b&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;• ip_address, action (UNIQUE KEY)&lt;br/&gt;• attempts, last_attempt_at, locked_until" style="shape=swimlane;startSize=30;horizontal=0;html=1;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;rounded=1;shadow=1;" vertex="1" parent="1">
-          <mxGeometry x="1040" y="80" width="240" height="150" as="geometry" />
+        <mxCell id="t_rate_limits" value="&lt;div style=&quot;color:#0F172A;&quot;&gt;&lt;b style=&quot;color:#991B1B; font-size:14px;&quot;&gt;🔒 rate_limits&lt;/b&gt;&lt;hr style=&quot;border-color:#DC2626;&quot;/&gt;🔑 &lt;b style=&quot;color:#B91C1C;&quot;&gt;id&lt;/b&gt;: INT (PK)&lt;br/&gt;• ip_address, action (UNIQUE KEY)&lt;br/&gt;• attempts, last_attempt_at, locked_until&lt;/div&gt;" style="shape=swimlane;startSize=32;horizontal=0;html=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#DC2626;strokeWidth=2;fontSize=12;fontColor=#0F172A;rounded=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="80" width="250" height="160" as="geometry" />
         </mxCell>
 
         <!-- RELATIONSHIP ARROWS -->
-        <!-- Users -> Restaurants -->
-        <mxCell id="r1" value="0..* : 0..1 (SET NULL)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="t_users" target="t_restaurants">
+        <mxCell id="r1" value="&lt;span style=&quot;color:#1E3A8A; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;0..* : 0..1 (SET NULL)&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2.5;fontColor=#1E3A8A;fontSize=10;" edge="1" parent="1" source="t_users" target="t_restaurants">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Categories -> Restaurants -->
-        <mxCell id="r2" value="1..* : 1 (CASCADE)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="t_categories" target="t_restaurants">
+        <mxCell id="r2" value="&lt;span style=&quot;color:#1E3A8A; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;1..* : 1 (CASCADE)&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2.5;fontColor=#1E3A8A;fontSize=10;" edge="1" parent="1" source="t_categories" target="t_restaurants">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Foods -> Categories & Restaurants -->
-        <mxCell id="r3" value="0..* : 0..1 (SET NULL)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d6b656;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="t_foods" target="t_categories">
+        <mxCell id="r3" value="&lt;span style=&quot;color:#854D0E; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;0..* : 0..1 (SET NULL)&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#CA8A04;strokeWidth=2.5;fontColor=#854D0E;fontSize=10;" edge="1" parent="1" source="t_foods" target="t_categories">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Orders -> Restaurants, Users (Customer), Users (Delivery) -->
-        <mxCell id="r4" value="Orders placed by User" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="t_orders" target="t_users">
+        <mxCell id="r4" value="&lt;span style=&quot;color:#14532D; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Orders placed by User&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;strokeWidth=2.5;fontColor=#14532D;fontSize=10;" edge="1" parent="1" source="t_orders" target="t_users">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Order Items -> Orders -->
-        <mxCell id="r5" value="1..* : 1 (CASCADE)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="t_order_items" target="t_orders">
+        <mxCell id="r5" value="&lt;span style=&quot;color:#7C2D12; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;1..* : 1 (CASCADE)&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;strokeWidth=2.5;fontColor=#7C2D12;fontSize=10;" edge="1" parent="1" source="t_order_items" target="t_orders">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Order Items -> Foods -->
-        <mxCell id="r6" value="Food snapshot" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d79b00;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="t_order_items" target="t_foods">
+        <mxCell id="r6" value="&lt;span style=&quot;color:#7C2D12; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;Food snapshot&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#EA580C;strokeWidth=2.5;fontColor=#7C2D12;fontSize=10;" edge="1" parent="1" source="t_order_items" target="t_foods">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- User Addresses -> Users -->
-        <mxCell id="r7" value="1..* : 1 (CASCADE)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="t_user_addresses" target="t_users">
+        <mxCell id="r7" value="&lt;span style=&quot;color:#14532D; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;1..* : 1 (CASCADE)&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;strokeWidth=2.5;fontColor=#14532D;fontSize=10;" edge="1" parent="1" source="t_user_addresses" target="t_users">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- Courier Telemetry -> Users -->
-        <mxCell id="r8" value="1:1 (CASCADE)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="t_courier_telemetry" target="t_users">
+        <mxCell id="r8" value="&lt;span style=&quot;color:#14532D; font-weight:bold; background-color:#FFFFFF; padding:2px;&quot;&gt;1:1 (CASCADE)&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#16A34A;strokeWidth=2.5;fontColor=#14532D;fontSize=10;" edge="1" parent="1" source="t_courier_telemetry" target="t_users">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
