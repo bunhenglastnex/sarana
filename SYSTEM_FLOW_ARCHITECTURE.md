@@ -2,6 +2,7 @@
 
 **System:** Online Ordering System (Multi-Tenant Real-Time Platform)  
 **Roles Supported:** Customer, Restaurant Admin / Kitchen Staff, Delivery Driver, Super Admin  
+**Draw.io Diagram File:** 🎨 [`SYSTEM_FLOW_ARCHITECTURE.drawio`](file:///d:/learning/Sarana/Online-Ordering/SYSTEM_FLOW_ARCHITECTURE.drawio)  
 **Last Updated:** September 18, 2026  
 
 ---

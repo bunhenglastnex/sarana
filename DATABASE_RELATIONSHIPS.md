@@ -2,6 +2,7 @@
 
 **System:** Online Ordering System (Multi-Tenant Architecture)  
 **Database Engine:** MySQL / InnoDB (utf8mb4)  
+**Draw.io Diagram File:** 🎨 [`DATABASE_RELATIONSHIPS.drawio`](file:///d:/learning/Sarana/Online-Ordering/DATABASE_RELATIONSHIPS.drawio)  
 **Generated Date:** September 18, 2026  
 
 ---
