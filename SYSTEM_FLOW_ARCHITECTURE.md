@@ -21,9 +21,8 @@ sequenceDiagram
     participant DB as Database (MySQL)
     participant RT as Real-time Broadcaster
 
-    %% 1. Browse & Auth Flow
-    rect rgb(240, 248, 255)
-    Note over C, FE: Phase 1: Browse Catalog & Authentication
+    %% Phase 1
+    Note over C, FE: 🔹 Phase 1: Browse Catalog & Authentication
     C->>FE: 1. Browse Menu & Select Food Items
     C->>FE: 2. Click "Add to Cart" / "Checkout"
     FE->>FE: 3. Check Auth Token / Login Session
@@ -34,22 +33,18 @@ sequenceDiagram
         BE->>DB: Verify User Credentials & Role ('customer')
         BE-->>FE: Return JWT / Session Token
     end
-    end
 
-    %% 2. Checkout & Order Placement Flow
-    rect rgb(245, 255, 250)
-    Note over C, BE: Phase 2: Checkout & Order Placement
+    %% Phase 2
+    Note over C, BE: 🔹 Phase 2: Checkout & Order Placement
     C->>FE: 4. Select Delivery / Pickup & Payment Method (KHQR / COD)
     FE->>BE: 5. POST /api/orders.php (Order Payload)
     BE->>DB: 6. Insert Into 'orders' & 'order_items' (Transaction)
     BE->>RT: 7. Broadcast Event ('new-order')
     RT-->>FE: 8. Real-time Sound Alert & Banner on Kitchen App
     BE-->>FE: 9. Return Order Confirmation (#1001)
-    end
 
-    %% 3. Kitchen Processing Flow
-    rect rgb(255, 250, 240)
-    Note over K, RT: Phase 3: Kitchen Order Acceptance & Prep
+    %% Phase 3
+    Note over K, RT: 🔹 Phase 3: Kitchen Order Acceptance & Prep
     K->>FE: 10. Click [ Accept Order ]
     FE->>BE: 11. PATCH /api/order-status.php (Status: 'accepted')
     BE->>DB: Update orders.status = 'accepted'
@@ -58,11 +53,9 @@ sequenceDiagram
     K->>FE: 12. Mark [ Preparing ] -> [ Ready for Delivery ]
     FE->>BE: 13. PATCH /api/order-status.php (Status: 'ready_for_delivery')
     BE->>RT: Broadcast Event ('delivery-dispatch') -> Driver App
-    end
 
-    %% 4. Delivery & GPS Telemetry Flow
-    rect rgb(255, 240, 245)
-    Note over D, C: Phase 4: Delivery Dispatch & Live GPS Telemetry
+    %% Phase 4
+    Note over D, C: 🔹 Phase 4: Delivery Dispatch & Live GPS Telemetry
     D->>FE: 14. View Available Orders & Tap [ Accept / Pickup ]
     FE->>BE: 15. POST /api/delivery.php (Assign Driver ID)
     D->>FE: 16. Tap [ Start Delivery ] (Status: 'on_the_way')
@@ -77,15 +70,12 @@ sequenceDiagram
     BE->>DB: Update orders.status = 'delivered', payment_status = 'paid'
     BE->>RT: Broadcast Event ('order-completed') -> Customer & Kitchen
     RT-->>FE: Customer Screen: "Order Completed! 🎉"
-    end
 
-    %% 5. Admin & Super Admin Monitoring
-    rect rgb(248, 248, 255)
-    Note over SA, DB: Phase 5: Super Admin Platform Oversight
+    %% Phase 5
+    Note over SA, DB: 🔹 Phase 5: Super Admin Platform Oversight
     SA->>FE: 20. View Multi-tenant Dashboard, Telemetry & Audit Logs
     FE->>BE: GET /api/admin/system_logs.php & rate_limits.php
     BE-->>FE: Return Tenant Performance & Audit Reports
-    end
 ```
 
 ---
