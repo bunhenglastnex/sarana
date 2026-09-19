@@ -328,7 +328,7 @@ export const OrdersView: React.FC = () => {
                       {/* Bottom Banner Info: Outlet & Fulfillment Pill */}
                       <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
                         <span className="font-bold truncate max-w-[170px] drop-shadow-sm">
-                          {order.restaurant_name || "Amber Bistro"}
+                          {order.restaurant?.name || order.restaurant_name || "Amber & Ember Woodfired Bistro"}
                         </span>
                         <span className="px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs font-semibold text-[10px] uppercase tracking-wider">
                           {order.fulfillment_type === "pickup" ? "Pickup" : "Delivery"}

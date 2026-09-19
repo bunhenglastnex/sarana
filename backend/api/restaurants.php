@@ -17,6 +17,8 @@ if ($method === 'GET') {
     try {
         $search = trim($_GET['search'] ?? '');
         $activeOnly = isset($_GET['active_only']) ? (bool)$_GET['active_only'] : false;
+        $idParam = isset($_GET['id']) && is_numeric($_GET['id']) ? (int)$_GET['id'] : null;
+        $adminScope = isset($_GET['admin_scope']) ? (bool)$_GET['admin_scope'] : false;
 
         $authUser = AuthMiddleware::getOptionalUser($pdo);
 
@@ -26,10 +28,15 @@ if ($method === 'GET') {
                 WHERE 1=1";
         $params = [];
 
-        // If authenticated as normal restaurant admin (not super_admin), restrict to their own restaurant
-        if ($authUser && $authUser['role'] === 'admin' && !empty($authUser['restaurant_id']) && !$activeOnly) {
+        // Only restrict to admin user's restaurant_id IF explicitly requested via admin_scope=1 for admin dashboard views
+        if ($adminScope && $authUser && $authUser['role'] === 'admin' && !empty($authUser['restaurant_id'])) {
             $sql .= " AND r.id = ?";
             $params[] = (int)$authUser['restaurant_id'];
+        }
+
+        if ($idParam !== null) {
+            $sql .= " AND r.id = ?";
+            $params[] = $idParam;
         }
 
         if ($activeOnly) {
@@ -106,7 +113,11 @@ if ($method === 'GET') {
             return $a['id'] <=> $b['id'];
         });
 
-        jsonResponse(1, 'Restaurants fetched successfully', $restaurants);
+        if ($idParam !== null && count($restaurants) > 0) {
+            jsonResponse(1, 'Restaurant fetched successfully', $restaurants[0]);
+        } else {
+            jsonResponse(1, 'Restaurants fetched successfully', $restaurants);
+        }
     } catch (PDOException $e) {
         jsonResponse(0, 'Failed to fetch restaurants: ' . $e->getMessage(), null, 500);
     }

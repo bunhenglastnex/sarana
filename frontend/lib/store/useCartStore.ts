@@ -47,8 +47,17 @@ export const useCartStore = create<CartState>()(
 
       addItem: (food, quantity = 1, options = {}, notes = '') => {
         const currentItems = get().items;
+        const currentRestoId = get().restaurantId;
         const targetRestoId = Number(food.restaurant_id || (food as any).restaurantId || 1);
         const targetRestoName = food.restaurant_name || (food as any).restaurantName || 'Restaurant';
+
+        if (currentItems.length > 0 && currentRestoId && currentRestoId !== targetRestoId) {
+          return {
+            isConflict: true,
+            currentRestaurantName: get().restaurantName || 'Another Restaurant',
+            newRestaurantName: targetRestoName,
+          };
+        }
 
         const foodId = Number(food.id);
         const optionsKey = JSON.stringify(options || {});

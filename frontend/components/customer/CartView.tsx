@@ -106,6 +106,7 @@ export const CartView: React.FC = () => {
   const freeDeliveryMinSubtotal = parseFloat(
     settings.free_delivery_min_subtotal ?? "25.00",
   );
+  const baseDeliveryFee = parseFloat(settings.base_delivery_fee ?? "1.50");
 
   // Financial calculations from store items
   const subtotal = cartItems.reduce(
@@ -119,7 +120,7 @@ export const CartView: React.FC = () => {
   );
   const discount = 0;
   const isFreeDelivery = subtotal >= freeDeliveryMinSubtotal;
-  const estimatedDeliveryFee = subtotal > 0 ? (isFreeDelivery ? 0 : 0) : 0;
+  const estimatedDeliveryFee = subtotal > 0 ? (isFreeDelivery ? 0 : baseDeliveryFee) : 0;
   const serviceTax = subtotal > 0 ? (subtotal * taxRate) / 100 : 0;
   const finalTotal = Math.max(
     0,
@@ -483,12 +484,12 @@ export const CartView: React.FC = () => {
                     <span>Delivery Fee</span>
                     <span className="text-[11px] font-bold text-secondary">
                       {isFreeDelivery
-                        ? "Free Delivery Unlocked"
-                        : "Calculated at checkout"}
+                        ? "Free Delivery (Orders > $25)"
+                        : `Est. Base $${baseDeliveryFee.toFixed(2)} + distance`}
                     </span>
                   </div>
                   <span className="text-on-surface font-extrabold text-sm">
-                    {isFreeDelivery ? "$0.00" : "At Checkout"}
+                    {isFreeDelivery ? "$0.00" : `$${baseDeliveryFee.toFixed(2)}`}
                   </span>
                 </div>
 

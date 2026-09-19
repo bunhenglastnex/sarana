@@ -22,7 +22,8 @@ if ($method === 'GET') {
         // 1. Fetch Single Food Detail by ID or Slug
         if (!empty($targetId) || !empty($targetSlug)) {
             $baseSql = "
-                SELECT f.id, f.category_id, c.name as category_name, c.slug as category_slug, 
+                SELECT f.id, f.restaurant_id, r.name as restaurant_name, r.logo_url as restaurant_logo, r.address as restaurant_address,
+                       f.category_id, c.name as category_name, c.slug as category_slug, 
                        f.name, f.slug, f.price, f.description, f.image_url, 
                        f.badge_text, f.badge_type,
                        COALESCE(f.is_top_seller, 0) as is_top_seller,
@@ -33,6 +34,7 @@ if ($method === 'GET') {
                        COALESCE(f.is_featured, 0) as is_featured,
                        f.status
                 FROM foods f
+                LEFT JOIN restaurants r ON f.restaurant_id = r.id
                 LEFT JOIN categories c ON f.category_id = c.id
             ";
 
@@ -66,13 +68,17 @@ if ($method === 'GET') {
 
             // Format single food detail object
             $food['id'] = (int)$food['id'];
+            $food['restaurant_id'] = (int)($food['restaurant_id'] ?? 1);
+            $food['restaurant_name'] = $food['restaurant_name'] ?? 'Restaurant';
             $food['category_id'] = $food['category_id'] ? (int)$food['category_id'] : null;
             $food['category'] = $food['category_slug'] ?? ($food['category_name'] ? strtolower(str_replace(' ', '-', $food['category_name'])) : 'general');
             $food['price'] = (float)$food['price'];
             $food['is_available'] = (bool)$food['is_available'];
             $food['isAvailable'] = (bool)$food['is_available'];
             $food['stockQuantity'] = (int)$food['stock_quantity'];
-            $food['imageUrl'] = $food['image_url'] ?? '';
+            $formattedImage = formatPublicImageUrl($food['image_url'] ?? '');
+            $food['image_url'] = $formattedImage;
+            $food['imageUrl'] = $formattedImage;
             $food['isTopSeller'] = (bool)$food['is_top_seller'];
             $food['prepTimeMinutes'] = (int)$food['prep_time_minutes'];
             $food['status'] = $food['status'] ?? 'public';
@@ -243,7 +249,9 @@ if ($method === 'GET') {
             $food['is_available'] = (bool)$food['is_available'];
             $food['isAvailable'] = (bool)$food['is_available'];
             $food['stockQuantity'] = (int)$food['stock_quantity'];
-            $food['imageUrl'] = $food['image_url'] ?? '';
+            $formattedImage = formatPublicImageUrl($food['image_url'] ?? '');
+            $food['image_url'] = $formattedImage;
+            $food['imageUrl'] = $formattedImage;
             $food['isTopSeller'] = (bool)$food['is_top_seller'];
             $food['prepTimeMinutes'] = (int)$food['prep_time_minutes'];
             $food['status'] = $food['status'] ?? 'public';

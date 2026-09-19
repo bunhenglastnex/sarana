@@ -50,23 +50,24 @@ class AuthMiddleware {
      * Returns null if super_admin viewing all, delivery rider, or customer.
      * Returns int restaurant_id for tenant admin / staff.
      */
-    public static function getTenantFilter(PDO $pdo, array $allowedRoles = ['admin', 'staff']): ?int {
+    public static function getTenantFilter(PDO $pdo, array $allowedRoles = ['admin']): ?int {
         $user = self::authenticate($pdo, array_merge(['super_admin'], $allowedRoles));
-        $requestedTenant = $_GET['restaurant_id'] ?? $_GET['tenant_id'] ?? $_SERVER['HTTP_X_TENANT_ID'] ?? null;
 
-        if ($requestedTenant === 'all' || $requestedTenant === '0') {
-            return null;
-        }
-
+        // 1. Super Admin: Can view all (null) or explicitly filter by restaurant_id
         if ($user['role'] === 'super_admin') {
+            $requestedTenant = $_GET['restaurant_id'] ?? $_GET['tenant_id'] ?? $_SERVER['HTTP_X_TENANT_ID'] ?? null;
+            if ($requestedTenant === 'all' || $requestedTenant === '0') {
+                return null;
+            }
             if ($requestedTenant !== null && is_numeric($requestedTenant) && (int)$requestedTenant > 0) {
                 return (int)$requestedTenant;
             }
             return null;
         }
 
+        // 2. Restaurant Admin: HARD-LOCKED to user's assigned restaurant_id. NO FALLBACK, NO OVERRIDES.
         if (empty($user['restaurant_id'])) {
-            return 1; // Default fallback to primary restaurant tenant #1
+            jsonResponse(0, 'Forbidden: Restaurant admin account is not assigned to any restaurant tenant.', null, 403);
         }
 
         return (int)$user['restaurant_id'];

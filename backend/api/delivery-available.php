@@ -5,6 +5,7 @@
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
+require_once __DIR__ . '/../lib/LocationService.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method !== 'GET') {
@@ -13,6 +14,18 @@ if ($method !== 'GET') {
 
 try {
     $pdo = getDB();
+
+    $action = $_GET['action'] ?? '';
+    $restaurantId = (int)($_GET['restaurant_id'] ?? $_GET['restaurantId'] ?? 1);
+
+    // 1. Coverage Diagnostic Evaluation Request
+    if ($action === 'check_coverage' || isset($_GET['lat']) || isset($_GET['restaurant_id'])) {
+        $lat = isset($_GET['lat']) && $_GET['lat'] !== '' ? (float)$_GET['lat'] : null;
+        $lng = isset($_GET['lng']) && $_GET['lng'] !== '' ? (float)$_GET['lng'] : null;
+
+        $coverage = LocationService::evaluateCoverage($pdo, $lat, $lng, $restaurantId);
+        jsonResponse(1, 'Coverage evaluation completed', $coverage);
+    }
 
     // Fetch Store HQ coordinates & info
     $settingsStmt = $pdo->query("SELECT setting_key, setting_value FROM settings");

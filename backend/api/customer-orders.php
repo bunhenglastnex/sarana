@@ -152,31 +152,44 @@ if ($method === 'POST') {
         ];
     }
 
-    // Check if fulfilling restaurant(s) are active in restaurants table AND settings table
-    $restoCheckStmt = $pdo->prepare("SELECT id, name, is_active FROM restaurants WHERE id = ?");
-    $settingsCheckStmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = 'is_active' AND (restaurant_id = ? OR restaurant_id IS NULL)");
+    // Enforce Single-Restaurant Cart Constraint (Rule 3)
+    if (count($itemsByRestaurant) !== 1) {
+        jsonResponse(0, 'Validation Error: An order must contain products from a single restaurant. Multi-restaurant orders are not supported in a single checkout.', null, 400);
+        return;
+    }
 
-    foreach (array_keys($itemsByRestaurant) as $checkRestoId) {
-        $restoCheckStmt->execute([$checkRestoId]);
-        $rRow = $restoCheckStmt->fetch();
-        $restoName = $rRow['name'] ?? "Restaurant #{$checkRestoId}";
+    $targetRestaurantId = (int)array_keys($itemsByRestaurant)[0];
 
-        // 1. Check restaurants table
-        if ($rRow && isset($rRow['is_active']) && ((int)$rRow['is_active'] === 0 || $rRow['is_active'] === '0' || $rRow['is_active'] === false)) {
-            jsonResponse(0, "Sorry! '{$restoName}' is currently closed and not accepting new orders at this time.", null, 400);
+    // Require LocationService for Two-Tier Coverage & Fulfillment Validation
+    require_once __DIR__ . '/../lib/LocationService.php';
+
+    $coverageDiagnostic = LocationService::evaluateCoverage($pdo, $deliveryLat, $deliveryLng, $targetRestaurantId);
+
+    if (!$coverageDiagnostic['success']) {
+        jsonResponse(0, $coverageDiagnostic['error'] ?? 'Restaurant validation failed', null, 400);
+        return;
+    }
+
+    // Rule 1 & Rule 7: Two-Tier Location Coverage Checks
+    if ($fulfillmentType === 'delivery') {
+        if (!$coverageDiagnostic['deliveryAvailable']) {
+            $reasonStr = !empty($coverageDiagnostic['reasons']) ? implode(' ', $coverageDiagnostic['reasons']) : 'Delivery is unavailable for your address.';
+            jsonResponse(0, "Delivery Unavailable: {$reasonStr}", null, 400);
             return;
         }
-
-        // 2. Check settings table (both tenant-specific and global)
-        $settingsCheckStmt->execute([$checkRestoId]);
-        $sRows = $settingsCheckStmt->fetchAll();
-        foreach ($sRows as $sRow) {
-            $val = strtolower(trim((string)$sRow['setting_value']));
-            if ($val === 'false' || $val === '0' || $val === 'off') {
-                jsonResponse(0, "Sorry! '{$restoName}' is currently closed and not accepting new orders at this time.", null, 400);
-                return;
-            }
+    } else {
+        // Pickup is ALWAYS independent of distance coverage (Rule 1)
+        if (!$coverageDiagnostic['pickupAvailable']) {
+            jsonResponse(0, 'Pickup Unavailable: Target restaurant does not accept pickup orders.', null, 400);
+            return;
         }
+    }
+
+    // Rule 9: Minimum Order Amount Check
+    $restaurantFoodAmount = $itemsByRestaurant[$targetRestaurantId]['food_amount'];
+    if ($restaurantFoodAmount < $coverageDiagnostic['minOrderAmount']) {
+        jsonResponse(0, "Minimum Order Error: Target restaurant requires a minimum subtotal of $" . number_format($coverageDiagnostic['minOrderAmount'], 2), null, 400);
+        return;
     }
 
     // Fetch Settings from database for dynamic fee & tax calculations
@@ -190,7 +203,6 @@ if ($method === 'POST') {
     $freeDeliveryMinSubtotal = isset($settings['free_delivery_min_subtotal']) ? (float)$settings['free_delivery_min_subtotal'] : 25.00;
     
     $tip = max(0.0, (float)($input['tip'] ?? 0));
-    $totalGroups = count($itemsByRestaurant);
     $createdOrders = [];
 
     try {
@@ -378,6 +390,15 @@ try {
         foreach ($orders as &$order) {
             $order['id'] = (int)$order['id'];
             $order['total_amount'] = (float)$order['total_amount'];
+            $order['restaurant'] = [
+                'id' => (int)($order['restaurant_id'] ?? 1),
+                'name' => $order['restaurant_name'] ?? 'Amber & Ember Woodfired Bistro',
+                'address' => $order['restaurant_address'] ?? '520 N Michigan Ave, Suite 14F, Siem Reap',
+                'lat' => $order['restaurant_lat'] !== null ? (float)$order['restaurant_lat'] : null,
+                'lng' => $order['restaurant_lng'] !== null ? (float)$order['restaurant_lng'] : null,
+                'logoUrl' => $order['restaurant_logo'] ?? '',
+                'phone' => $order['restaurant_phone'] ?? '',
+            ];
 
             $itemStmt = $pdo->prepare("
                 SELECT oi.id, oi.food_id, oi.food_name, oi.price, oi.quantity, oi.subtotal, f.image_url 
@@ -437,6 +458,15 @@ try {
     foreach ($orders as &$order) {
         $order['id'] = (int)$order['id'];
         $order['total_amount'] = (float)$order['total_amount'];
+        $order['restaurant'] = [
+            'id' => (int)($order['restaurant_id'] ?? 1),
+            'name' => $order['restaurant_name'] ?? 'Amber & Ember Woodfired Bistro',
+            'address' => $order['restaurant_address'] ?? '520 N Michigan Ave, Suite 14F, Siem Reap',
+            'lat' => $order['restaurant_lat'] !== null ? (float)$order['restaurant_lat'] : null,
+            'lng' => $order['restaurant_lng'] !== null ? (float)$order['restaurant_lng'] : null,
+            'logoUrl' => $order['restaurant_logo'] ?? '',
+            'phone' => $order['restaurant_phone'] ?? '',
+        ];
 
         $itemStmt = $pdo->prepare("
             SELECT oi.id, oi.food_id, oi.food_name, oi.price, oi.quantity, oi.subtotal, f.image_url 

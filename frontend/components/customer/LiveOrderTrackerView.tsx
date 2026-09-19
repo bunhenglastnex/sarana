@@ -63,10 +63,12 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
     ? parseFloat(liveOrder.restaurant_lng)
     : parseFloat(settings.store_longitude || "103.955116");
   const storeName =
-    liveOrder?.restaurant_name || settings.store_name || "Amber & Ember Bistro";
+    liveOrder?.restaurant?.name ||
+    liveOrder?.restaurant_name ||
+    "Amber & Ember Woodfired Bistro";
   const storeAddress =
+    liveOrder?.restaurant?.address ||
     liveOrder?.restaurant_address ||
-    settings.store_address ||
     "520 N Michigan Ave, Siem Reap";
 
   const triggerNotice = (msg: string) => {
@@ -315,10 +317,10 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
                   Preparing Kitchen Outlet
                 </span>
                 <h2 className="font-extrabold text-sm text-on-surface truncate">
-                  {liveOrder?.restaurant_name || settings.store_name || "Amber & Ember Woodfired Bistro"}
+                  {liveOrder?.restaurant?.name || liveOrder?.restaurant_name || "Amber & Ember Woodfired Bistro"}
                 </h2>
                 <span className="text-[11px] text-on-surface-variant truncate">
-                  {liveOrder?.restaurant_address || settings.store_address || "Siem Reap, Cambodia"}
+                  {liveOrder?.restaurant?.address || liveOrder?.restaurant_address || "Siem Reap, Cambodia"}
                 </span>
               </div>
             </div>

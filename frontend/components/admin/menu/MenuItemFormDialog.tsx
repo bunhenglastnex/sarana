@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -82,13 +82,22 @@ export const MenuItemFormDialog: React.FC<MenuItemFormDialogProps> = ({
   const [reviewCount, setReviewCount] = useState<number>(248);
   const [options, setOptions] = useState<CustomizationOptionGroup[]>([]);
 
+  const displayImageUrl = useMemo(() => {
+    if (!imageUrl) return "";
+    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://") || imageUrl.startsWith("data:")) {
+      return imageUrl;
+    }
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    return imageUrl.startsWith("/") ? `${apiBase}${imageUrl}` : `${apiBase}/${imageUrl}`;
+  }, [imageUrl]);
+
   useEffect(() => {
     if (itemToEdit) {
       setName(itemToEdit.name || "");
       setCategory(itemToEdit.category || "burgers");
       setPrice(itemToEdit.price ?? 14.5);
       setDescription(itemToEdit.description || "");
-      setImageUrl(itemToEdit.imageUrl || "");
+      setImageUrl(itemToEdit.imageUrl || (itemToEdit as any).image_url || "");
       setBadgeText(itemToEdit.badge?.text || "");
       setBadgeType(itemToEdit.badge?.type || "chef");
       setIsAvailable(itemToEdit.isAvailable ?? true);
@@ -367,15 +376,13 @@ export const MenuItemFormDialog: React.FC<MenuItemFormDialogProps> = ({
 
             {/* Live Hero Image Banner Preview */}
             <div className="relative w-full h-36 rounded-xl overflow-hidden bg-surface-container border border-border/40 group shadow-xs">
-              {imageUrl ? (
+              {displayImageUrl ? (
                 <>
                   <img
-                    src={imageUrl}
+                    key={displayImageUrl}
+                    src={displayImageUrl}
                     alt="Dish Preview"
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end justify-between p-3 text-white">
                     <div>

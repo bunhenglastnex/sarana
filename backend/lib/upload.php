@@ -52,3 +52,22 @@ function saveBase64Image(?string $base64String, string $subFolder = 'foods'): ?s
 
     return null;
 }
+
+/**
+ * Formats a stored image URL path into a complete accessible HTTP URL
+ *
+ * @param string|null $url
+ * @return string|null
+ */
+function formatPublicImageUrl(?string $url): ?string {
+    if (empty($url)) {
+        return null;
+    }
+    if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0 || strpos($url, 'data:') === 0) {
+        return $url;
+    }
+    $host = isset($_SERVER['HTTP_HOST']) && !empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost:8000';
+    $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+    $baseUrl = "{$scheme}://{$host}";
+    return strpos($url, '/') === 0 ? "{$baseUrl}{$url}" : "{$baseUrl}/{$url}";
+}

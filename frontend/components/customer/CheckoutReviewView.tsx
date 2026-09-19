@@ -64,6 +64,7 @@ export const CheckoutReviewView: React.FC = () => {
   const {
     items,
     restaurantId: cartStoreRestoId,
+    restaurantName: cartRestaurantName,
     fulfillmentType,
     setFulfillmentType,
     customerPhone: cartPhone,
@@ -97,26 +98,34 @@ export const CheckoutReviewView: React.FC = () => {
   );
   const settings = settingsRes?.data || settingsRes || {};
 
-  // Fetch multi-tenant restaurants list for live restaurant location, status and details
-  const { data: restaurantsRes } = useApi<any>("/restaurants.php", undefined, {
+  // Fetch explicit target restaurant details using public single restaurant API
+  const { data: singleRestoRes } = useApi<any>(
+    `/restaurants.php?id=${targetRestoId}&public=1`,
+    undefined,
+    { forceRefresh: true }
+  );
+
+  const { data: restaurantsRes } = useApi<any>("/restaurants.php?public=1", undefined, {
     forceRefresh: true,
   });
-  const restaurantsList = useMemo(() => {
-    if (Array.isArray(restaurantsRes?.data)) return restaurantsRes.data;
-    if (Array.isArray(restaurantsRes)) return restaurantsRes;
-    return [];
-  }, [restaurantsRes]);
 
   // Determine active restaurant for items in cart
   const activeRestaurant = useMemo(() => {
-    if (restaurantsList.length > 0) {
-      const found = restaurantsList.find(
-        (r: any) => Number(r.id) === Number(targetRestoId),
-      );
+    const single = singleRestoRes?.data || singleRestoRes;
+    if (single && !Array.isArray(single) && single.id && Number(single.id) === Number(targetRestoId)) {
+      return single;
+    }
+    const list = Array.isArray(restaurantsRes?.data)
+      ? restaurantsRes.data
+      : Array.isArray(restaurantsRes)
+      ? restaurantsRes
+      : [];
+    if (list.length > 0) {
+      const found = list.find((r: any) => Number(r.id) === Number(targetRestoId));
       if (found) return found;
     }
-    return null;
-  }, [restaurantsList, targetRestoId]);
+    return single && !Array.isArray(single) ? single : null;
+  }, [singleRestoRes, restaurantsRes, targetRestoId]);
 
   const isKitchenActive = useMemo(() => {
     let status: any = undefined;
@@ -148,11 +157,13 @@ export const CheckoutReviewView: React.FC = () => {
     activeRestaurant?.name ||
     items[0]?.restaurant_name ||
     items[0]?.food?.restaurant_name ||
-    settings.store_name ||
-    "";
+    cartRestaurantName ||
+    "Restaurant";
 
   const restaurantAddress =
-    activeRestaurant?.address || settings.store_address || "";
+    activeRestaurant?.address ||
+    (items[0]?.food as any)?.restaurant_address ||
+    "Siem Reap";
 
   const restaurantPhone = activeRestaurant?.phone || settings.store_phone || "";
 
@@ -161,128 +172,73 @@ export const CheckoutReviewView: React.FC = () => {
   const openingTime = settings.opening_time || "";
   const closingTime = settings.closing_time || "";
 
-  const parsedMaxRadius = parseFloat(settings.max_delivery_radius_km || "7.5");
-  const maxRadiusKm = !isNaN(parsedMaxRadius) ? parsedMaxRadius : 7.5;
-  const enableZoneBlocker =
-    settings.enable_zone_blocker !== false &&
-    settings.enable_zone_blocker !== "false";
-  const outOfZoneMessage =
-    settings.out_of_zone_message ||
-    `Sorry! Your delivery address is outside our maximum delivery radius of ${maxRadiusKm} km. Pickup is still available!`;
-
-  const parsedBaseFee = parseFloat(settings.base_delivery_fee || "1.50");
-  const baseDeliveryFee = !isNaN(parsedBaseFee) ? parsedBaseFee : 1.50;
-
-  const parsedExtraFee = parseFloat(settings.extra_fee_per_km || "0.50");
-  const extraFeePerKm = !isNaN(parsedExtraFee) ? parsedExtraFee : 0.50;
-
-  const parsedFreeDeliveryMin = parseFloat(settings.free_delivery_min_subtotal || "25.00");
-  const freeDeliveryMinSubtotal = !isNaN(parsedFreeDeliveryMin) ? parsedFreeDeliveryMin : 25.00;
-
-  const parsedTax = parseFloat(settings.tax_rate ?? "9.03");
-  const taxRate = !isNaN(parsedTax) ? parsedTax : 9.03;
-
-  // Local State
-  const [fulfillmentMode, setFulfillmentMode] = useState<"delivery" | "pickup">(
-    fulfillmentType || "delivery",
+  const parsedMaxRadius = parseFloat(
+    activeRestaurant?.delivery_radius_km !== undefined
+      ? String(activeRestaurant.delivery_radius_km)
+      : (settings.max_delivery_radius_km || "5.0")
   );
-  const [paymentMethod, setPaymentMethod] = useState<
-    "khqr" | "cod" | "counter"
-  >("khqr");
-  const [tipAmount, setTipAmount] = useState<number>(2.5);
-  const [isCustomTip, setIsCustomTip] = useState(false);
+  const maxRadiusKm = !isNaN(parsedMaxRadius) ? parsedMaxRadius : 5.0;
+
+  // React States for Checkout UI Flow
+  const [fulfillmentMode, setFulfillmentModeState] = useState<"delivery" | "pickup">(
+    fulfillmentType || "delivery"
+  );
+  const setFulfillmentMode = (mode: "delivery" | "pickup") => {
+    setFulfillmentModeState(mode);
+    setFulfillmentType(mode);
+  };
+
+  const [customerName, setCustomerName] = useState(authName || "Guest Customer");
+  const [customerPhone, setCustomerPhone] = useState(cartPhone || authPhone || "");
+  const [deliveryAddress, setDeliveryAddress] = useState(
+    cartAddress || "123 Main Street, Siem Reap"
+  );
+
+  // Customer geographic coordinates (defaulting to Siem Reap center)
+  const [customerCoords, setCustomerCoords] = useState<{ lat: number; lng: number }>({
+    lat: 13.36227,
+    lng: 103.855116,
+  });
+
+  const [paymentMethod, setPaymentMethod] = useState<"khqr" | "cod" | "counter">("khqr");
+  const [tipAmount, setTipAmount] = useState<number>(0.0);
+  const [isCustomTip, setIsCustomTip] = useState<boolean>(false);
   const [customTipInput, setCustomTipInput] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [notes, setNotes] = useState<string>(storeNotes || "");
+  const [isEditingNotes, setIsEditingNotes] = useState<boolean>(false);
+
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState<boolean>(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [confirmedOrder, setConfirmedOrder] = useState<any>(null);
 
-  // Address, Coordinates & Notes State
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [deliveryAddress, setDeliveryAddress] = useState<string>(
-    cartAddress || "",
-  );
-  const [customerCoords, setCustomerCoords] = useState<{
-    lat: number;
-    lng: number;
-  }>({
-    lat: storeLat,
-    lng: storeLng,
-  });
-  const [customerPhone, setCustomerPhone] = useState<string>(
-    authPhone || cartPhone || "+1 (555) 382-9012",
-  );
-  const [customerName, setCustomerName] = useState<string>(
-    authName || "Guest Customer",
-  );
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
-  const [notes, setNotes] = useState<string>(storeNotes || "");
+  // Financial calculations & distance verification
+  const baseDeliveryFee = parseFloat(settings.base_delivery_fee ?? "1.50");
+  const extraFeePerKm = parseFloat(settings.extra_fee_per_km ?? "0.50");
+  const freeDeliveryMinSubtotal = parseFloat(settings.free_delivery_min_subtotal ?? "25.00");
+  const taxRate = parseFloat(settings.tax_rate ?? "2.0");
 
-  useEffect(() => {
-    setFulfillmentType(fulfillmentMode);
-  }, [fulfillmentMode, setFulfillmentType]);
-
-  // Auto-acquire browser real GPS location on mount if address is not set
-  useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      navigator.geolocation &&
-      !cartAddress
-    ) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          setCustomerCoords({ lat: latitude, lng: longitude });
-          try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-            );
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.display_name) {
-                const parts = data.display_name.split(",");
-                const concise = parts.slice(0, 3).join(",").trim();
-                setDeliveryAddress(concise);
-                setCustomerInfo({ deliveryAddress: concise });
-              }
-            }
-          } catch {
-            // Geocoding network fallback
-          }
-        },
-        (err) => {
-          console.log("Checkout initial GPS fetch skipped:", err);
-        },
-        { enableHighAccuracy: true, timeout: 8000 },
-      );
-    }
-  }, [cartAddress, setCustomerInfo]);
-
-  // Compute distance from store center safely
-  const distanceKm = useMemo(() => {
-    const lat1 = !isNaN(customerCoords.lat) ? customerCoords.lat : storeLat;
-    const lng1 = !isNaN(customerCoords.lng) ? customerCoords.lng : storeLng;
-    const dist = calculateDistanceKm(lat1, lng1, storeLat, storeLng);
-    return !isNaN(dist) ? dist : 0.0;
-  }, [customerCoords, storeLat, storeLng]);
-
-  // Out of delivery zone restriction check
-  const isOutOfZone = useMemo(() => {
-    return (
-      fulfillmentMode === "delivery" &&
-      enableZoneBlocker &&
-      maxRadiusKm < 999 &&
-      distanceKm > maxRadiusKm
-    );
-  }, [fulfillmentMode, enableZoneBlocker, maxRadiusKm, distanceKm]);
-
-  // Price Calculations
   const subtotal = getFoodSubtotal();
   const packagingAndTax = subtotal > 0 ? (subtotal * taxRate) / 100 : 0.0;
 
-  const rawFee = distanceKm * extraFeePerKm;
-  const isFreeDelivery = subtotal >= freeDeliveryMinSubtotal;
+  const distanceKm = useMemo(() => {
+    return calculateDistanceKm(
+      storeLat,
+      storeLng,
+      customerCoords.lat,
+      customerCoords.lng
+    );
+  }, [storeLat, storeLng, customerCoords]);
+
+  const isOutOfZone = fulfillmentMode === "delivery" && distanceKm > maxRadiusKm;
+  const outOfZoneMessage = `Delivery address (${distanceKm.toFixed(1)} km away) is outside '${restaurantName}' delivery radius of ${maxRadiusKm.toFixed(1)} km. Please switch to Pickup!`;
+
+  const rawFee = baseDeliveryFee + (distanceKm > 3.0 ? (distanceKm - 3.0) * extraFeePerKm : 0.0);
+  const isFreeDelivery = subtotal >= freeDeliveryMinSubtotal && !isOutOfZone;
   const deliveryFee =
-    fulfillmentMode === "delivery" ? (isFreeDelivery ? 0.0 : rawFee) : 0.0;
+    fulfillmentMode === "delivery"
+      ? (isFreeDelivery ? 0.0 : Math.round(rawFee * 100) / 100)
+      : 0.0;
 
   const effectiveTip = fulfillmentMode === "delivery" ? tipAmount : 0.0;
   const totalAmount =
@@ -1208,7 +1164,15 @@ export const CheckoutReviewView: React.FC = () => {
                       ? `Delivery Fee (${distanceKm.toFixed(1)} km)`
                       : "Pickup Packaging"}
                   </span>
-                  <span>${deliveryFee.toFixed(2)}</span>
+                  <span className={isOutOfZone && fulfillmentMode === "delivery" ? "text-error font-bold" : ""}>
+                    {fulfillmentMode === "pickup"
+                      ? "$0.00"
+                      : isOutOfZone
+                      ? "Out of Delivery Zone"
+                      : isFreeDelivery
+                      ? "$0.00 (Free)"
+                      : `$${deliveryFee.toFixed(2)}`}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>{`Packaging & Tax (${taxRate}%)`}</span>

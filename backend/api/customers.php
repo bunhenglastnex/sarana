@@ -96,6 +96,11 @@ if ($method === 'GET') {
 
         // 1. Fetch Single Customer Detail by ID
         if (!empty($targetId)) {
+            $custWhere = "WHERE u.id = ? AND u.role = 'customer'";
+            if ($tenantId !== null) {
+                $custWhere .= " AND EXISTS (SELECT 1 FROM orders o_sub WHERE o_sub.user_id = u.id AND o_sub.restaurant_id = " . (int)$tenantId . ")";
+            }
+
             $stmt = $pdo->prepare("
                 SELECT u.id, u.name, u.phone, u.email, u.avatar_url,
                        COALESCE(u.customer_tag, 'New') as tag,
@@ -110,7 +115,7 @@ if ($method === 'GET') {
                        MAX(o.created_at) as lastOrderDateRaw
                 FROM users u
                 LEFT JOIN orders o ON o.user_id = u.id {$orderTenantJoin}
-                WHERE u.id = ? AND u.role = 'customer'
+                {$custWhere}
                 GROUP BY u.id
                 LIMIT 1
             ");

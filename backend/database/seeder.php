@@ -9,10 +9,10 @@ function seedDatabase(PDO $pdo): void {
     echo "🌱 Seeding sample multi-tenant data...\n";
 
     // 1. Seed Multi-Tenant Restaurants
-    $pdo->exec("INSERT IGNORE INTO restaurants (id, name, slug, logo_url, banner_url, address, lat, lng, phone, is_active) VALUES
-        (1, 'Amber & Ember Woodfired Bistro', 'amber-ember-bistro', 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150', 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600', '520 N Michigan Ave, Suite 14F, Siem Reap', 13.35227000, 103.95511600, '+855 23 888 999', 1),
-        (2, 'Spice Route Artisan Grill', 'spice-route-grill', 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=150', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600', '188 Pub Street Promenade, Siem Reap', 13.35400000, 103.95800000, '+855 23 777 888', 1),
-        (3, 'Phnom Penh Noodle House', 'phnom-penh-noodle-house', 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=150', 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600', '42 Riverfront Boulevard, Siem Reap', 13.34800000, 103.95100000, '+855 23 666 555', 1)");
+    $pdo->exec("INSERT IGNORE INTO restaurants (id, name, slug, logo_url, banner_url, address, lat, lng, phone, is_active, delivery_radius_km, allow_delivery, allow_pickup, min_order_amount) VALUES
+        (1, 'Amber & Ember Woodfired Bistro', 'amber-ember-bistro', 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150', 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600', '520 N Michigan Ave, Suite 14F, Siem Reap', 13.35227000, 103.95511600, '+855 23 888 999', 1, 5.00, 1, 1, 0.00),
+        (2, 'Spice Route Artisan Grill', 'spice-route-grill', 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=150', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600', '188 Pub Street Promenade, Siem Reap', 13.35400000, 103.95800000, '+855 23 777 888', 1, 6.00, 1, 1, 5.00),
+        (3, 'Phnom Penh Noodle House', 'phnom-penh-noodle-house', 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=150', 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600', '42 Riverfront Boulevard, Siem Reap', 13.34800000, 103.95100000, '+855 23 666 555', 1, 4.00, 1, 1, 0.00)");
 
     // 2. Seed Users: Super Admin, Tenant Admins, Shared Delivery Riders, Customers
     $superPassword  = password_hash('admin123', PASSWORD_BCRYPT);

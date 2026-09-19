@@ -25,7 +25,7 @@ class SettingsController {
 
             if (isset($_GET['restaurant_id']) && is_numeric($_GET['restaurant_id'])) {
                 $tenantId = (int)$_GET['restaurant_id'];
-            } else {
+            } elseif (isset($_GET['admin_scope'])) {
                 $authUser = AuthMiddleware::getOptionalUser($this->pdo);
                 if ($authUser && $authUser['role'] === 'admin' && !empty($authUser['restaurant_id'])) {
                     $tenantId = (int)$authUser['restaurant_id'];

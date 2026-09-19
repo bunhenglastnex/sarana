@@ -76,11 +76,16 @@ if ($method === 'GET') {
         $hasMore = $page < $totalPages;
         $offset = ($page - 1) * $limit;
 
-        // Fetch paginated raw orders
-        $sql = "SELECT o.*, u.name as delivery_staff_name, c.customer_tag 
+        // Fetch paginated raw orders with joined restaurant entity
+        $sql = "SELECT o.*, u.name as delivery_staff_name, c.customer_tag,
+                       r.name as restaurant_name, r.address as restaurant_address, 
+                       r.lat as restaurant_lat, r.lng as restaurant_lng, 
+                       r.logo_url as restaurant_logo_url, r.delivery_radius_km, 
+                       r.allow_delivery, r.allow_pickup
                 FROM orders o 
                 LEFT JOIN users u ON o.delivery_staff_id = u.id 
                 LEFT JOIN users c ON o.user_id = c.id 
+                LEFT JOIN restaurants r ON o.restaurant_id = r.id 
                 " . $whereClause . " 
                 ORDER BY o.created_at DESC, o.id DESC 
                 LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
@@ -218,6 +223,20 @@ if ($method === 'GET') {
             $formattedOrders[] = [
                 'id'                   => '#' . ltrim($o['order_number'], '#'),
                 'dbId'                 => (int)$o['id'],
+                'restaurant_id'        => (int)($o['restaurant_id'] ?? 1),
+                'restaurant_name'      => $o['restaurant_name'] ?? 'Amber & Ember Woodfired Bistro',
+                'restaurant_address'   => $o['restaurant_address'] ?? '520 N Michigan Ave, Suite 14F, Siem Reap',
+                'restaurant'           => [
+                    'id'               => (int)($o['restaurant_id'] ?? 1),
+                    'name'             => $o['restaurant_name'] ?? 'Amber & Ember Woodfired Bistro',
+                    'address'          => $o['restaurant_address'] ?? '520 N Michigan Ave, Suite 14F, Siem Reap',
+                    'lat'              => $o['restaurant_lat'] !== null ? (float)$o['restaurant_lat'] : null,
+                    'lng'              => $o['restaurant_lng'] !== null ? (float)$o['restaurant_lng'] : null,
+                    'logoUrl'          => $o['restaurant_logo_url'] ?? '',
+                    'deliveryRadiusKm' => isset($o['delivery_radius_km']) ? (float)$o['delivery_radius_km'] : 5.0,
+                    'allowDelivery'    => isset($o['allow_delivery']) ? ((int)$o['allow_delivery'] === 1) : true,
+                    'allowPickup'      => isset($o['allow_pickup']) ? ((int)$o['allow_pickup'] === 1) : true,
+                ],
                 'customerName'         => $o['customer_name'],
                 'customerPhone'        => $o['customer_phone'],
                 'customerTag'          => $o['customer_tag'] ?? ($o['user_id'] ? 'Registered Guest' : 'First Order'),

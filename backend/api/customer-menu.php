@@ -5,6 +5,7 @@
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
+require_once __DIR__ . '/../lib/upload.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method !== 'GET') {
@@ -119,7 +120,9 @@ try {
         $food['price'] = (float)$food['price'];
         $food['is_available'] = (bool)$food['is_available'];
         $food['stockQuantity'] = (int)$food['stock_quantity'];
-        $food['imageUrl'] = $food['image_url'] ?? '';
+        $formattedImg = formatPublicImageUrl($food['image_url'] ?? '');
+        $food['image_url'] = $formattedImg;
+        $food['imageUrl'] = $formattedImg;
         $food['isTopSeller'] = (bool)$food['is_top_seller'];
         $food['prepTimeMinutes'] = (int)$food['prep_time_minutes'];
         $food['status'] = $food['status'] ?? 'public';
@@ -144,7 +147,40 @@ try {
     $totalPages = $totalItems > 0 ? (int)ceil($totalItems / $limit) : 0;
     $hasMore    = ($page * $limit) < $totalItems;
 
+    // Fetch Target Restaurant Info
+    $targetRestoId = is_numeric($restaurantParam) ? (int)$restaurantParam : 1;
+    $restoStmt = $pdo->prepare("
+        SELECT id, name, address, lat, lng, logo_url, phone, 
+               COALESCE(delivery_radius_km, 5.00) as delivery_radius_km, 
+               COALESCE(allow_delivery, 1) as allow_delivery, 
+               COALESCE(allow_pickup, 1) as allow_pickup, 
+               COALESCE(min_order_amount, 0.00) as min_order_amount
+        FROM restaurants 
+        WHERE id = ? OR slug = ?
+        LIMIT 1
+    ");
+    $restoStmt->execute([$targetRestoId, (string)$restaurantParam]);
+    $restaurantRow = $restoStmt->fetch(PDO::FETCH_ASSOC);
+
+    $restaurantData = null;
+    if ($restaurantRow) {
+        $restaurantData = [
+            'id' => (int)$restaurantRow['id'],
+            'name' => $restaurantRow['name'],
+            'address' => $restaurantRow['address'] ?? '',
+            'lat' => $restaurantRow['lat'] !== null ? (float)$restaurantRow['lat'] : null,
+            'lng' => $restaurantRow['lng'] !== null ? (float)$restaurantRow['lng'] : null,
+            'logoUrl' => $restaurantRow['logo_url'] ?? '',
+            'phone' => $restaurantRow['phone'] ?? '',
+            'deliveryRadiusKm' => (float)$restaurantRow['delivery_radius_km'],
+            'allowDelivery' => (int)$restaurantRow['allow_delivery'] === 1,
+            'allowPickup' => (int)$restaurantRow['allow_pickup'] === 1,
+            'minOrderAmount' => (float)$restaurantRow['min_order_amount'],
+        ];
+    }
+
     jsonResponse(1, 'Public customer menu fetched successfully', [
+        'restaurant'  => $restaurantData,
         'categories'  => $categories,
         'total'       => $totalItems,
         'page'        => $page,
