@@ -22,6 +22,8 @@ import {
   MapPin,
   Store,
   UserPlus,
+  Navigation,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,10 +52,52 @@ export default function AdminLoginPage() {
   const [regPhone, setRegPhone] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regAddress, setRegAddress] = useState("");
+  const [isLocating, setIsLocating] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // GPS Auto-Fetch Current Location for Restaurant Registration
+  const handleGetLocation = () => {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        let addressStr = `GPS Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.display_name) {
+              const parts = data.display_name.split(",");
+              addressStr = parts.slice(0, 4).join(",").trim();
+            }
+          }
+        } catch (err) {
+          console.warn("Reverse geocoding error:", err);
+        }
+
+        setRegAddress(addressStr);
+        setIsLocating(false);
+      },
+      (error) => {
+        setIsLocating(false);
+        console.warn("Geolocation error:", error);
+        alert("Unable to detect current GPS location. Please check browser location permissions.");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   // Restore remembered email on component mount
   useEffect(() => {
@@ -530,17 +574,37 @@ export default function AdminLoginPage() {
               </div>
 
               {/* Restaurant Address */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-on-surface">
-                  Restaurant Location / Address
-                </label>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-on-surface">
+                    Restaurant Location / Address
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGetLocation}
+                    disabled={isLocating}
+                    className="text-[11px] font-bold text-primary hover:text-primary/90 flex items-center gap-1 bg-primary/10 hover:bg-primary/20 px-2.5 py-1 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {isLocating ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                        <span>Detecting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Navigation className="w-3 h-3" />
+                        <span>Use Current Location</span>
+                      </>
+                    )}
+                  </button>
+                </div>
                 <div className="relative">
                   <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
                   <Input
                     type="text"
                     value={regAddress}
                     onChange={(e) => setRegAddress(e.target.value)}
-                    placeholder="Pub Street Promenade, Siem Reap"
+                    placeholder="Click 'Use Current Location' or enter restaurant address"
                     className="pl-10 h-10 text-xs border-border font-medium"
                   />
                 </div>
