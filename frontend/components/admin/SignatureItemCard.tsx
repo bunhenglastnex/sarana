@@ -13,9 +13,9 @@ interface SignatureItemCardProps {
 }
 
 export const SignatureItemCard: React.FC<SignatureItemCardProps> = ({ item }) => {
-  const name = item?.name || "Smoked Truffle Burger";
-  const quantity = item?.quantity ?? 14;
-  const price = item?.price ?? 16.50;
+  const name = item?.name || "No Top Seller Yet";
+  const quantity = item?.quantity ?? 0;
+  const price = item?.price ?? 0.0;
   const imageUrl =
     item?.imageUrl ||
     "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop";

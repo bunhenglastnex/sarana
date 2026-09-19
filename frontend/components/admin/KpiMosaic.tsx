@@ -25,14 +25,14 @@ interface KpiMosaicProps {
 }
 
 export const KpiMosaic: React.FC<KpiMosaicProps> = ({ kpis }) => {
-  const todayOrders = kpis?.todayOrders ?? 24;
-  const growth = kpis?.todayOrdersGrowth ?? 14;
-  const revenue = kpis?.totalRevenue ?? 425.5;
-  const settledCount = kpis?.settledCount ?? 22;
-  const pendingCount = kpis?.pendingCount ?? 5;
-  const activeDeliveries = kpis?.activeDeliveries ?? 3;
-  const completedCount = kpis?.completedCount ?? 18;
-  const codPendingTotal = kpis?.codPendingTotal ?? 45.0;
+  const todayOrders = kpis?.todayOrders ?? 0;
+  const growth = kpis?.todayOrdersGrowth ?? 0;
+  const revenue = kpis?.totalRevenue ?? 0.0;
+  const settledCount = kpis?.settledCount ?? 0;
+  const pendingCount = kpis?.pendingCount ?? 0;
+  const activeDeliveries = kpis?.activeDeliveries ?? 0;
+  const completedCount = kpis?.completedCount ?? 0;
+  const codPendingTotal = kpis?.codPendingTotal ?? 0.0;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-space-md">

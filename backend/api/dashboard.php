@@ -6,6 +6,7 @@ require_once __DIR__ . '/../middleware/CorsMiddleware.php';
 require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/response.php';
+require_once __DIR__ . '/../lib/upload.php';
 
 CorsMiddleware::handle();
 
@@ -16,6 +17,7 @@ if ($method === 'GET') {
     try {
         $tenantId = AuthMiddleware::getTenantFilter($pdo, ['admin', 'staff']);
         $tenantWhere = $tenantId !== null ? " AND restaurant_id = " . (int)$tenantId : "";
+        $orderTenantWhere = $tenantId !== null ? " AND o.restaurant_id = " . (int)$tenantId : "";
 
         $range = $_GET['range'] ?? 'today';
         
@@ -41,10 +43,13 @@ if ($method === 'GET') {
         $todayStmt = $pdo->query($todaySql);
         $todayOrders = (int)$todayStmt->fetchColumn();
 
-        // If today has 0 orders, fall back to all-time orders for this tenant
+        // If today has 0 orders, check if tenant has any all-time orders
         if ($todayOrders === 0 && $range === 'today') {
-            $todayOrders = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE 1=1{$tenantWhere}")->fetchColumn();
-            $startDate = null; // show all time DB stats
+            $allTimeOrders = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE 1=1{$tenantWhere}")->fetchColumn();
+            if ($allTimeOrders > 0) {
+                $todayOrders = $allTimeOrders;
+                $startDate = null; // show all time DB stats for active restaurant
+            }
         }
 
         // Dynamic growth rate vs yesterday
@@ -56,8 +61,8 @@ if ($method === 'GET') {
             $growth = 100;
         }
 
-        // Revenue (Verified & Paid Settlements)
-        $revSql = "SELECT SUM(total_amount) as total_rev, COUNT(*) as settled_cnt FROM orders WHERE payment_status IN ('paid', 'verified') AND status NOT IN ('cancelled'){$tenantWhere}";
+        // Revenue (Verified & Paid Settlements or Completed Orders)
+        $revSql = "SELECT SUM(total_amount) as total_rev, COUNT(*) as settled_cnt FROM orders WHERE (payment_status IN ('paid', 'verified') OR status IN ('completed', 'delivered', 'picked_up')) AND status NOT IN ('cancelled'){$tenantWhere}";
         if ($startDate) {
             $revSql .= " AND created_at >= '{$startDate}'";
         }
@@ -65,6 +70,14 @@ if ($method === 'GET') {
         $revRow = $revStmt->fetch(PDO::FETCH_ASSOC);
         $totalRevenue = (float)($revRow['total_rev'] ?? 0.00);
         $settledCount = (int)($revRow['settled_cnt'] ?? 0);
+
+        // If today's revenue is 0 and we are showing all-time fallback stats
+        if ($totalRevenue === 0.00 && $startDate === null && $range === 'today') {
+            $allTimeRevStmt = $pdo->query("SELECT SUM(total_amount) as total_rev, COUNT(*) as settled_cnt FROM orders WHERE (payment_status IN ('paid', 'verified') OR status IN ('completed', 'delivered', 'picked_up')) AND status NOT IN ('cancelled'){$tenantWhere}");
+            $allTimeRevRow = $allTimeRevStmt->fetch(PDO::FETCH_ASSOC);
+            $totalRevenue = (float)($allTimeRevRow['total_rev'] ?? 0.00);
+            $settledCount = (int)($allTimeRevRow['settled_cnt'] ?? 0);
+        }
 
         // Pending Action
         $pendingStmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE status IN ('pending', 'accepted'){$tenantWhere}");
@@ -75,7 +88,11 @@ if ($method === 'GET') {
         $activeDeliveries = (int)$deliveryStmt->fetchColumn();
 
         // Completed Orders
-        $completedStmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE status IN ('delivered', 'completed', 'picked_up'){$tenantWhere}");
+        $completedSql = "SELECT COUNT(*) FROM orders WHERE status IN ('delivered', 'completed', 'picked_up'){$tenantWhere}";
+        if ($startDate) {
+            $completedSql .= " AND created_at >= '{$startDate}'";
+        }
+        $completedStmt = $pdo->query($completedSql);
         $completedCount = (int)$completedStmt->fetchColumn();
 
         // Unpaid COD / Pending Amount
@@ -92,7 +109,7 @@ if ($method === 'GET') {
             FROM order_items oi
             JOIN orders o ON oi.order_id = o.id
             LEFT JOIN foods f ON oi.food_id = f.id
-            WHERE 1=1{$tenantWhere}
+            WHERE 1=1{$orderTenantWhere}
             GROUP BY oi.food_name
             ORDER BY total_qty DESC
             LIMIT 1
@@ -101,10 +118,10 @@ if ($method === 'GET') {
         $topSeller = $topSellerStmt->fetch(PDO::FETCH_ASSOC);
 
         $signatureItem = [
-            'name'      => $topSeller['food_name'] ?? 'Ember Smash Sliders',
+            'name'      => !empty($topSeller['food_name']) ? $topSeller['food_name'] : 'No Top Seller Yet',
             'quantity'  => (int)($topSeller['total_qty'] ?? 0),
             'price'     => (float)($topSeller['unit_price'] ?? 0.00),
-            'imageUrl'  => $topSeller['image_url'] ?? 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop',
+            'imageUrl'  => !empty($topSeller['image_url']) ? formatPublicImageUrl($topSeller['image_url']) : 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop',
         ];
 
         // 3. Hourly Rhythm Chart Data (100% Real DB Queries)
@@ -199,7 +216,7 @@ if ($method === 'GET') {
             SELECT o.*, u.name as delivery_staff_name
             FROM orders o
             LEFT JOIN users u ON o.delivery_staff_id = u.id
-            WHERE 1=1{$tenantWhere}
+            WHERE 1=1{$orderTenantWhere}
             ORDER BY o.created_at DESC, o.id DESC
             LIMIT 10
         ")->fetchAll(PDO::FETCH_ASSOC);

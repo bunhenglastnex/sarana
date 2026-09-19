@@ -130,6 +130,7 @@ export default function AdminLoginPage() {
           localStorage.removeItem("sarana_remembered_admin_email");
         }
 
+        const targetRestoId = res.data.selectedTenantId || res.data.restaurantId || res.data.restaurant_id || null;
         setSession({
           token: res.data.token,
           userId: res.data.userId,
@@ -137,7 +138,8 @@ export default function AdminLoginPage() {
           phone: res.data.phone,
           email: res.data.email,
           role: res.data.role || "admin",
-          restaurantId: res.data.restaurantId || res.data.restaurant_id || null,
+          restaurantId: targetRestoId,
+          selectedTenantId: targetRestoId,
         });
         router.push("/admin");
       } else {
@@ -170,6 +172,7 @@ export default function AdminLoginPage() {
 
       if (res.success && res.data) {
         setSuccessMessage("🎉 Restaurant & Admin account registered successfully!");
+        const newRestoId = res.data.selectedTenantId || res.data.restaurantId || res.data.restaurant_id || null;
         setSession({
           token: res.data.token,
           userId: res.data.userId,
@@ -177,7 +180,8 @@ export default function AdminLoginPage() {
           phone: res.data.phone,
           email: res.data.email,
           role: res.data.role || "admin",
-          restaurantId: res.data.restaurantId || res.data.restaurant_id || null,
+          restaurantId: newRestoId,
+          selectedTenantId: newRestoId,
         });
 
         setTimeout(() => {

@@ -226,6 +226,13 @@ if ($method === 'POST') {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
+        $stockDeductStmt = $pdo->prepare("
+            UPDATE foods 
+            SET stock_quantity = GREATEST(0, COALESCE(stock_quantity, 50) - ?),
+                is_available = CASE WHEN COALESCE(stock_quantity, 50) - ? <= 0 THEN 0 ELSE is_available END
+            WHERE id = ?
+        ");
+
         $groupIndex = 0;
 
         foreach ($itemsByRestaurant as $restoId => $groupData) {
@@ -318,6 +325,14 @@ if ($method === 'POST') {
                     $it['image_url'],
                     $it['notes']
                 ]);
+
+                if (!empty($it['food_id'])) {
+                    $stockDeductStmt->execute([
+                        (int)$it['quantity'],
+                        (int)$it['quantity'],
+                        (int)$it['food_id']
+                    ]);
+                }
             }
 
             $createdOrders[] = [
