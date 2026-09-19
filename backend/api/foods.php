@@ -137,12 +137,26 @@ if ($method === 'GET') {
         // 2. Category Filter
         if (!empty($categoryParam) && $categoryParam !== 'all') {
             if (is_numeric($categoryParam)) {
-                $whereConditions[] = "f.category_id = ?";
+                $whereConditions[] = "(f.category_id = ? OR c.id = ?)";
+                $params[] = (int)$categoryParam;
                 $params[] = (int)$categoryParam;
             } else {
-                $whereConditions[] = "(c.slug = ? OR c.name = ?)";
+                $cleanCat = strtolower(trim($categoryParam));
+                $slugCat = str_replace([' ', '_', '&'], ['-', '-', 'and'], $cleanCat);
+                $spaceCat = str_replace(['-', '_', '&'], [' ', ' ', 'and'], $cleanCat);
+
+                $whereConditions[] = "(
+                    c.slug = ? 
+                    OR LOWER(c.name) = ? 
+                    OR LOWER(c.name) LIKE ? 
+                    OR LOWER(REPLACE(REPLACE(c.name, '&', 'and'), ' ', '-')) = ?
+                    OR LOWER(c.slug) LIKE ?
+                )";
                 $params[] = $categoryParam;
-                $params[] = $categoryParam;
+                $params[] = $cleanCat;
+                $params[] = "%{$spaceCat}%";
+                $params[] = $slugCat;
+                $params[] = "%{$slugCat}%";
             }
         }
 

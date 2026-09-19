@@ -63,12 +63,26 @@ try {
 
     if (!empty($categoryParam) && $categoryParam !== 'all') {
         if (is_numeric($categoryParam)) {
-            $whereSql .= " AND f.category_id = ?";
+            $whereSql .= " AND (f.category_id = ? OR c.id = ?)";
+            $params[]  = (int)$categoryParam;
             $params[]  = (int)$categoryParam;
         } else {
-            $whereSql .= " AND (c.slug = ? OR c.name = ?)";
-            $params[]  = $categoryParam;
-            $params[]  = $categoryParam;
+            $cleanCat = strtolower(trim($categoryParam));
+            $slugCat = str_replace([' ', '_', '&'], ['-', '-', 'and'], $cleanCat);
+            $spaceCat = str_replace(['-', '_', '&'], [' ', ' ', 'and'], $cleanCat);
+
+            $whereSql .= " AND (
+                c.slug = ? 
+                OR LOWER(c.name) = ? 
+                OR LOWER(c.name) LIKE ? 
+                OR LOWER(REPLACE(REPLACE(c.name, '&', 'and'), ' ', '-')) = ?
+                OR LOWER(c.slug) LIKE ?
+            )";
+            $params[] = $categoryParam;
+            $params[] = $cleanCat;
+            $params[] = "%{$spaceCat}%";
+            $params[] = $slugCat;
+            $params[] = "%{$slugCat}%";
         }
     }
 

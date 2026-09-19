@@ -23,8 +23,12 @@ export const FavoritesView: React.FC = () => {
   const addItemToCart = useCartStore((state) => state.addItem);
 
   const localFavoriteIds = useFavoritesStore((state) => state.localFavoriteIds);
-  const toggleLocalFavorite = useFavoritesStore((state) => state.toggleLocalFavorite);
-  const syncFavoritesToDatabase = useFavoritesStore((state) => state.syncFavoritesToDatabase);
+  const toggleLocalFavorite = useFavoritesStore(
+    (state) => state.toggleLocalFavorite,
+  );
+  const syncFavoritesToDatabase = useFavoritesStore(
+    (state) => state.syncFavoritesToDatabase,
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -63,10 +67,11 @@ export const FavoritesView: React.FC = () => {
 
   // Fetch logged-in user favorites from API
   const endpoint = userId || phone ? "/favorites.php" : null;
-  const { data: rawFavoritesResponse, loading: isLoadingFavs, refetch } = useApi<any>(
-    endpoint,
-    { phone, user_id: userId }
-  );
+  const {
+    data: rawFavoritesResponse,
+    loading: isLoadingFavs,
+    refetch,
+  } = useApi<any>(endpoint, { phone, user_id: userId });
 
   // Fetch guest favorites from IndexedDB IDs if not logged in
   useEffect(() => {
@@ -134,7 +139,11 @@ export const FavoritesView: React.FC = () => {
   const toggleFavorite = async (id: string) => {
     if (userId || phone) {
       try {
-        await Api.post("/favorites.php", { food_id: Number(id), phone, user_id: userId });
+        await Api.post("/favorites.php", {
+          food_id: Number(id),
+          phone,
+          user_id: userId,
+        });
         refetch();
       } catch (err) {
         console.error("Failed to toggle favorite:", err);
@@ -155,7 +164,7 @@ export const FavoritesView: React.FC = () => {
         description: item.description,
         is_available: true,
       } as any,
-      1
+      1,
     );
 
     setAddedIds((prev) => ({ ...prev, [item.id]: true }));
@@ -182,29 +191,31 @@ export const FavoritesView: React.FC = () => {
   const isLoading = isLoadingFavs || isGuestLoading;
 
   return (
-    <main className="flex flex-col relative w-full max-w-md px-screen-edge-padding pt-4 pb-28 bg-surface min-h-screen">
+    <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-surface flex flex-col relative pb-28">
       {/* Title & Badge */}
-      <div className="flex items-end justify-between mb-space-md pt-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-surface-container pb-4">
         <div>
-          <span className="font-label-sm text-label-sm uppercase tracking-widest text-primary font-bold block">
-            Saved Dishes
+          <span className="font-label-sm text-xs uppercase tracking-widest text-primary font-extrabold block mb-1">
+            Saved Culinary Collection
           </span>
-          <h1 className="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">
-            My Favorites
+          <h1 className="font-headline-lg text-2xl sm:text-3xl text-on-surface font-extrabold tracking-tight">
+            My Favorite Dishes
           </h1>
         </div>
-        <div className="flex items-center gap-1.5 bg-surface-container-high px-space-xs py-1 rounded-full text-on-surface-variant border border-surface-container-highest/60">
-          <Heart className="w-3.5 h-3.5 text-primary fill-primary" />
-          <span className="font-label-sm text-label-sm font-semibold">
-            {favorites.length} Saved
+        <div className="flex items-center gap-2 self-start sm:self-auto bg-surface-container-high px-4 py-2 rounded-full text-on-surface-variant border border-surface-container-highest/60 shadow-xs">
+          <Heart className="w-4 h-4 text-primary fill-primary" />
+          <span className="font-bold text-xs text-on-surface">
+            {favorites.length}{" "}
+            {favorites.length === 1 ? "Saved Item" : "Saved Items"}
           </span>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative mb-space-md">
-        <div className="relative flex items-center">
-          <Search className="w-4 h-4 text-on-surface-variant absolute left-3.5 pointer-events-none" />
+      {/* Search & Category Filter Bar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-on-surface-variant absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
@@ -217,147 +228,148 @@ export const FavoritesView: React.FC = () => {
               type="button"
               onClick={() => setSearchQuery("")}
               aria-label="Clear search"
-              className="absolute right-3 text-on-surface-variant hover:text-on-surface p-1"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface p-1"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
-      </div>
 
-      {/* Category Pills Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-space-md">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
-              selectedCategory === cat.id
-                ? "bg-primary text-on-primary shadow-xs"
-                : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
+        {/* Category Pills Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
+                selectedCategory === cat.id
+                  ? "bg-primary text-on-primary shadow-xs"
+                  : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Favorites Feed / Loading / Empty */}
       {isLoading ? (
-        <div className="py-16 flex flex-col items-center justify-center gap-2 text-on-surface-variant">
-          <Loader2 className="w-6 h-6 text-primary animate-spin" />
-          <span className="font-label-md text-xs font-bold">Loading favorites...</span>
+        <div className="py-20 flex flex-col items-center justify-center gap-3 text-on-surface-variant">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <span className="font-bold text-xs text-on-surface-variant">
+            Loading saved favorites feed...
+          </span>
         </div>
       ) : filteredFavorites.length > 0 ? (
-        <div className="flex flex-col gap-space-md">
+        /* Responsive Favorites Grid Layout (1 col mobile -> 2 sm -> 3 lg -> 4 xl) */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredFavorites.map((item) => {
             const isAdded = addedIds[item.id];
             return (
-              <div
+              <article
                 key={item.id}
-                className="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0_4px_16px_-2px_rgba(26,23,21,0.05)] border border-surface-container/80 flex flex-col gap-3 group transition-all hover:border-primary/20"
+                className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-surface-container/80 flex flex-col justify-between group transition-all hover:border-primary/20"
               >
-                <div className="flex items-start gap-3">
-                  {/* Dish Thumbnail */}
-                  <div
-                    onClick={() =>
-                      router.push(`/items-detail/${item.slug || item.id}`)
-                    }
-                    className="relative w-24 h-24 rounded-xl overflow-hidden bg-surface-variant flex-shrink-0 cursor-pointer border border-surface-container"
+                {/* Dish Thumbnail */}
+                <div
+                  onClick={() =>
+                    router.push(`/items-detail/${item.slug || item.id}`)
+                  }
+                  className="relative w-full h-44 sm:h-48 bg-surface-variant overflow-hidden cursor-pointer"
+                >
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {item.badge && (
+                    <div className="absolute top-3 left-3 bg-surface-bright/90 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-xs">
+                      {item.badge.type === "fire" ? (
+                        <Flame className="w-3.5 h-3.5 text-primary" />
+                      ) : (
+                        <Star className="w-3.5 h-3.5 text-secondary fill-secondary" />
+                      )}
+                      <span className="text-[10px] font-bold text-on-surface">
+                        {item.badge.text}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Favorite Heart Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(item.id);
+                    }}
+                    aria-label="Remove from favorites"
+                    className="absolute top-3 right-3 w-9 h-9 rounded-full bg-surface-bright/80 backdrop-blur-md flex items-center justify-center transition-all shadow-xs hover:scale-110 active:scale-90"
                   >
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {item.badge && (
-                      <div className="absolute top-1.5 left-1.5 bg-surface-bright/90 backdrop-blur-xs px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs">
-                        {item.badge.type === "fire" ? (
-                          <Flame className="w-3 h-3 text-primary" />
-                        ) : (
-                          <Star className="w-3 h-3 text-secondary fill-secondary" />
-                        )}
-                        <span className="text-[9px] font-bold text-on-surface">
-                          {item.badge.text}
-                        </span>
-                      </div>
-                    )}
+                    <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                  </button>
+                </div>
+
+                {/* Dish Specs & Details */}
+                <div className="p-4 flex flex-col justify-between flex-1">
+                  <div>
+                    <h3
+                      onClick={() =>
+                        router.push(`/items-detail/${item.slug || item.id}`)
+                      }
+                      className="font-bold text-base text-on-surface truncate cursor-pointer hover:text-primary transition-colors"
+                    >
+                      {item.name}
+                    </h3>
+                    <p className="text-xs text-on-surface-variant line-clamp-2 mt-1 leading-relaxed">
+                      {item.description}
+                    </p>
                   </div>
 
-                  {/* Dish Specs & Details */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
-                    <div>
-                      <div className="flex items-start justify-between gap-1">
-                        <h3
-                          onClick={() =>
-                            router.push(`/items-detail/${item.slug || item.id}`)
-                          }
-                          className="font-bold text-sm text-on-surface truncate cursor-pointer hover:text-primary transition-colors"
-                        >
-                          {item.name}
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite(item.id)}
-                          aria-label="Remove from favorites"
-                          className="p-1 text-red-500 hover:scale-110 active:scale-95 transition-transform flex-shrink-0 -mr-1"
-                        >
-                          <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-on-surface-variant line-clamp-2 mt-0.5 leading-snug">
-                        {item.description}
-                      </p>
-                    </div>
+                  {/* Price & Add Button */}
+                  <div className="flex items-center justify-between pt-4 mt-2 border-t border-surface-container">
+                    <span className="font-extrabold text-lg text-primary">
+                      ${item.price.toFixed(2)}
+                    </span>
 
-                    {/* Rating & Price Row */}
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="font-extrabold text-sm text-primary">
-                          ${item.price.toFixed(2)}
-                        </span>
-                      </div>
-
-                      {/* Quick Add Button */}
-                      <button
-                        type="button"
-                        onClick={() => handleQuickAdd(item)}
-                        className={`px-3 py-1.5 rounded-full font-label-sm text-label-sm font-bold flex items-center gap-1 transition-all active:scale-95 shadow-xs ${
-                          isAdded
-                            ? "bg-emerald-600 text-white"
-                            : "bg-primary hover:bg-primary-container text-on-primary"
-                        }`}
-                      >
-                        {isAdded ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 stroke-[3]" />
-                            <span>Added</span>
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                            <span>Add</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickAdd(item)}
+                      className={`px-4 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-xs ${
+                        isAdded
+                          ? "bg-emerald-600 text-white"
+                          : "bg-primary hover:bg-primary-container text-on-primary"
+                      }`}
+                    >
+                      {isAdded ? (
+                        <>
+                          <Check className="w-4 h-4 stroke-[3]" />
+                          <span>Added</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 stroke-[3]" />
+                          <span>Add to Cart</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
       ) : (
         /* Empty Favorites View */
-        <div className="flex flex-col items-center justify-center text-center py-16 px-4 bg-surface-container-lowest rounded-2xl border border-surface-container/80 shadow-xs my-4">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3">
+        <div className="flex flex-col items-center justify-center text-center py-20 px-4 bg-surface-container-lowest rounded-3xl border border-surface-container/80 shadow-xs my-6 max-w-lg mx-auto w-full">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
             <Heart className="w-8 h-8 text-primary" />
           </div>
-          <h3 className="font-bold text-base text-on-surface mb-1">
+          <h3 className="font-bold text-lg text-on-surface mb-1">
             No Favorites Found
           </h3>
-          <p className="text-xs text-on-surface-variant max-w-[240px] mb-5 leading-relaxed">
+          <p className="text-xs text-on-surface-variant max-w-xs mb-6 leading-relaxed">
             {searchQuery
               ? `No saved items matching "${searchQuery}"`
               : "Save your favorite wood-fired dishes & burgers to access them quickly anytime!"}
@@ -365,7 +377,7 @@ export const FavoritesView: React.FC = () => {
           <button
             type="button"
             onClick={() => router.push("/")}
-            className="bg-primary text-on-primary px-space-md py-2.5 rounded-full font-label-md text-label-md font-bold shadow-sm hover:bg-primary-container transition-all flex items-center gap-1.5"
+            className="bg-primary text-on-primary px-6 py-3 rounded-full font-bold text-xs shadow-md hover:bg-primary-container transition-all flex items-center gap-2"
           >
             <Utensils className="w-4 h-4" />
             <span>Explore Menu</span>
