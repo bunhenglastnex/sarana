@@ -411,25 +411,25 @@ export const CheckoutReviewView: React.FC = () => {
   };
 
   return (
-    <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col items-center selection:bg-primary/20 selection:text-primary pb-32">
-      {/* Fixed Header */}
-      <header className="sticky top-0 w-full max-w-md mx-auto z-40 pt-safe bg-surface/90 backdrop-blur-xl border-b border-surface-container/40 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-        <div className="h-16 px-space-lg flex items-center justify-between gap-space-xs">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+    <div className="bg-surface text-on-surface font-sans text-sm min-h-screen selection:bg-primary/20 selection:text-primary pb-16 w-full">
+      {/* Responsive Header */}
+      <header className="sticky top-0 w-full z-40 bg-surface/95 backdrop-blur-xl border-b border-surface-container/40 shadow-xs">
+        <div className="w-full max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => router.back()}
               aria-label="Go back"
-              className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors flex-shrink-0"
+              className="w-9 h-9 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors flex-shrink-0 border border-surface-container-highest"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </button>
             <img
               src="/logo.jpg"
               alt="Amber & Ember Bistro Logo"
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-primary/20"
+              className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-primary/20 shadow-xs"
             />
-            <h1 className="font-bold text-base text-on-surface truncate">
+            <h1 className="font-extrabold text-lg text-on-surface truncate">
               Checkout Flow
             </h1>
           </div>
@@ -438,7 +438,7 @@ export const CheckoutReviewView: React.FC = () => {
             type="button"
             onClick={() => router.push("/customer-profile")}
             aria-label="User Profile"
-            className="w-10 h-10 flex items-center justify-center rounded-full p-0.5 hover:ring-2 hover:ring-primary/40 transition-all flex-shrink-0 overflow-hidden border border-outline-variant/50"
+            className="w-9 h-9 flex items-center justify-center rounded-full p-0.5 hover:ring-2 hover:ring-primary/40 transition-all flex-shrink-0 overflow-hidden border border-outline-variant/50"
           >
             {avatarUrl ? (
               <img
@@ -456,7 +456,7 @@ export const CheckoutReviewView: React.FC = () => {
       </header>
 
       {/* Main Container */}
-      <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 min-h-screen bg-surface">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-surface">
         {items.length === 0 ? (
           /* Empty Cart View */
           <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
@@ -1246,7 +1246,8 @@ export const CheckoutReviewView: React.FC = () => {
 
       {/* Sticky Bottom Order Execution Bar */}
       {items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 bg-surface/95 backdrop-blur-xl px-space-lg py-3 border-t border-surface-container/60 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-t border-surface-container/60 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] py-3">
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between text-on-surface-variant px-1 text-[11px]">
               <span className="flex items-center gap-1">
@@ -1297,6 +1298,7 @@ export const CheckoutReviewView: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
       )}
 
       {/* Location Selector Modal */}

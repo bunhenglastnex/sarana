@@ -263,105 +263,108 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
   const maxStock = item.stockQuantity ?? 50;
 
   return (
-    <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col items-center selection:bg-primary/20 selection:text-primary pb-32">
-      {/* Top Floating Back & Action Bar */}
-      <div className="fixed top-0 w-full max-w-md mx-auto z-40 pt-safe px-space-lg h-16 flex items-center justify-between pointer-events-none">
+    <div className="bg-surface text-on-surface font-sans text-sm min-h-screen selection:bg-primary/20 selection:text-primary pb-16 w-full">
+      {/* Top Desktop Navigation & Action Header */}
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2 flex items-center justify-between">
         <button
           type="button"
           onClick={() => router.back()}
           aria-label="Back to home"
-          className="w-10 h-10 rounded-full bg-surface-bright/80 backdrop-blur-md text-on-surface flex items-center justify-center shadow-md hover:bg-white active:scale-90 transition-all pointer-events-auto border border-surface-container"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors font-bold text-xs text-on-surface border border-surface-container-highest"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Menu</span>
         </button>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setIsShareOpen(true)}
             aria-label="Share item"
-            className="w-10 h-10 rounded-full bg-surface-bright/80 backdrop-blur-md text-on-surface flex items-center justify-center shadow-md hover:bg-white active:scale-90 transition-all border border-surface-container"
+            className="w-9 h-9 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors border border-surface-container-highest"
           >
-            <Share2 className="w-5 h-5 text-on-surface-variant" />
+            <Share2 className="w-4 h-4 text-on-surface-variant" />
           </button>
 
           <button
             type="button"
             onClick={toggleFavorite}
             aria-label="Toggle favorite"
-            className={`w-10 h-10 rounded-full bg-surface-bright/80 backdrop-blur-md flex items-center justify-center shadow-md active:scale-90 transition-all border border-surface-container ${
+            className={`w-9 h-9 rounded-full bg-surface-container hover:bg-surface-container-high flex items-center justify-center transition-colors border border-surface-container-highest ${
               isFavorite
                 ? "text-red-500 fill-red-500"
                 : "text-on-surface-variant"
             }`}
           >
             <Heart
-              className={`w-5 h-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`}
+              className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`}
             />
           </button>
         </div>
       </div>
 
-      {/* Main Container Frame */}
-      <main className="flex flex-col relative w-full max-w-md min-h-screen bg-surface">
-        {/* Full Width Hero Image */}
-        <div className="relative w-full h-72 bg-surface-container overflow-hidden">
-          <img
-            src={item.imageUrl}
-            alt={item.name}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-black/30 pointer-events-none" />
+      {/* Main 2-Column Split Container Frame */}
+      <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Hero Image Card */}
+        <div className="lg:col-span-6 flex flex-col gap-4">
+          <div className="relative w-full h-80 sm:h-96 lg:h-[460px] bg-surface-container rounded-3xl overflow-hidden shadow-lg border border-surface-container/60">
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
-          {/* Badge Overlay */}
-          {item.badge && (
-            <div className="absolute bottom-4 left-space-lg bg-surface-bright/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
-              {item.badge.type === "fire" ? (
-                <Flame className="w-4 h-4 text-primary" />
-              ) : item.badge.type === "award" ? (
-                <Award className="w-4 h-4 text-secondary" />
-              ) : (
-                <Star className="w-4 h-4 text-secondary fill-secondary" />
-              )}
-              <span className="font-bold text-xs text-on-surface">
-                {item.badge.text}
-              </span>
-            </div>
-          )}
+            {/* Badge Overlay */}
+            {item.badge && (
+              <div className="absolute bottom-4 left-4 bg-surface-bright/90 backdrop-blur-md px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-md">
+                {item.badge.type === "fire" ? (
+                  <Flame className="w-4 h-4 text-primary" />
+                ) : item.badge.type === "award" ? (
+                  <Award className="w-4 h-4 text-secondary" />
+                ) : (
+                  <Star className="w-4 h-4 text-secondary fill-secondary" />
+                )}
+                <span className="font-bold text-xs text-on-surface">
+                  {item.badge.text}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Content Body */}
-        <div className="px-space-lg pt-2 pb-6 flex flex-col gap-5 -mt-4 relative z-10">
+        {/* Right Column: Product Info & Variant Options & Action Card */}
+        <div className="lg:col-span-6 flex flex-col gap-6">
           {/* Header Identity Card */}
-          <div className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm border border-surface-container/60">
-            <div className="flex items-start justify-between gap-3">
-              <h1 className="font-extrabold text-xl text-on-surface leading-tight">
+          <div className="bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-surface-container/60 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="font-extrabold text-2xl text-on-surface leading-tight">
                 {item.name}
               </h1>
-              <span className="font-extrabold text-xl text-primary flex-shrink-0">
+              <span className="font-extrabold text-2xl text-primary flex-shrink-0">
                 ${item.price.toFixed(2)}
               </span>
             </div>
 
             {/* Metrics & Stock Inventory Pills */}
-            <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-surface-container text-xs text-on-surface-variant">
+            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-surface-container text-xs text-on-surface-variant">
               <div className="flex items-center gap-1 font-semibold">
                 <Clock className="w-4 h-4 text-primary" />
-                <span>{item.prepTimeMinutes || 15} mins</span>
+                <span>{item.prepTimeMinutes || 15} mins prep time</span>
               </div>
               <div className="w-1 h-1 rounded-full bg-outline-variant" />
 
               {/* Stock Inventory Pill */}
               {maxStock <= 0 ? (
-                <div className="flex items-center gap-1 font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                <div className="flex items-center gap-1 font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
                   <span>❌ Sold Out</span>
                 </div>
               ) : maxStock <= 5 ? (
-                <div className="flex items-center gap-1 font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 animate-pulse">
+                <div className="flex items-center gap-1 font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300 animate-pulse">
                   <span>⚠️ Only {maxStock} left in stock!</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <div className="flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                   <ShieldCheck className="w-4 h-4" />
                   <span>{maxStock} in stock</span>
                 </div>
@@ -370,7 +373,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
 
             {/* Detailed Culinary Description */}
             {item.description && (
-              <p className="text-xs text-on-surface-variant mt-3 leading-relaxed">
+              <p className="text-sm text-on-surface-variant leading-relaxed pt-1">
                 {item.description}
               </p>
             )}
@@ -389,24 +392,24 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
                 return (
                   <div
                     key={optGroup.name}
-                    className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm border border-surface-container/60 space-y-3"
+                    className="bg-surface-container-lowest rounded-3xl p-5 shadow-sm border border-surface-container/60 space-y-3"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-xs uppercase tracking-wider text-on-surface">
                         {optGroup.name}
                       </span>
                       {isRequired ? (
-                        <span className="text-[11px] font-semibold text-primary">
+                        <span className="text-xs font-semibold text-primary">
                           Required
                         </span>
                       ) : (
-                        <span className="text-[11px] font-semibold text-on-surface-variant">
+                        <span className="text-xs font-semibold text-on-surface-variant">
                           Optional
                         </span>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {optGroup.choices?.map((choice) => {
                         const isSelected =
                           selectedOptions[optGroup.name] === choice.label;
@@ -421,7 +424,7 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
                                 isRequired,
                               )
                             }
-                            className={`flex items-center justify-between p-3.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.99] ${
+                            className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs font-semibold transition-all active:scale-[0.99] ${
                               isSelected
                                 ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
                                 : "border-surface-container-high bg-surface-container-lowest text-on-surface hover:border-outline"
@@ -455,69 +458,67 @@ export const ItemDetailView: React.FC<ItemDetailViewProps> = ({ slug }) => {
               })}
             </div>
           )}
-        </div>
-      </main>
 
-      {/* Floating Bottom Add-To-Cart Action Dock */}
-      <aside className="fixed bottom-16 z-40 w-full max-w-md mx-auto px-space-lg pointer-events-auto">
-        <div className="bg-surface-container-lowest border border-surface-container/80 p-3 rounded-2xl shadow-xl flex items-center gap-3 backdrop-blur-md">
-          {/* Quantity Stepper */}
-          <div className="flex items-center bg-surface-container-high rounded-full p-1 border border-surface-container-highest flex-shrink-0">
+          {/* Desktop Add to Order Action Panel */}
+          <div className="bg-surface-container-lowest border border-surface-container/80 p-4 rounded-3xl shadow-lg flex flex-col sm:flex-row items-center gap-4">
+            {/* Quantity Stepper */}
+            <div className="flex items-center justify-center bg-surface-container-high rounded-full p-1.5 border border-surface-container-highest w-full sm:w-auto">
+              <button
+                type="button"
+                disabled={maxStock <= 0}
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                aria-label="Decrease quantity"
+                className="w-10 h-10 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all disabled:opacity-40"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="w-12 text-center font-bold text-base text-on-surface">
+                {quantity}
+              </span>
+              <button
+                type="button"
+                disabled={maxStock <= 0 || quantity >= maxStock}
+                onClick={() => setQuantity(Math.min(maxStock, quantity + 1))}
+                aria-label="Increase quantity"
+                className="w-10 h-10 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all disabled:opacity-40"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Add to Cart Button */}
             <button
               type="button"
               disabled={maxStock <= 0}
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              aria-label="Decrease quantity"
-              className="w-9 h-9 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all disabled:opacity-40"
+              onClick={handleAddToCart}
+              className={`w-full flex-1 py-3.5 px-6 rounded-full font-extrabold text-sm flex items-center justify-between shadow-md active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                maxStock <= 0
+                  ? "bg-surface-container-highest text-on-surface-variant"
+                  : added
+                    ? "bg-secondary text-on-secondary"
+                    : "bg-primary text-on-primary hover:bg-primary-container"
+              }`}
             >
-              <Minus className="w-4 h-4" />
-            </button>
-            <span className="w-8 text-center font-bold text-sm text-on-surface">
-              {quantity}
-            </span>
-            <button
-              type="button"
-              disabled={maxStock <= 0 || quantity >= maxStock}
-              onClick={() => setQuantity(Math.min(maxStock, quantity + 1))}
-              aria-label="Increase quantity"
-              className="w-9 h-9 rounded-full bg-surface-bright flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-90 transition-all disabled:opacity-40"
-            >
-              <Plus className="w-4 h-4" />
+              <div className="flex items-center gap-2.5">
+                {maxStock <= 0 ? (
+                  <span>Out of Stock</span>
+                ) : added ? (
+                  <>
+                    <Check className="w-5 h-5" />
+                    <span>Added to Order!</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag className="w-5 h-5" />
+                    <span>Add to Order</span>
+                  </>
+                )}
+              </div>
+              {maxStock > 0 && <span className="text-base">${totalPrice.toFixed(2)}</span>}
             </button>
           </div>
-
-          {/* Add to Cart Button */}
-          <button
-            type="button"
-            disabled={maxStock <= 0}
-            onClick={handleAddToCart}
-            className={`flex-1 py-3 px-4 rounded-full font-extrabold text-sm flex items-center justify-between shadow-md active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-              maxStock <= 0
-                ? "bg-surface-container-highest text-on-surface-variant"
-                : added
-                  ? "bg-secondary text-on-secondary"
-                  : "bg-primary text-on-primary hover:bg-primary-container"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              {maxStock <= 0 ? (
-                <span>Out of Stock</span>
-              ) : added ? (
-                <>
-                  <Check className="w-5 h-5" />
-                  <span>Added to Order!</span>
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="w-5 h-5" />
-                  <span>Add to Order</span>
-                </>
-              )}
-            </div>
-            {maxStock > 0 && <span>${totalPrice.toFixed(2)}</span>}
-          </button>
         </div>
-      </aside>
+      </main>
 
       {/* Share Item Popup Modal */}
       {item && (

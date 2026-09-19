@@ -404,7 +404,7 @@ export default function CustomerPageLayout() {
   }, [selectedRestaurant, restaurantsList]);
 
   return (
-    <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 pb-28 bg-surface min-h-screen">
+    <main className="flex flex-col relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-28 bg-surface min-h-screen">
       <div className="flex flex-col w-full">
         {/* Search & Quick Filter Bar */}
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -466,19 +466,21 @@ export default function CustomerPageLayout() {
             </div>
           ) : foodItems.length > 0 ? (
             <>
-              {foodItems.map((food) => (
-                <FoodCard
-                  key={food.id}
-                  item={food}
-                  isFavorite={activeFavoriteIds.has(food.id)}
-                  onToggleFavorite={(id) => handleToggleFavorite(id)}
-                  onSelect={(item) => {
-                    const itemSlug = item.slug || item.id;
-                    router.push(`/items-detail/${itemSlug}`);
-                  }}
-                  onQuickAdd={(item) => handleQuickAdd(item)}
-                />
-              ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                {foodItems.map((food) => (
+                  <FoodCard
+                    key={food.id}
+                    item={food}
+                    isFavorite={activeFavoriteIds.has(food.id)}
+                    onToggleFavorite={(id) => handleToggleFavorite(id)}
+                    onSelect={(item) => {
+                      const itemSlug = item.slug || item.id;
+                      router.push(`/items-detail/${itemSlug}`);
+                    }}
+                    onQuickAdd={(item) => handleQuickAdd(item)}
+                  />
+                ))}
+              </div>
 
               {/* Infinite Scroll Sentinel / Bottom Feed Load More Indicator */}
               <div

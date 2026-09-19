@@ -147,13 +147,13 @@ export const CartView: React.FC = () => {
   }
 
   return (
-    <main className="flex flex-col relative w-full max-w-md px-space-lg pt-4 pb-28 bg-surface min-h-screen">
+    <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-surface">
       <div className="flex flex-col w-full pb-6">
-        {/* Top Cart Action Header */}
-        <div className="flex items-center justify-between py-space-sm">
-          <div className="flex items-center gap-space-2xs">
-            <h1 className="font-extrabold text-xl text-on-surface">My Cart</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold text-xs">
+        {/* Top Cart Header */}
+        <div className="flex items-center justify-between py-space-sm mb-4">
+          <div className="flex items-center gap-3">
+            <h1 className="font-extrabold text-2xl text-on-surface">My Cart</h1>
+            <span className="px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold text-xs">
               {totalItemCount} {totalItemCount === 1 ? "item" : "items"}
             </span>
           </div>
@@ -161,7 +161,7 @@ export const CartView: React.FC = () => {
             <button
               type="button"
               onClick={handleClearCart}
-              className="text-xs font-bold text-primary hover:text-primary-container transition-colors active:scale-95 flex items-center gap-1"
+              className="text-xs font-bold text-primary hover:text-primary-container transition-colors active:scale-95 flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-primary/10"
             >
               <Trash2 className="w-4 h-4" />
               <span>Clear Cart</span>
@@ -178,360 +178,356 @@ export const CartView: React.FC = () => {
               return acc;
             }, {} as Record<number, boolean>)
           ).length > 1 ? (
-            <div className="flex items-start gap-2.5 px-3.5 py-3 bg-amber-500/10 rounded-xl mb-3 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300 shadow-sm animate-in fade-in">
-              <Sparkles className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
+            <div className="flex items-start gap-3 px-4 py-3.5 bg-amber-500/10 rounded-2xl mb-6 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300 shadow-sm animate-in fade-in">
+              <Sparkles className="w-5 h-5 shrink-0 text-amber-500 mt-0.5" />
               <div>
-                <p className="font-extrabold text-amber-800 dark:text-amber-200">
+                <p className="font-extrabold text-sm text-amber-800 dark:text-amber-200">
                   Multi-Restaurant Cart
                 </p>
-                <p className="text-[11px] text-amber-700 dark:text-amber-300/90 mt-0.5 leading-tight">
+                <p className="text-xs text-amber-700 dark:text-amber-300/90 mt-0.5 leading-relaxed">
                   You have items from multiple restaurants. Separate orders will be automatically placed for each kitchen.
                 </p>
               </div>
             </div>
           ) : restaurantName ? (
-            <div className="flex items-center gap-2 px-3.5 py-2.5 bg-primary/10 rounded-xl mb-3 border border-primary/20 text-xs font-bold text-primary shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-3 bg-primary/10 rounded-2xl mb-6 border border-primary/20 text-xs font-bold text-primary shadow-sm">
               <ShoppingBag className="w-4 h-4 shrink-0" />
-              <span>Ordering from: <strong className="font-extrabold">{restaurantName}</strong></span>
+              <span>Ordering from: <strong className="font-extrabold text-sm">{restaurantName}</strong></span>
             </div>
           ) : null
         )}
 
-        {/* Cart Items List Grouped by Restaurant */}
-        {cartItems.length > 0 ? (
-          <div className="flex flex-col gap-4 mb-space-lg">
-            {Object.values(
-              cartItems.reduce((acc, item) => {
-                const rId = item.restaurant_id || item.food?.restaurant_id || 0;
-                const rName =
-                  item.restaurant_name ||
-                  item.food?.restaurant_name ||
-                  (item.food as any)?.restaurant_name ||
-                  restaurantName ||
-                  "Restaurant";
-                if (!acc[rId]) {
-                  acc[rId] = { restaurantId: rId, restaurantName: rName, items: [] };
-                }
-                acc[rId].items.push(item);
-                return acc;
-              }, {} as Record<number, { restaurantId: number; restaurantName: string; items: typeof cartItems }>)
-            ).map((group) => (
-              <div
-                key={group.restaurantId}
-                className="flex flex-col gap-space-sm bg-surface-container-lowest p-3 rounded-2xl border border-surface-container/80 shadow-sm"
-              >
-                {/* Kitchen Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-surface-container/60 px-1">
-                  <div className="flex items-center gap-2 font-bold text-xs text-primary">
-                    <Utensils className="w-3.5 h-3.5 text-primary" />
-                    <span className="truncate max-w-[200px]">{group.restaurantName}</span>
-                  </div>
-                  <span className="text-[10px] font-extrabold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                    {group.items.length} {group.items.length === 1 ? "item" : "items"}
-                  </span>
-                </div>
-
-                {/* Restaurant Items */}
-                {group.items.map((cartItem, idx) => {
-                  const foodId = Number(cartItem.food_id);
-                  const imgUrl =
-                    cartItem.food?.image_url ||
-                    (cartItem.food as any)?.imageUrl ||
-                    "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80";
-                  const optionsKey = JSON.stringify(cartItem.options || {});
-                  const hasOptions =
-                    cartItem.options && Object.keys(cartItem.options).length > 0;
-
-                  return (
-                    <div
-                      key={`${cartItem.food_id}-${optionsKey}-${idx}`}
-                      className="bg-surface p-space-sm rounded-xl shadow-xs flex gap-space-sm relative transition-all duration-200 border border-surface-container/60"
-                    >
-                      <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
-                        <img
-                          src={imgUrl}
-                          alt={cartItem.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="flex flex-col flex-1 min-w-0 justify-between">
-                        <div className="flex items-start justify-between gap-1">
-                          <div className="min-w-0">
-                            <h4 className="font-bold text-sm text-on-surface truncate">
-                              {cartItem.name}
-                            </h4>
-
-                            {/* Selected Customization Options Badge Tags */}
-                            {hasOptions ? (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {Object.entries(cartItem.options!).map(
-                                  ([grp, val]) => (
-                                    <span
-                                      key={grp}
-                                      className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-surface-container-low text-on-surface-variant border border-surface-container-high"
-                                    >
-                                      <span className="text-outline font-normal">
-                                        {grp}:
-                                      </span>
-                                      <span className="text-primary font-bold">
-                                        {val}
-                                      </span>
-                                    </span>
-                                  ),
-                                )}
-                              </div>
-                            ) : (
-                              <p className="text-xs text-on-surface-variant line-clamp-1">
-                                {cartItem.food?.description ||
-                                  "Freshly cooked to order"}
-                              </p>
-                            )}
-
-                            {/* Customize / Edit Options Link */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const slug =
-                                  cartItem.food?.slug ||
-                                  (cartItem.food as any)?.id ||
-                                  cartItem.food_id;
-                                router.push(`/items-detail/${slug}`);
-                              }}
-                              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 mt-1.5 transition-colors"
-                            >
-                              <SlidersHorizontal className="w-3 h-3" />
-                              <span>Customize / Edit Options</span>
-                            </button>
-                          </div>
-                          <button
-                            type="button"
-                            aria-label="Remove item"
-                            onClick={() => handleRemoveItem(foodId, optionsKey)}
-                            className="text-tertiary hover:text-error transition-colors p-1"
-                          >
-                            <Trash2 className="w-4 h-4 text-outline hover:text-red-500" />
-                          </button>
-                        </div>
-
-                        <div className="flex items-center justify-between mt-space-2xs">
-                          <span className="font-extrabold text-base text-primary">
-                            $
-                            {(
-                              (typeof cartItem.price === "string"
-                                ? parseFloat(cartItem.price)
-                                : Number(cartItem.price || 0)) * cartItem.quantity
-                            ).toFixed(2)}
-                          </span>
-                          <div className="flex items-center bg-surface-container-low rounded-full px-1 py-0.5 border border-surface-container-high">
-                            <button
-                              type="button"
-                              aria-label="Decrease quantity"
-                              onClick={() =>
-                                handleUpdateQty(foodId, -1, optionsKey)
-                              }
-                              className="w-7 h-7 flex items-center justify-center rounded-full text-on-surface hover:bg-surface transition-transform active:scale-90"
-                            >
-                              <Minus className="w-3.5 h-3.5" />
-                            </button>
-                            <span className="font-bold text-xs px-2 text-on-surface">
-                              {cartItem.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              aria-label="Increase quantity"
-                              onClick={() => handleUpdateQty(foodId, 1, optionsKey)}
-                              className="w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface transition-transform active:scale-90"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-surface-container-lowest rounded-xl p-6 border border-surface-container mb-space-lg">
-            <ShoppingBag className="w-12 h-12 text-outline mx-auto mb-2 opacity-50" />
-            <p className="font-bold text-on-surface text-base">
+        {cartItems.length === 0 ? (
+          <div className="text-center py-16 bg-surface-container-lowest rounded-3xl p-8 border border-surface-container max-w-md mx-auto my-8 shadow-sm">
+            <ShoppingBag className="w-16 h-16 text-outline mx-auto mb-3 opacity-40" />
+            <p className="font-extrabold text-on-surface text-lg">
               Your cart is empty
             </p>
-            <p className="text-xs text-on-surface-variant mt-1 mb-4">
+            <p className="text-xs text-on-surface-variant mt-1 mb-6">
               Explore our wood-fired hearth menu and add delicious items.
             </p>
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="bg-primary text-on-primary px-6 py-2 rounded-full font-bold text-xs hover:bg-primary-container transition-all"
+              className="bg-primary text-on-primary px-8 py-3 rounded-full font-bold text-xs hover:bg-primary-container transition-all shadow-md active:scale-95"
             >
               Browse Menu
             </button>
           </div>
-        )}
-
-        {/* Utensils / Eco Toggle Card */}
-        <div className="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex items-center justify-between mb-space-md border border-surface-container/60">
-          <div className="flex items-center gap-space-sm min-w-0 pr-2">
-            <div className="w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center flex-shrink-0 text-secondary">
-              <Utensils className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-xs text-on-surface leading-tight">
-                Cutlery & paper napkins
-              </p>
-              <p className="text-[11px] text-on-surface-variant">
-                Included at no extra charge
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={includeCutlery}
-            onClick={() => setIncludeCutlery(!includeCutlery)}
-            className={`w-11 h-6 rounded-full transition-colors relative flex items-center p-0.5 cursor-pointer flex-shrink-0 ${
-              includeCutlery ? "bg-primary" : "bg-surface-container-highest"
-            }`}
-          >
-            <span
-              className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
-                includeCutlery ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* Upsell Recommendation Carousel */}
-        {upsellItems.length > 0 && (
-          <div className="mb-space-lg">
-            <div className="flex items-center justify-between mb-space-xs px-1">
-              <span className="font-bold text-xs text-on-surface">
-                Frequently paired with
-              </span>
-              <span className="text-[11px] text-secondary font-bold flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Chef's pick
-              </span>
-            </div>
-
-            <div className="flex gap-space-sm overflow-x-auto pb-1 -mx-space-lg px-space-lg no-scrollbar">
-              {upsellItems.map((upsell) => {
-                const isAdded = addedUpsells[upsell.id];
-                return (
+        ) : (
+          /* Desktop 2-Column Grid Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: Cart Items & Cutlery & Upsells */}
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-6">
+              {/* Cart Items List Grouped by Restaurant */}
+              <div className="flex flex-col gap-4">
+                {Object.values(
+                  cartItems.reduce((acc, item) => {
+                    const rId = item.restaurant_id || item.food?.restaurant_id || 0;
+                    const rName =
+                      item.restaurant_name ||
+                      item.food?.restaurant_name ||
+                      (item.food as any)?.restaurant_name ||
+                      restaurantName ||
+                      "Restaurant";
+                    if (!acc[rId]) {
+                      acc[rId] = { restaurantId: rId, restaurantName: rName, items: [] };
+                    }
+                    acc[rId].items.push(item);
+                    return acc;
+                  }, {} as Record<number, { restaurantId: number; restaurantName: string; items: typeof cartItems }>)
+                ).map((group) => (
                   <div
-                    key={upsell.id}
-                    className="bg-surface-container-lowest p-2 rounded-xl shadow-sm flex items-center gap-space-sm flex-shrink-0 w-64 border border-surface-container/60"
+                    key={group.restaurantId}
+                    className="flex flex-col gap-3 bg-surface-container-lowest p-4 rounded-3xl border border-surface-container/80 shadow-sm"
                   >
-                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-surface-container flex-shrink-0">
-                      <img
-                        src={upsell.imageUrl}
-                        alt={upsell.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h5 className="font-bold text-xs text-on-surface truncate">
-                        {upsell.name}
-                      </h5>
-                      <span className="font-bold text-xs text-primary">
-                        ${upsell.price.toFixed(2)}
+                    {/* Kitchen Header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-surface-container/60 px-1">
+                      <div className="flex items-center gap-2 font-extrabold text-sm text-primary">
+                        <Utensils className="w-4 h-4 text-primary" />
+                        <span className="truncate">{group.restaurantName}</span>
+                      </div>
+                      <span className="text-xs font-extrabold bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+                        {group.items.length} {group.items.length === 1 ? "item" : "items"}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleAddUpsell(upsell)}
-                      disabled={isAdded}
-                      className={`px-3 py-1.5 rounded-full font-bold text-xs transition-all flex items-center gap-1 ${
-                        isAdded
-                          ? "bg-primary text-on-primary"
-                          : "bg-surface-container-high hover:bg-primary hover:text-on-primary text-on-surface"
-                      }`}
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>{isAdded ? "Added" : "Add"}</span>
-                    </button>
+
+                    {/* Restaurant Items */}
+                    {group.items.map((cartItem, idx) => {
+                      const foodId = Number(cartItem.food_id);
+                      const imgUrl =
+                        cartItem.food?.image_url ||
+                        (cartItem.food as any)?.imageUrl ||
+                        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80";
+                      const optionsKey = JSON.stringify(cartItem.options || {});
+                      const hasOptions =
+                        cartItem.options && Object.keys(cartItem.options).length > 0;
+
+                      return (
+                        <div
+                          key={`${cartItem.food_id}-${optionsKey}-${idx}`}
+                          className="bg-surface p-4 rounded-2xl shadow-xs flex gap-4 relative transition-all duration-200 border border-surface-container/60 items-center"
+                        >
+                          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container">
+                            <img
+                              src={imgUrl}
+                              alt={cartItem.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+
+                          <div className="flex flex-col flex-1 min-w-0 justify-between gap-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <h4 className="font-extrabold text-base text-on-surface truncate">
+                                  {cartItem.name}
+                                </h4>
+
+                                {/* Selected Customization Options Badge Tags */}
+                                {hasOptions ? (
+                                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                    {Object.entries(cartItem.options!).map(
+                                      ([grp, val]) => (
+                                        <span
+                                          key={grp}
+                                          className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-lg bg-surface-container-low text-on-surface-variant border border-surface-container-high"
+                                        >
+                                          <span className="text-outline font-normal">
+                                            {grp}:
+                                          </span>
+                                          <span className="text-primary font-bold">
+                                            {val}
+                                          </span>
+                                        </span>
+                                      ),
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-on-surface-variant line-clamp-1 mt-0.5">
+                                    {cartItem.food?.description ||
+                                      "Freshly cooked to order"}
+                                  </p>
+                                )}
+
+                                {/* Customize / Edit Options Link */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const slug =
+                                      cartItem.food?.slug ||
+                                      (cartItem.food as any)?.id ||
+                                      cartItem.food_id;
+                                    router.push(`/items-detail/${slug}`);
+                                  }}
+                                  className="text-xs font-bold text-primary hover:underline flex items-center gap-1 mt-2 transition-colors"
+                                >
+                                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                                  <span>Customize / Edit Options</span>
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                aria-label="Remove item"
+                                onClick={() => handleRemoveItem(foodId, optionsKey)}
+                                className="text-tertiary hover:text-error transition-colors p-1.5 rounded-full hover:bg-surface-container"
+                              >
+                                <Trash2 className="w-4.5 h-4.5 text-outline hover:text-red-500" />
+                              </button>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="font-extrabold text-lg text-primary">
+                                $
+                                {(
+                                  (typeof cartItem.price === "string"
+                                    ? parseFloat(cartItem.price)
+                                    : Number(cartItem.price || 0)) * cartItem.quantity
+                                ).toFixed(2)}
+                              </span>
+                              <div className="flex items-center bg-surface-container-low rounded-full px-1.5 py-1 border border-surface-container-high">
+                                <button
+                                  type="button"
+                                  aria-label="Decrease quantity"
+                                  onClick={() =>
+                                    handleUpdateQty(foodId, -1, optionsKey)
+                                  }
+                                  className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface hover:bg-surface transition-transform active:scale-90"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </button>
+                                <span className="font-extrabold text-sm px-3 text-on-surface">
+                                  {cartItem.quantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  aria-label="Increase quantity"
+                                  onClick={() => handleUpdateQty(foodId, 1, optionsKey)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-lowest text-on-surface shadow-xs hover:bg-surface transition-transform active:scale-90"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Order Breakdown Card */}
-        {cartItems.length > 0 && (
-          <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-2.5 mb-space-xl border border-surface-container/60">
-            <h4 className="font-bold text-sm text-on-surface border-b border-surface-container pb-2">
-              Order Summary
-            </h4>
-
-            <div className="flex justify-between items-center text-xs text-on-surface-variant">
-              <span>Subtotal</span>
-              <span className="text-on-surface font-semibold">
-                ${subtotal.toFixed(2)}
-              </span>
-            </div>
-
-            <div className="flex justify-between items-center text-xs text-on-surface-variant">
-              <div className="flex flex-col">
-                <span>Delivery Fee</span>
-                <span className="text-[10px] font-bold text-secondary">
-                  {isFreeDelivery
-                    ? "Free Delivery Unlocked"
-                    : "Calculated at checkout by distance"}
-                </span>
+                ))}
               </div>
-              <span className="text-on-surface font-semibold">
-                {isFreeDelivery ? "$0.00" : "At Checkout"}
-              </span>
-            </div>
 
-            <div className="flex justify-between items-center text-xs text-on-surface-variant">
-              <span>{`Packaging & Tax (${taxRate}%)`}</span>
-              <span className="text-on-surface font-semibold">
-                ${serviceTax.toFixed(2)}
-              </span>
-            </div>
-
-            <div className="w-full h-px bg-surface-container my-1" />
-
-            <div className="flex justify-between items-baseline pt-1">
-              <div className="flex flex-col">
-                <span className="font-extrabold text-base text-on-surface">
-                  Total Amount
-                </span>
-                <span className="text-[10px] text-on-surface-variant">
-                  Includes taxes & operational fees
-                </span>
-              </div>
-              <span className="font-extrabold text-xl text-primary">
-                ${finalTotal.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Sticky Checkout Trigger Button */}
-        {cartItems.length > 0 && (
-          <div className="sticky bottom-20 z-30 pt-2 pointer-events-auto">
-            <button
-              type="button"
-              onClick={handleProceedToCheckout}
-              className="w-full h-[52px] bg-primary text-on-primary rounded-xl shadow-xl flex items-center justify-between px-space-md hover:bg-primary-container transition-transform active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-on-primary/20 flex items-center justify-center">
-                  <Lock className="w-4 h-4 text-on-primary" />
+              {/* Utensils / Eco Toggle Card */}
+              <div className="bg-surface-container-lowest p-4 rounded-2xl shadow-sm flex items-center justify-between border border-surface-container/60">
+                <div className="flex items-center gap-3 min-w-0 pr-2">
+                  <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center flex-shrink-0 text-secondary">
+                    <Utensils className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-on-surface leading-tight">
+                      Cutlery & paper napkins
+                    </p>
+                    <p className="text-xs text-on-surface-variant">
+                      Included at no extra charge
+                    </p>
+                  </div>
                 </div>
-                <span className="font-bold text-sm">Proceed to Checkout</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={includeCutlery}
+                  onClick={() => setIncludeCutlery(!includeCutlery)}
+                  className={`w-12 h-7 rounded-full transition-colors relative flex items-center p-0.5 cursor-pointer flex-shrink-0 ${
+                    includeCutlery ? "bg-primary" : "bg-surface-container-highest"
+                  }`}
+                >
+                  <span
+                    className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${
+                      includeCutlery ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
               </div>
-              <div className="flex items-center gap-1.5 font-extrabold text-sm">
-                <span>${finalTotal.toFixed(2)}</span>
-                <ArrowRight className="w-4 h-4" />
+
+              {/* Upsell Recommendation Grid / Carousel */}
+              {upsellItems.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <span className="font-bold text-sm text-on-surface">
+                      Frequently paired with
+                    </span>
+                    <span className="text-xs text-secondary font-bold flex items-center gap-1">
+                      <Sparkles className="w-4 h-4" /> Chef's pick
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {upsellItems.map((upsell) => {
+                      const isAdded = addedUpsells[upsell.id];
+                      return (
+                        <div
+                          key={upsell.id}
+                          className="bg-surface-container-lowest p-3 rounded-2xl shadow-sm flex items-center gap-3 border border-surface-container/60"
+                        >
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-container flex-shrink-0">
+                            <img
+                              src={upsell.imageUrl}
+                              alt={upsell.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-bold text-xs text-on-surface truncate">
+                              {upsell.name}
+                            </h5>
+                            <span className="font-extrabold text-xs text-primary">
+                              ${upsell.price.toFixed(2)}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleAddUpsell(upsell)}
+                            disabled={isAdded}
+                            className={`px-3 py-1.5 rounded-full font-bold text-xs transition-all flex items-center gap-1 ${
+                              isAdded
+                                ? "bg-primary text-on-primary"
+                                : "bg-surface-container-high hover:bg-primary hover:text-on-primary text-on-surface"
+                            }`}
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>{isAdded ? "Added" : "Add"}</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Sticky Desktop Order Financial Breakdown & Checkout Button */}
+            <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-20 flex flex-col gap-4">
+              <div className="bg-surface-container-lowest p-6 rounded-3xl shadow-md flex flex-col gap-3.5 border border-surface-container/80">
+                <h4 className="font-extrabold text-base text-on-surface border-b border-surface-container pb-3">
+                  Order Summary
+                </h4>
+
+                <div className="flex justify-between items-center text-xs text-on-surface-variant">
+                  <span>Subtotal</span>
+                  <span className="text-on-surface font-extrabold text-sm">
+                    ${subtotal.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center text-xs text-on-surface-variant">
+                  <div className="flex flex-col">
+                    <span>Delivery Fee</span>
+                    <span className="text-[11px] font-bold text-secondary">
+                      {isFreeDelivery
+                        ? "Free Delivery Unlocked"
+                        : "Calculated at checkout"}
+                    </span>
+                  </div>
+                  <span className="text-on-surface font-extrabold text-sm">
+                    {isFreeDelivery ? "$0.00" : "At Checkout"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center text-xs text-on-surface-variant">
+                  <span>{`Packaging & Tax (${taxRate}%)`}</span>
+                  <span className="text-on-surface font-extrabold text-sm">
+                    ${serviceTax.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="w-full h-px bg-surface-container my-1" />
+
+                <div className="flex justify-between items-baseline pt-1">
+                  <div className="flex flex-col">
+                    <span className="font-extrabold text-lg text-on-surface">
+                      Total Amount
+                    </span>
+                    <span className="text-xs text-on-surface-variant">
+                      Includes taxes & fees
+                    </span>
+                  </div>
+                  <span className="font-extrabold text-2xl text-primary">
+                    ${finalTotal.toFixed(2)}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleProceedToCheckout}
+                  className="w-full h-14 mt-3 bg-primary text-on-primary rounded-2xl shadow-xl flex items-center justify-between px-6 hover:bg-primary-container transition-transform active:scale-[0.98] font-extrabold text-base"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Lock className="w-5 h-5 text-on-primary" />
+                    <span>Proceed to Checkout</span>
+                  </div>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
               </div>
-            </button>
+            </div>
           </div>
         )}
       </div>

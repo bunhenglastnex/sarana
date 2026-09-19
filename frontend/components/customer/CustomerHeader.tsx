@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
-import { MapPin, ChevronDown, Bell, User, LogIn } from 'lucide-react';
-import { useAuthStore } from '@/lib/store/useAuthStore';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { MapPin, ChevronDown, Bell, User, LogIn, ShoppingBag, Heart, Store, Receipt } from 'lucide-react';
+import { useAuthStore, useCartStore } from '@/lib/store';
 
 interface CustomerHeaderProps {
   currentAddress?: string;
@@ -23,67 +24,125 @@ export const CustomerHeader: React.FC<CustomerHeaderProps> = ({
   avatarUrl,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { token, userId, avatarUrl: storeAvatarUrl } = useAuthStore();
+  const cartItems = useCartStore((state) => state.items);
   const isLoggedIn = Boolean(token || userId);
   const userAvatar = storeAvatarUrl || avatarUrl;
+
+  const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const handleProfileClick = () => {
     if (!isLoggedIn) {
       router.push('/login');
     } else if (onOpenProfile) {
       onOpenProfile();
+    } else {
+      router.push('/customer-profile');
     }
   };
 
+  const navLinks = [
+    { label: 'Menu', href: '/', icon: Store },
+    { label: 'Favorites', href: '/favorites', icon: Heart, reqAuth: true },
+    { label: 'My Orders', href: '/orders', icon: Receipt, reqAuth: true },
+  ];
+
   return (
-    <header className="sticky top-0 w-full max-w-md mx-auto z-40 pt-safe bg-surface/90 backdrop-blur-xl border-b border-surface-container/40 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-      <div className="h-16 px-space-lg flex items-center justify-between gap-space-xs">
-        {/* Brand Logo & Address Selector */}
-        <div className="flex items-center gap-space-xs min-w-0 flex-1">
-          <img
-            src="/logo.jpg"
-            alt="Amber & Ember Bistro Logo"
-            className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-primary/20 shadow-xs"
-          />
-          <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-space-2xs text-on-surface font-bold text-sm tracking-tight leading-tight">
-              Amber & Ember
-            </div>
-            <button
-              onClick={onOpenLocation}
-              className="flex items-center gap-0.5 text-on-surface-variant text-left hover:text-primary transition-colors group"
-              type="button"
-            >
-              <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-              <span className="text-xs font-semibold truncate max-w-[140px] text-on-surface-variant group-hover:text-primary">
-                {currentAddress}
+    <header className="sticky top-0 w-full z-40 bg-surface/95 backdrop-blur-xl border-b border-surface-container/60 shadow-sm transition-all">
+      <div className="w-full max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+        {/* Left: Brand Logo & Delivery Location Picker */}
+        <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+          <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
+            <img
+              src="/logo.jpg"
+              alt="Amber & Ember Bistro Logo"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-primary/20 shadow-xs group-hover:scale-105 transition-transform"
+            />
+            <div className="flex flex-col">
+              <span className="font-extrabold text-base tracking-tight text-on-surface leading-none group-hover:text-primary transition-colors">
+                Amber & Ember
               </span>
-              <ChevronDown className="w-3.5 h-3.5 text-on-surface-variant group-hover:text-primary flex-shrink-0" />
-            </button>
-          </div>
+              <span className="text-[10px] font-bold text-primary tracking-wide uppercase leading-tight">
+                Bistro & Delivery
+              </span>
+            </div>
+          </Link>
+
+          <button
+            onClick={onOpenLocation}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-low hover:bg-surface-container border border-surface-container/80 transition-all group text-left max-w-[200px] sm:max-w-[260px]"
+            type="button"
+            title="Change Delivery Location"
+          >
+            <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+            <span className="text-xs font-semibold truncate text-on-surface-variant group-hover:text-on-surface">
+              {currentAddress}
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-on-surface-variant group-hover:text-primary flex-shrink-0 ml-auto" />
+          </button>
         </div>
 
-        {/* Action Buttons: Notifications & Profile Avatar / Login */}
-        <div className="flex items-center gap-space-xs flex-shrink-0">
+        {/* Center Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.reqAuth && !isLoggedIn ? '/login' : link.href}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-bold transition-all ${
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right Action Buttons: Desktop Cart, Notifications & Profile */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Desktop Cart Shortcut Button */}
+          <Link
+            href="/cart"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all font-bold text-xs relative group"
+            title="View Shopping Cart"
+          >
+            <ShoppingBag className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline">Cart</span>
+            {totalCartCount > 0 && (
+              <span className="min-w-[18px] h-4 px-1 rounded-full bg-primary text-on-primary font-bold text-[10px] flex items-center justify-center">
+                {totalCartCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Notifications */}
           {isLoggedIn && (
             <button
               aria-label="Notifications"
               onClick={onOpenNotifications}
-              className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors relative active:scale-95"
+              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors relative active:scale-95 border border-transparent hover:border-surface-container"
               type="button"
             >
-              <Bell className="w-5 h-5 text-on-surface" />
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
               {unreadNotifications && (
-                <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary ring-2 ring-surface animate-pulse" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface animate-pulse" />
               )}
             </button>
           )}
 
+          {/* User Profile / Login Button */}
           {isLoggedIn ? (
             <button
               aria-label="User Profile"
               onClick={handleProfileClick}
-              className="w-10 h-10 flex items-center justify-center rounded-full p-0.5 hover:ring-2 hover:ring-primary/40 transition-all active:scale-95 overflow-hidden border border-outline-variant/50 shadow-sm"
+              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full p-0.5 hover:ring-2 hover:ring-primary/40 transition-all active:scale-95 overflow-hidden border border-outline-variant/50 shadow-xs"
               type="button"
             >
               {userAvatar ? (
@@ -93,8 +152,8 @@ export const CustomerHeader: React.FC<CustomerHeaderProps> = ({
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-primary-container text-on-primary-container flex items-center justify-center rounded-full">
-                  <User className="w-5 h-5" />
+                <div className="w-full h-full bg-primary-container text-on-primary-container flex items-center justify-center rounded-full font-bold text-xs">
+                  <User className="w-4 h-4" />
                 </div>
               )}
             </button>
@@ -102,9 +161,9 @@ export const CustomerHeader: React.FC<CustomerHeaderProps> = ({
             <button
               onClick={() => router.push('/login')}
               type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-on-primary font-bold text-xs shadow-sm hover:opacity-95 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-primary text-on-primary font-bold text-xs shadow-sm hover:opacity-95 active:scale-95 transition-all"
             >
-              <LogIn className="w-3.5 h-3.5" />
+              <LogIn className="w-4 h-4" />
               <span>Log In</span>
             </button>
           )}
@@ -113,4 +172,3 @@ export const CustomerHeader: React.FC<CustomerHeaderProps> = ({
     </header>
   );
 };
-
