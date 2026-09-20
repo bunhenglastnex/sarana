@@ -1,13 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Search,
-  Timer,
-  User,
-  LogOut,
-  Store,
-} from "lucide-react";
+import { Search, Timer, User, LogOut, Store } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { AdminNotificationPopover } from "./AdminNotificationPopover";
 import { LogoutConfirmModal } from "./LogoutConfirmModal";
@@ -17,7 +11,9 @@ export const AdminHeader: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { name, role, selectedTenantId, setSelectedTenantId } = useAuthStore();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [restaurantsList, setRestaurantsList] = useState<Array<{ id: number; name: string }>>([]);
+  const [restaurantsList, setRestaurantsList] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
 
   useEffect(() => {
     Api.get("/restaurants.php", { active_only: 1 })
@@ -62,7 +58,7 @@ export const AdminHeader: React.FC = () => {
         </div>
 
         {/* Store / Tenant Switcher for Super Admins */}
-        {role === "super_admin" && (
+        {/* {role === "super_admin" && (
           <div className="hidden md:flex items-center gap-1.5 bg-surface-container-low border border-border/60 rounded-lg px-2 py-1">
             <Store className="w-3.5 h-3.5 text-primary" />
             <select
@@ -85,7 +81,7 @@ export const AdminHeader: React.FC = () => {
               ))}
             </select>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Right Telemetry & Station Info */}
@@ -119,8 +115,8 @@ export const AdminHeader: React.FC = () => {
               {role === "super_admin"
                 ? "Super Admin"
                 : role === "admin"
-                ? "Restaurant Admin"
-                : role}
+                  ? "Restaurant Admin"
+                  : role}
             </span>
           </div>
           <button
