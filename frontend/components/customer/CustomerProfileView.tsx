@@ -62,15 +62,21 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
     isTelegramLinked,
     clearSession,
     setTelegramLink,
+    _hasHydrated,
   } = useAuthStore();
 
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
-    if (!authUserId && !authPhone && !authName) {
-      setShowLoginPrompt(true);
+    // Only evaluate login prompt after store has finished rehydrating from cookies/storage
+    if (_hasHydrated) {
+      if (!authUserId && !authPhone && !authName) {
+        setShowLoginPrompt(true);
+      } else {
+        setShowLoginPrompt(false);
+      }
     }
-  }, [authUserId, authPhone, authName]);
+  }, [_hasHydrated, authUserId, authPhone, authName]);
 
   const name = authName || propName || "Valued Customer";
   const phone = authPhone || propPhone || "No phone linked";
@@ -92,7 +98,10 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
   } else if (authPhone) {
     startParam = authPhone.replace(/[^0-9]/g, "");
   } else if (authEmail) {
-    startParam = authEmail.replace(/@/g, "_at_").replace(/\./g, "_dot_").replace(/[^a-zA-Z0-9_]/g, "");
+    startParam = authEmail
+      .replace(/@/g, "_at_")
+      .replace(/\./g, "_dot_")
+      .replace(/[^a-zA-Z0-9_]/g, "");
   } else if (authName) {
     startParam = authName.replace(/[^a-zA-Z0-9_]/g, "_");
   }
@@ -155,12 +164,16 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
 
               {/* Identity Details */}
               <div className="mt-4">
-                <h2 className="font-extrabold text-xl text-on-surface">{name}</h2>
+                <h2 className="font-extrabold text-xl text-on-surface">
+                  {name}
+                </h2>
                 <div className="flex flex-col items-center gap-0.5 mt-1">
                   <span className="text-xs text-on-surface-variant font-medium">
                     {phone}
                   </span>
-                  <span className="text-xs text-on-surface-variant">{email}</span>
+                  <span className="text-xs text-on-surface-variant">
+                    {email}
+                  </span>
                 </div>
               </div>
 
@@ -201,284 +214,260 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
 
         {/* Right Column: Quick Stats & Navigation Stack */}
         <div className="lg:col-span-8 flex flex-col gap-6">
-        <div className="grid grid-cols-3 gap-space-xs">
-          <div className="flex flex-col items-center justify-center p-space-sm rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container/60 text-center">
-            <span className="font-extrabold text-xl text-primary">12</span>
-            <span className="text-[11px] font-semibold text-on-surface-variant mt-0.5">
-              Orders Placed
-            </span>
+          <div className="grid grid-cols-3 gap-space-xs">
+            <div className="flex flex-col items-center justify-center p-space-sm rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container/60 text-center">
+              <span className="font-extrabold text-xl text-primary">12</span>
+              <span className="text-[11px] font-semibold text-on-surface-variant mt-0.5">
+                Orders Placed
+              </span>
+            </div>
+            <div className="flex flex-col items-center justify-center p-space-sm rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container/60 text-center">
+              <span className="font-extrabold text-xl text-secondary">3</span>
+              <span className="text-[11px] font-semibold text-on-surface-variant mt-0.5">
+                Addresses
+              </span>
+            </div>
+            <div className="flex flex-col items-center justify-center p-space-sm rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container/60 text-center">
+              <span className="font-extrabold text-xl text-primary-container">
+                2
+              </span>
+              <span className="text-[11px] font-semibold text-on-surface-variant mt-0.5">
+                Favorites
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col items-center justify-center p-space-sm rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container/60 text-center">
-            <span className="font-extrabold text-xl text-secondary">3</span>
-            <span className="text-[11px] font-semibold text-on-surface-variant mt-0.5">
-              Addresses
+
+          {/* Account Menu Stack */}
+          <div className="flex flex-col space-y-space-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant px-1">
+              Culinary Profile & Orders
             </span>
-          </div>
-          <div className="flex flex-col items-center justify-center p-space-sm rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container/60 text-center">
-            <span className="font-extrabold text-xl text-primary-container">
-              2
-            </span>
-            <span className="text-[11px] font-semibold text-on-surface-variant mt-0.5">
-              Favorites
-            </span>
-          </div>
-        </div>
-
-        {/* Account Menu Stack */}
-        <div className="flex flex-col space-y-space-sm">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant px-1">
-            Culinary Profile & Orders
-          </span>
-          <div className="flex flex-col rounded-xl bg-surface-container-lowest shadow-sm overflow-hidden border border-surface-container/60 divide-y divide-surface-container">
-            {/* My Orders */}
-            <Link
-              href="/orders"
-              className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container group"
-            >
-              <div className="flex items-center gap-space-sm min-w-0">
-                <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary flex-shrink-0">
-                  <Receipt className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="font-bold text-xs text-on-surface truncate">
-                    My Orders
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant truncate">
-                    View active deliveries & past receipts
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
-              </div>
-            </Link>
-
-            {/* Saved Addresses */}
-            <button
-              type="button"
-              onClick={() => setIsLocationOpen(true)}
-              className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
-            >
-              <div className="flex items-center gap-space-sm min-w-0">
-                <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary flex-shrink-0">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="font-bold text-xs text-on-surface">
-                    Saved Addresses
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant truncate">
-                    Home, Work, Studio (3 total)
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
-            </button>
-
-            {/* Payment Methods */}
-            <button
-              type="button"
-              onClick={() => alert("Payment methods: KHQR Linked")}
-              className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
-            >
-              <div className="flex items-center gap-space-sm min-w-0">
-                <div className="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary flex-shrink-0">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="font-bold text-xs text-on-surface">
-                    Payment Methods
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant truncate">
-                    KHQR Linked • Cash preferences
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
-            </button>
-
-            {/* Promos & Rewards */}
-            <button
-              type="button"
-              onClick={() =>
-                alert("Promos: 1 complimentary truffle brioche voucher!")
-              }
-              className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
-            >
-              <div className="flex items-center gap-space-sm min-w-0">
-                <div className="w-10 h-10 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed flex-shrink-0">
-                  <Gift className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-xs text-on-surface">
-                      Promos & Ember Rewards
+            <div className="flex flex-col rounded-xl bg-surface-container-lowest shadow-sm overflow-hidden border border-surface-container/60 divide-y divide-surface-container">
+              {/* My Orders */}
+              <Link
+                href="/orders"
+                className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container group"
+              >
+                <div className="flex items-center gap-space-sm min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary flex-shrink-0">
+                    <Receipt className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-xs text-on-surface truncate">
+                      My Orders
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-primary text-on-primary font-bold text-[10px]">
-                      1 available
+                    <span className="text-[11px] text-on-surface-variant truncate">
+                      View active deliveries & past receipts
                     </span>
                   </div>
-                  <span className="text-[11px] text-on-surface-variant truncate">
-                    Seasonal complimentary truffle brioche
-                  </span>
                 </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
-            </button>
-          </div>
-        </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
+                </div>
+              </Link>
 
-        {/* Preferences & Support Section */}
-        <div className="flex flex-col space-y-space-sm">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant px-1">
-            Settings & Assistance
-          </span>
-          <div className="flex flex-col rounded-xl bg-surface-container-lowest shadow-sm overflow-hidden border border-surface-container/60 divide-y divide-surface-container">
-            {/* App Language Selector Row */}
-            <div className="flex items-center justify-between p-space-md">
-              <div className="flex items-center gap-space-sm min-w-0">
-                <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface flex-shrink-0">
-                  <Globe className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-              <LanguageSwitcher />
-            </div>
-
-            {/* Notifications Toggle Row */}
-            <div className="flex items-center justify-between p-space-md">
-              <div className="flex items-center gap-space-sm min-w-0">
-                <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface flex-shrink-0">
-                  <BellRing className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col min-w-0 pr-2">
-                  <span className="font-bold text-xs text-on-surface">
-                    Notifications & SMS Alerts
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant truncate">
-                    Live dispatch alerts & chef updates
-                  </span>
-                </div>
-              </div>
+              {/* Saved Addresses */}
               <button
                 type="button"
-                role="switch"
-                aria-checked={smsAlerts}
-                onClick={() => setSmsAlerts(!smsAlerts)}
-                className={`w-12 h-7 rounded-full transition-colors relative flex items-center p-1 cursor-pointer flex-shrink-0 ${
-                  smsAlerts ? "bg-primary" : "bg-surface-variant"
-                }`}
+                onClick={() => setIsLocationOpen(true)}
+                className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
               >
-                <span
-                  className={`w-5 h-5 rounded-full bg-surface-container-lowest shadow-md transform transition-transform ${
-                    smsAlerts ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
+                <div className="flex items-center gap-space-sm min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary flex-shrink-0">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-xs text-on-surface">
+                      Saved Addresses
+                    </span>
+                    <span className="text-[11px] text-on-surface-variant truncate">
+                      Home, Work, Studio (3 total)
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
+              </button>
+
+              {/* Payment Methods */}
+              <button
+                type="button"
+                onClick={() => alert("Payment methods: KHQR Linked")}
+                className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
+              >
+                <div className="flex items-center gap-space-sm min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary flex-shrink-0">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-xs text-on-surface">
+                      Payment Methods
+                    </span>
+                    <span className="text-[11px] text-on-surface-variant truncate">
+                      KHQR Linked • Cash preferences
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
+              </button>
+
+              {/* Promos & Rewards */}
+              <button
+                type="button"
+                onClick={() =>
+                  alert("Promos: 1 complimentary truffle brioche voucher!")
+                }
+                className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
+              >
+                <div className="flex items-center gap-space-sm min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed flex-shrink-0">
+                    <Gift className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-xs text-on-surface">
+                        Promos & Ember Rewards
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-primary text-on-primary font-bold text-[10px]">
+                        1 available
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-on-surface-variant truncate">
+                      Seasonal complimentary truffle brioche
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
               </button>
             </div>
-
-            {/* Telegram Bot Link Row */}
-            <button
-              type="button"
-              onClick={handleOpenTelegram}
-              className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
-            >
-              <div className="flex items-center gap-space-sm min-w-0">
-                <div className="w-10 h-10 rounded-full bg-[#24A1DE]/15 flex items-center justify-center text-[#24A1DE] flex-shrink-0">
-                  <Send className="w-5 h-5 -translate-x-0.5 translate-y-0.5" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-xs text-on-surface">
-                      Telegram Bot Alerts
-                    </span>
-                    {isTelegramLinked ? (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Linked
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 font-bold text-[10px]">
-                        Connect Bot
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-on-surface-variant truncate">
-                    Receive live kitchen &amp; delivery notifications
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
-            </button>
-
-            {/* Help & Bistro Support */}
-            <button
-              type="button"
-              onClick={() => alert("Support concierge live chat opened")}
-              className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
-            >
-              <div className="flex items-center gap-space-sm min-w-0">
-                <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface flex-shrink-0">
-                  <Headphones className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="font-bold text-xs text-on-surface">
-                    Help & Bistro Support
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant truncate">
-                    Chat with kitchen concierge / FAQs
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
-            </button>
-
-            {/* About Bistro */}
-            <button
-              type="button"
-              onClick={() =>
-                alert("Amber & Ember Bistro - Woodfired craft comfort kitchen")
-              }
-              className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
-            >
-              <div className="flex items-center gap-space-sm min-w-0">
-                <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface flex-shrink-0">
-                  <Utensils className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="font-bold text-xs text-on-surface">
-                    About Amber & Ember Bistro
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant truncate">
-                    Opening hours, woodfire craft, story
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
-            </button>
           </div>
-        </div>
 
-        {/* Logout Button & Version Footnote */}
-        <div className="flex flex-col items-center gap-space-sm pt-space-xs">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-error-container text-on-error-container font-bold text-xs hover:brightness-95 active:scale-[0.99] transition-all shadow-sm cursor-pointer"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
-          </button>
-          <div className="text-center">
-            <p className="text-xs text-on-surface-variant opacity-75">
-              Amber & Ember Bistro v2.4.0 (Mobile)
-            </p>
-            <p className="text-[11px] text-outline mt-0.5">
-              Crafted with woodsmoke & artisanal hospitality
-            </p>
+          {/* Preferences & Support Section */}
+          <div className="flex flex-col space-y-space-sm">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant px-1">
+              Settings & Assistance
+            </span>
+            <div className="flex flex-col rounded-xl bg-surface-container-lowest shadow-sm overflow-hidden border border-surface-container/60 divide-y divide-surface-container">
+              {/* App Language Selector Row */}
+              <div className="flex items-center justify-between p-space-md">
+                <div className="flex items-center gap-space-sm min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface flex-shrink-0">
+                    <Globe className="w-5 h-5 text-primary" />
+                  </div>
+                </div>
+                <LanguageSwitcher />
+              </div>
+
+              {/* Notifications Toggle Row */}
+              <div className="flex items-center justify-between p-space-md">
+                <div className="flex items-center gap-space-sm min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface flex-shrink-0">
+                    <BellRing className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col min-w-0 pr-2">
+                    <span className="font-bold text-xs text-on-surface">
+                      Notifications & SMS Alerts
+                    </span>
+                    <span className="text-[11px] text-on-surface-variant truncate">
+                      Live dispatch alerts & chef updates
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={smsAlerts}
+                  onClick={() => setSmsAlerts(!smsAlerts)}
+                  className={`w-12 h-7 rounded-full transition-colors relative flex items-center p-1 cursor-pointer flex-shrink-0 ${
+                    smsAlerts ? "bg-primary" : "bg-surface-variant"
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded-full bg-surface-container-lowest shadow-md transform transition-transform ${
+                      smsAlerts ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Telegram Bot Link Row */}
+              <button
+                type="button"
+                onClick={handleOpenTelegram}
+                className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
+              >
+                <div className="flex items-center gap-space-sm min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-[#24A1DE]/15 flex items-center justify-center text-[#24A1DE] flex-shrink-0">
+                    <Send className="w-5 h-5 -translate-x-0.5 translate-y-0.5" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-xs text-on-surface">
+                        Telegram Bot Alerts
+                      </span>
+                      {isTelegramLinked ? (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Linked
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 font-bold text-[10px]">
+                          Connect Bot
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-on-surface-variant truncate">
+                      Receive live kitchen &amp; delivery notifications
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
+              </button>
+
+              {/* Help & Bistro Support */}
+              <button
+                type="button"
+                onClick={() => alert("Support concierge live chat opened")}
+                className="flex items-center justify-between p-space-md hover:bg-surface-container-low transition-colors active:bg-surface-container w-full text-left group"
+              >
+                <div className="flex items-center gap-space-sm min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface flex-shrink-0">
+                    <Headphones className="w-5 h-5" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-xs text-on-surface">
+                      Help & Bistro Support
+                    </span>
+                    <span className="text-[11px] text-on-surface-variant truncate">
+                      Chat with kitchen concierge / FAQs
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
+              </button>
+            </div>
+          </div>
+
+          {/* Logout Button & Version Footnote */}
+          <div className="flex flex-col items-center gap-space-sm pt-space-xs">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-error-container text-on-error-container font-bold text-xs hover:brightness-95 active:scale-[0.99] transition-all shadow-sm cursor-pointer"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Log Out</span>
+            </button>
+            <div className="text-center">
+              <p className="text-xs text-on-surface-variant opacity-75">
+                Amber & Ember Bistro v2.4.0 (Mobile)
+              </p>
+              <p className="text-[11px] text-outline mt-0.5">
+                Crafted with woodsmoke & artisanal hospitality
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       {/* Sign In Prompt Confirmation Modal */}
       {showLoginPrompt && (
@@ -493,7 +482,8 @@ export const CustomerProfileView: React.FC<CustomerProfileViewProps> = ({
                 Sign In Required
               </h3>
               <p className="font-body-sm text-xs text-on-surface-variant leading-relaxed">
-                You need to be signed in to access your saved profile and account settings. Would you like to sign in now?
+                You need to be signed in to access your saved profile and
+                account settings. Would you like to sign in now?
               </p>
             </div>
 

@@ -19,6 +19,9 @@ import {
   X,
   Building2,
   Clock,
+  Filter,
+  Star,
+  CheckCircle2,
 } from "lucide-react";
 
 import { Api, useApi } from "@/lib/api";
@@ -27,7 +30,6 @@ import { FoodCard, FoodItem } from "@/components/customer/FoodCard";
 import { AddProductPopup } from "@/components/customer/AddProductPopup";
 import { RestaurantConflictModal } from "@/components/customer/RestaurantConflictModal";
 import { FloatingCartBar } from "@/components/customer/FloatingCartBar";
-import { BottomNav } from "@/components/customer/BottomNav";
 
 interface RestaurantWithFoods {
   id: number;
@@ -63,6 +65,7 @@ interface RestaurantWithFoods {
 export default function AllRestaurantsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<"all" | "open" | "popular">("all");
   const [selectedItemForPopup, setSelectedItemForPopup] = useState<FoodItem | null>(null);
 
   // Cart Store hooks
@@ -102,12 +105,20 @@ export default function AllRestaurantsPage() {
     );
   }, [rawRestaurants]);
 
-  // Filter restaurants by search query (matching restaurant name, address, or item names inside)
+  // Filter restaurants by active tab & search query
   const filteredRestaurants = useMemo(() => {
-    if (!searchQuery.trim()) return restaurantsList;
+    let list = restaurantsList;
+
+    if (activeFilter === "open") {
+      list = list.filter((r) => r.is_active);
+    } else if (activeFilter === "popular") {
+      list = list.filter((r) => (r.total_foods_count || 0) >= 3);
+    }
+
+    if (!searchQuery.trim()) return list;
 
     const query = searchQuery.toLowerCase().trim();
-    return restaurantsList.filter((resto) => {
+    return list.filter((resto) => {
       const matchRestoName = resto.name?.toLowerCase().includes(query);
       const matchAddress = resto.address?.toLowerCase().includes(query);
       const matchFoods = resto.foods?.some(
@@ -117,7 +128,7 @@ export default function AllRestaurantsPage() {
       );
       return matchRestoName || matchAddress || matchFoods;
     });
-  }, [restaurantsList, searchQuery]);
+  }, [restaurantsList, searchQuery, activeFilter]);
 
   // Convert raw API food object into FoodItem standard
   const formatFoodItem = (f: any, resto: RestaurantWithFoods): FoodItem => {
@@ -239,100 +250,141 @@ export default function AllRestaurantsPage() {
   const totalCartCount = cartItems.reduce((acc, i) => acc + i.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col items-center justify-start pb-28">
-      {/* Mobile-first Container Frame */}
-      <main className="w-full max-w-md mx-auto min-h-screen flex flex-col relative px-4 pt-3">
-        {/* Top Header Navigation */}
-        <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-md pt-2 pb-3 border-b border-surface-container/40 -mx-4 px-4 flex items-center justify-between gap-2 shadow-xs">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="w-9 h-9 rounded-full bg-surface-container/70 flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors active:scale-95"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="font-extrabold text-base text-on-surface leading-tight">
-                All Restaurants
+    <div className="min-h-screen bg-surface flex flex-col w-full pb-28">
+      {/* Main Responsive Layout Wrapper */}
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+        {/* Desktop & Mobile Hero Banner */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary/15 via-surface-container-low to-secondary/15 border border-primary/20 p-6 sm:p-8 shadow-sm">
+          {/* Decorative ambient glows */}
+          <div className="absolute -top-10 -right-10 w-60 h-60 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-60 h-60 rounded-full bg-secondary/10 blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 shadow-xs">
+                <Building2 className="w-4 h-4 text-primary" />
+                <span className="font-extrabold text-xs tracking-wide uppercase">
+                  Multi-Tenant Partner Kitchens
+                </span>
+                <Sparkles className="w-3.5 h-3.5 text-primary fill-primary/30" />
+              </div>
+
+              <h1 className="font-black text-2xl sm:text-3xl lg:text-4xl text-on-surface tracking-tight">
+                Explore All Partner Restaurants &amp; Bistros
               </h1>
-              <p className="text-[11px] text-on-surface-variant font-medium">
-                {restaurantsList.length} Kitchens Available
+              <p className="text-xs sm:text-sm text-on-surface-variant font-medium leading-relaxed">
+                Discover woodfire craft menus, artisanal kitchens, and signature dishes with live order dispatch and unified delivery.
               </p>
             </div>
+
+            {/* Quick Stats Badges */}
+            <div className="flex items-center gap-3 self-start md:self-auto flex-wrap">
+              <div className="px-4 py-3 rounded-2xl bg-surface-container-lowest/80 backdrop-blur-md border border-surface-container/80 shadow-xs text-center flex-1 sm:flex-initial">
+                <span className="font-black text-xl text-primary block leading-none">
+                  {restaurantsList.length}
+                </span>
+                <span className="text-[11px] font-bold text-on-surface-variant mt-1 block uppercase tracking-wider">
+                  Partner Kitchens
+                </span>
+              </div>
+              <div className="px-4 py-3 rounded-2xl bg-surface-container-lowest/80 backdrop-blur-md border border-surface-container/80 shadow-xs text-center flex-1 sm:flex-initial">
+                <span className="font-black text-xl text-secondary block leading-none">
+                  100%
+                </span>
+                <span className="text-[11px] font-bold text-on-surface-variant mt-1 block uppercase tracking-wider">
+                  Live Dispatch
+                </span>
+              </div>
+            </div>
           </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => router.push("/cart")}
-            className="relative w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors active:scale-95"
-          >
-            <ShoppingBag className="w-5 h-5" />
-            {totalCartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-primary text-on-primary text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-scale-up">
-                {totalCartCount}
-              </span>
-            )}
-          </button>
-        </header>
-
-        {/* Search Input Bar */}
-        <div className="my-3 relative">
-          <div className="relative flex items-center w-full">
+        {/* Search Bar & Quick Filter Controls Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-surface-container-lowest p-3.5 sm:p-4 rounded-2xl border border-surface-container/80 shadow-xs">
+          {/* Search Input Field */}
+          <div className="relative flex items-center w-full sm:max-w-md">
             <Search className="w-4 h-4 text-on-surface-variant absolute left-3.5 pointer-events-none" />
             <input
               type="text"
               placeholder="Search restaurants, cuisines or dishes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-surface-container-low border border-surface-container-high/80 text-sm font-medium text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-surface-container-low border border-surface-container-high/80 text-sm font-medium text-on-surface placeholder:text-on-surface-variant/70 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
                 className="absolute right-3 p-1 rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
+                title="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
-        </div>
 
-        {/* Hero Section Badge */}
-        <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-primary/15 via-primary/5 to-surface-container-low border border-primary/20 flex items-center gap-3 shadow-xs">
-          <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center flex-shrink-0 shadow-sm">
-            <Building2 className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-xs text-on-surface uppercase tracking-wider flex items-center gap-1.5">
-              <span>Multi-Tenant Dining</span>
-              <Sparkles className="w-3.5 h-3.5 text-primary fill-primary/30" />
-            </h2>
-            <p className="text-[11px] text-on-surface-variant mt-0.5 font-medium line-clamp-1">
-              Order dishes across top partner kitchens with direct kitchen routing.
-            </p>
+          {/* Quick Filter Pill Chips */}
+          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setActiveFilter("all")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                activeFilter === "all"
+                  ? "bg-primary text-on-primary shadow-sm"
+                  : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" />
+              <span>All Kitchens ({restaurantsList.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveFilter("open")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                activeFilter === "open"
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Open Now</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveFilter("popular")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                activeFilter === "popular"
+                  ? "bg-secondary text-on-secondary shadow-sm"
+                  : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5 text-primary" />
+              <span>Popular Choice</span>
+            </button>
           </div>
         </div>
 
         {/* Skeleton Loading State */}
         {isLoading && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="rounded-3xl bg-surface-container-lowest border border-surface-container/60 p-4 shadow-sm animate-pulse space-y-4"
+                className="rounded-3xl bg-surface-container-lowest border border-surface-container/60 p-6 shadow-sm animate-pulse space-y-6"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-surface-container-high" />
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-surface-container-high" />
                   <div className="space-y-2 flex-1">
-                    <div className="h-4 bg-surface-container-high rounded-md w-1/2" />
-                    <div className="h-3 bg-surface-container-high rounded-md w-3/4" />
+                    <div className="h-5 bg-surface-container-high rounded-md w-1/3" />
+                    <div className="h-3.5 bg-surface-container-high rounded-md w-1/2" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div className="h-36 rounded-xl bg-surface-container-high" />
-                  <div className="h-36 rounded-xl bg-surface-container-high" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pt-2">
+                  {[1, 2, 3, 4].map((j) => (
+                    <div key={j} className="h-52 rounded-2xl bg-surface-container-high" />
+                  ))}
                 </div>
               </div>
             ))}
@@ -341,44 +393,47 @@ export default function AllRestaurantsPage() {
 
         {/* Error State */}
         {!isLoading && error && (
-          <div className="my-8 text-center p-6 rounded-2xl bg-error/10 border border-error/20 text-error">
-            <p className="font-bold text-sm">Failed to load restaurants</p>
-            <p className="text-xs mt-1">{error}</p>
+          <div className="my-8 text-center p-8 rounded-3xl bg-error/10 border border-error/20 text-error max-w-md mx-auto">
+            <p className="font-bold text-base">Failed to load restaurants</p>
+            <p className="text-xs mt-1 leading-relaxed">{error}</p>
             <button
               type="button"
               onClick={() => refetch(true)}
-              className="mt-3 px-4 py-2 rounded-full bg-error text-on-error font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all"
+              className="mt-4 px-5 py-2.5 rounded-full bg-error text-on-error font-bold text-xs shadow-md hover:opacity-90 active:scale-95 transition-all"
             >
-              Retry
+              Retry Loading
             </button>
           </div>
         )}
 
         {/* Empty Search Result */}
         {!isLoading && !error && filteredRestaurants.length === 0 && (
-          <div className="my-12 text-center p-8 rounded-3xl bg-surface-container-lowest border border-surface-container/60 shadow-xs flex flex-col items-center">
-            <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
-              <Store className="w-7 h-7" />
+          <div className="my-12 text-center p-10 rounded-3xl bg-surface-container-lowest border border-surface-container/60 shadow-xs flex flex-col items-center max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <Store className="w-8 h-8" />
             </div>
-            <h3 className="font-extrabold text-base text-on-surface">
+            <h3 className="font-black text-lg text-on-surface">
               No Restaurants Found
             </h3>
-            <p className="text-xs text-on-surface-variant mt-1 max-w-xs">
-              We couldn't find any kitchen or dish matching &quot;{searchQuery}&quot;. Try another search keyword.
+            <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+              We couldn't find any kitchen or dish matching &quot;{searchQuery}&quot;. Try adjusting your search query or filter.
             </p>
             <button
               type="button"
-              onClick={() => setSearchQuery("")}
-              className="mt-4 px-4 py-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-xs transition-all"
+              onClick={() => {
+                setSearchQuery("");
+                setActiveFilter("all");
+              }}
+              className="mt-5 px-5 py-2.5 rounded-full bg-primary text-on-primary font-bold text-xs shadow-md hover:bg-primary-container transition-all"
             >
-              Clear Search
+              Reset Filters &amp; Search
             </button>
           </div>
         )}
 
         {/* Restaurant Cards Container */}
         {!isLoading && !error && filteredRestaurants.length > 0 && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {filteredRestaurants.map((resto) => {
               const restoFoods = resto.foods || [];
 
@@ -388,11 +443,11 @@ export default function AllRestaurantsPage() {
                   className="rounded-3xl bg-surface-container-lowest border border-surface-container/70 shadow-sm hover:shadow-md transition-all overflow-hidden"
                 >
                   {/* Restaurant Header Banner Card */}
-                  <div className="relative p-4 bg-gradient-to-b from-surface-container-low/60 to-surface-container-lowest border-b border-surface-container/40">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
+                  <div className="relative p-5 sm:p-6 bg-gradient-to-r from-surface-container-low/80 via-surface-container-lowest to-surface-container-low/40 border-b border-surface-container/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
                         {/* Logo Avatar */}
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-surface-container border border-surface-container-high shadow-xs flex items-center justify-center flex-shrink-0">
+                        <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden bg-surface-container border border-surface-container-high shadow-xs flex items-center justify-center flex-shrink-0">
                           {resto.logo_url ? (
                             <img
                               src={resto.logo_url}
@@ -403,7 +458,7 @@ export default function AllRestaurantsPage() {
                               }}
                             />
                           ) : (
-                            <span className="font-extrabold text-lg text-primary uppercase">
+                            <span className="font-black text-xl text-primary uppercase">
                               {resto.name.substring(0, 2)}
                             </span>
                           )}
@@ -411,12 +466,12 @@ export default function AllRestaurantsPage() {
 
                         {/* Restaurant Information */}
                         <div className="flex flex-col min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <h3 className="font-extrabold text-base text-on-surface truncate">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h2 className="font-black text-lg sm:text-xl text-on-surface truncate">
                               {resto.name}
-                            </h3>
+                            </h2>
                             {resto.is_active && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                 Open Now
                               </span>
@@ -424,21 +479,21 @@ export default function AllRestaurantsPage() {
                           </div>
 
                           {resto.address && (
-                            <div className="flex items-center gap-1 text-xs text-on-surface-variant mt-0.5 truncate">
-                              <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                            <div className="flex items-center gap-1.5 text-xs text-on-surface-variant mt-1 truncate">
+                              <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
                               <span className="truncate">{resto.address}</span>
                             </div>
                           )}
 
-                          <div className="flex items-center gap-3 mt-1 text-[11px] text-on-surface-variant font-medium">
-                            <span className="flex items-center gap-1 text-primary font-bold">
-                              <Utensils className="w-3 h-3" />
+                          <div className="flex items-center gap-4 mt-1.5 text-xs text-on-surface-variant font-medium flex-wrap">
+                            <span className="flex items-center gap-1 text-primary font-extrabold">
+                              <Utensils className="w-3.5 h-3.5" />
                               {resto.total_foods_count}{" "}
-                              {resto.total_foods_count === 1 ? "Dishes" : "Dishes Available"}
+                              {resto.total_foods_count === 1 ? "Dish Available" : "Dishes Available"}
                             </span>
                             {resto.phone && (
                               <span className="flex items-center gap-1">
-                                <Phone className="w-3 h-3 text-on-surface-variant/70" />
+                                <Phone className="w-3.5 h-3.5 text-on-surface-variant/70" />
                                 {resto.phone}
                               </span>
                             )}
@@ -449,36 +504,37 @@ export default function AllRestaurantsPage() {
                       {/* View Full Menu Action */}
                       <Link
                         href={`/?restaurant=${resto.id}`}
-                        className="px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs flex items-center gap-1 transition-all active:scale-95 flex-shrink-0"
+                        className="px-4 py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all self-start sm:self-center"
                       >
-                        <span>Menu</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
+                        <span>View Full Menu</span>
+                        <ChevronRight className="w-4 h-4" />
                       </Link>
                     </div>
                   </div>
 
                   {/* Food Items Section under each Restaurant */}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-bold text-xs uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
-                        <Flame className="w-3.5 h-3.5 text-primary" />
-                        <span>Featured Dishes</span>
-                      </h4>
+                  <div className="p-5 sm:p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-extrabold text-xs uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
+                        <Flame className="w-4 h-4 text-primary" />
+                        <span>Featured Dishes &amp; Chef Specials</span>
+                      </h3>
                       <Link
                         href={`/?restaurant=${resto.id}`}
-                        className="text-[11px] font-bold text-primary hover:underline"
+                        className="text-xs font-extrabold text-primary hover:underline flex items-center gap-1"
                       >
-                        View all {resto.total_foods_count} &rarr;
+                        <span>View all {resto.total_foods_count}</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
 
                     {restoFoods.length === 0 ? (
-                      <div className="p-4 rounded-xl bg-surface-container-low text-center text-xs text-on-surface-variant font-medium">
+                      <div className="p-5 rounded-2xl bg-surface-container-low text-center text-xs text-on-surface-variant font-medium">
                         No public food items listed for this kitchen yet.
                       </div>
                     ) : (
-                      /* Horizontal Scrollable or 2-Column Responsive Grid */
-                      <div className="grid grid-cols-2 gap-3">
+                      /* Responsive Grid: 2 columns on mobile, 3 on tablet, 4 on desktop */
+                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {restoFoods.map((rawFood) => {
                           const item = formatFoodItem(rawFood, resto);
                           return (
@@ -518,9 +574,8 @@ export default function AllRestaurantsPage() {
           onConfirmReplace={handleConfirmSwitchKitchen}
         />
 
-        {/* Floating Cart & Navigation */}
+        {/* Floating Cart Bar */}
         <FloatingCartBar onViewCart={() => router.push("/cart")} />
-        <BottomNav activeTab="home" cartBadgeCount={totalCartCount} />
       </main>
     </div>
   );

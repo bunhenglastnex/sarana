@@ -24,6 +24,7 @@ This launches:
 
 - **Backend API**: `http://localhost:8000` (PHP Server)
 - **Frontend App**: `http://localhost:3000` (Next.js App)
+- **Telegram Bot Listener**: Local Long-Polling Service (`backend/telegram-poll.php`)
 
 ---
 

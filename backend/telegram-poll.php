@@ -22,10 +22,36 @@ echo "===========================================\n";
 echo "Press Ctrl+C to stop.\n\n";
 
 $offset = 0;
-$pdo = getDB();
-$telegramService = new TelegramService($pdo);
+$pdo = null;
+$telegramService = null;
 
 while (true) {
+    // Attempt DB connection gracefully if not connected
+    if (!$pdo) {
+        try {
+            $host = env('DB_HOST', '127.0.0.1');
+            $port = env('DB_PORT', '3306');
+            $db   = env('DB_NAME', 'restaurant_db');
+            $user = env('DB_USER', 'root');
+            $pass = env('DB_PASS', '');
+            $charset = 'utf8mb4';
+
+            $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
+            $options = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+            ];
+
+            $pdo = new PDO($dsn, $user, $pass, $options);
+            $telegramService = new TelegramService($pdo);
+            echo "✅ Connected to Database successfully!\n\n";
+        } catch (\Throwable $e) {
+            echo "⏳ Database connection waiting... Retrying in 5s (" . $e->getMessage() . ")\n";
+            sleep(5);
+            continue;
+        }
+    }
     $url = "https://api.telegram.org/bot{$botToken}/getUpdates?offset={$offset}&timeout=10";
 
     $ch = curl_init($url);

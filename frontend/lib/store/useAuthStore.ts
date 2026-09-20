@@ -17,12 +17,14 @@ export interface AuthState {
   telegramChatId: string | null;
   telegramUsername: string | null;
   isTelegramLinked: boolean;
+  _hasHydrated: boolean;
 
   // Actions
   setSession: (session: Partial<AuthState>) => void;
   setSelectedTenantId: (tenantId: number | null) => void;
   clearSession: () => void;
   setTelegramLink: (chatId: string, username?: string) => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -40,6 +42,9 @@ export const useAuthStore = create<AuthState>()(
       telegramChatId: null,
       telegramUsername: null,
       isTelegramLinked: false,
+      _hasHydrated: false,
+
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       setSession: (session) =>
         set((state) => ({
@@ -77,6 +82,13 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'sarana_auth_cookies', // Key in Browser Cookies
       storage: createJSONStorage(() => cookieStorage),
+      partialize: (state) => {
+        const { _hasHydrated, ...rest } = state;
+        return rest as AuthState;
+      },
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

@@ -133,17 +133,21 @@ const getPaymentLabel = (method: string) => {
 
 export const OrdersView: React.FC = () => {
   const router = useRouter();
-  const { token, userId, phone, email } = useAuthStore();
+  const { token, userId, phone, email, _hasHydrated } = useAuthStore();
   const { customerPhone: cartPhone } = useCartStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
-    if (!token && !userId && !phone && !cartPhone) {
-      setShowLoginPrompt(true);
+    if (_hasHydrated) {
+      if (!token && !userId && !phone && !cartPhone) {
+        setShowLoginPrompt(true);
+      } else {
+        setShowLoginPrompt(false);
+      }
     }
-  }, [token, userId, phone, cartPhone]);
+  }, [_hasHydrated, token, userId, phone, cartPhone]);
 
   const targetPhone = phone || cartPhone || email || "";
   const endpoint =
