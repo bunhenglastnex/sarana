@@ -16,7 +16,8 @@ if (!function_exists('jsonResponse')) {
             http_response_code($httpStatus);
             header("Access-Control-Allow-Origin: *");
             header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
-            header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+            header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Tenant-ID, X-Restaurant-ID, Accept, Origin, *");
+            header("Access-Control-Max-Age: 86400");
             header("Content-Type: application/json; charset=UTF-8");
         }
 
@@ -26,5 +27,14 @@ if (!function_exists('jsonResponse')) {
             'data' => $data
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
+    }
+
+    // Register global exception handler to ensure CORS headers & JSON are ALWAYS returned on error
+    if (!defined('GLOBAL_ERROR_HANDLER_SET') && php_sapi_name() !== 'cli') {
+        define('GLOBAL_ERROR_HANDLER_SET', true);
+
+        set_exception_handler(function (\Throwable $e) {
+            jsonResponse(0, 'Server Exception: ' . $e->getMessage(), null, 500);
+        });
     }
 }
