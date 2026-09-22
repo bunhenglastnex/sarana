@@ -234,6 +234,7 @@ if ($method === 'POST') {
         ");
 
         $groupIndex = 0;
+        $totalGroups = max(1, count($itemsByRestaurant));
 
         foreach ($itemsByRestaurant as $restoId => $groupData) {
             $foodAmount = $groupData['food_amount'];
