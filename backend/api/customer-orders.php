@@ -341,6 +341,7 @@ if ($method === 'POST') {
                 'order_number' => $orderNumber,
                 'restaurant_id' => $restoId,
                 'total_amount' => $totalAmount,
+                'delivery_fee' => $deliveryFee,
                 'amount_khr' => $amountKhr
             ];
 
@@ -348,6 +349,32 @@ if ($method === 'POST') {
         }
 
         $pdo->commit();
+
+        // Dispatch Telegram Broadcast Alert to Restaurant Group
+        try {
+            require_once __DIR__ . '/../services/TelegramNotifier.php';
+            $notifier = new TelegramNotifier($pdo);
+
+            foreach ($createdOrders as $cOrd) {
+                $cOrderFull = [
+                    'order_number' => $cOrd['order_number'],
+                    'customer_name' => $customerName,
+                    'customer_phone' => $customerPhone,
+                    'fulfillment_type' => $fulfillmentType,
+                    'delivery_address' => $deliveryAddress,
+                    'delivery_fee' => $cOrd['delivery_fee'] ?? 0,
+                    'total_amount' => $cOrd['total_amount'],
+                    'payment_method' => $paymentMethod,
+                    'notes' => $notes,
+                    'telegram_chat_id' => $telegramChatId,
+                    'restaurant_id' => $cOrd['restaurant_id']
+                ];
+                $itemsForResto = $itemsByRestaurant[$cOrd['restaurant_id']]['items'] ?? [];
+                $notifier->sendNewOrderBroadcast($cOrderFull, $itemsForResto);
+            }
+        } catch (\Throwable $te) {
+            error_log("Telegram broadcast alert error: " . $te->getMessage());
+        }
 
         jsonResponse(1, 'Order(s) created successfully', [
             'orders' => $createdOrders,
