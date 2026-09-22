@@ -109,11 +109,6 @@ export const TelegramSettingsTab: React.FC<TelegramSettingsTabProps> = ({
             <Bot className="w-4 h-4 text-sky-600" />
             <span>Bot Token &amp; Chat Group Credentials</span>
           </CardTitle>
-          <CardDescription className="text-xs">
-            Enter your Telegram Bot Token from{" "}
-            <span className="font-bold text-sky-600">@BotFather</span> and
-            target Group Chat ID.
-          </CardDescription>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -127,7 +122,9 @@ export const TelegramSettingsTab: React.FC<TelegramSettingsTabProps> = ({
                   <Input
                     type={showToken ? "text" : "password"}
                     value={formData.telegramBotToken || ""}
-                    onChange={(e) => onChange("telegramBotToken", e.target.value)}
+                    onChange={(e) =>
+                      onChange("telegramBotToken", e.target.value)
+                    }
                     placeholder="e.g. 5849302114:AAH9x..."
                     className="text-xs font-mono pr-10 border-border"
                   />
@@ -145,13 +142,17 @@ export const TelegramSettingsTab: React.FC<TelegramSettingsTabProps> = ({
                 </div>
                 <p className="text-[11px] text-on-surface-variant">
                   Obtained from Telegram&apos;s Official{" "}
-                  <span className="font-semibold text-sky-600">@BotFather</span>.
+                  <span className="font-semibold text-sky-600">@BotFather</span>
+                  .
                 </p>
               </div>
             ) : (
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-on-surface">
-                  Telegram Bot Token <span className="text-amber-600 font-normal">(Super Admin Restricted)</span>
+                  Telegram Bot Token{" "}
+                  <span className="text-amber-600 font-normal">
+                    (Super Admin Restricted)
+                  </span>
                 </label>
                 <Input
                   type="password"
@@ -160,7 +161,8 @@ export const TelegramSettingsTab: React.FC<TelegramSettingsTabProps> = ({
                   className="text-xs font-mono bg-surface-container-high border-border cursor-not-allowed opacity-75"
                 />
                 <p className="text-[11px] text-amber-600 font-medium">
-                  🔒 Global Bot Token is protected and accessible to <strong className="font-bold">Super Admin</strong> only.
+                  🔒 Global Bot Token is protected and accessible to{" "}
+                  <strong className="font-bold">Super Admin</strong> only.
                 </p>
               </div>
             )}
