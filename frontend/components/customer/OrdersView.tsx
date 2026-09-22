@@ -132,6 +132,47 @@ const getPaymentLabel = (method: string) => {
 };
 
 export const OrdersView: React.FC = () => {
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleReorder = (order: any) => {
+    const items = Array.isArray(order.items) ? order.items : [];
+    if (items.length === 0) return;
+
+    const { clearCart, addItem, setFulfillmentType } = useCartStore.getState();
+
+    // Clear existing cart and populate order items
+    clearCart();
+
+    if (order.fulfillment_type) {
+      setFulfillmentType(order.fulfillment_type as any);
+    }
+
+    const restoId = Number(order.restaurant_id || order.restaurant?.id || 1);
+    const restoName = order.restaurant_name || order.restaurant?.name || "Restaurant";
+
+    items.forEach((it: any) => {
+      const foodObj: any = {
+        id: Number(it.food_id || it.id),
+        name: it.food_name || it.name || "Menu Item",
+        price: typeof it.price === "string" ? parseFloat(it.price) : Number(it.price || 0),
+        image_url: it.image_url || it.image || "",
+        restaurant_id: restoId,
+        restaurant_name: restoName,
+      };
+      addItem(foodObj, Number(it.quantity || 1), {}, it.notes || "");
+    });
+
+    triggerToast(`✓ Reordered! ${items.length} item(s) added to cart.`);
+    setTimeout(() => {
+      router.push("/cart");
+    }, 600);
+  };
+
   const router = useRouter();
   const { token, userId, phone, email, _hasHydrated } = useAuthStore();
   const { customerPhone: cartPhone } = useCartStore();
@@ -433,9 +474,9 @@ export const OrdersView: React.FC = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push("/cart");
+                              handleReorder(order);
                             }}
-                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-surface-container-high hover:bg-primary hover:text-on-primary text-on-surface text-xs font-bold shadow-xs active:scale-95 transition-all border border-surface-container-highest"
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-primary/10 hover:bg-primary hover:text-on-primary text-primary text-xs font-bold shadow-xs active:scale-95 transition-all border border-primary/30"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                             <span>Reorder</span>
@@ -503,15 +544,16 @@ export const OrdersView: React.FC = () => {
               >
                 Sign In / Register
               </button>
-              <button
-                type="button"
-                onClick={() => router.push("/")}
-                className="w-full py-2.5 rounded-xl bg-surface-container-low text-on-surface-variant font-semibold text-xs hover:bg-surface-container transition-all"
-              >
-                Explore Menu
-              </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-inverse-surface text-inverse-on-surface px-5 py-3 rounded-full font-bold text-xs shadow-xl border border-white/10 animate-in fade-in slide-in-from-bottom-3 duration-200 flex items-center gap-2">
+          <RotateCcw className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
         </div>
       )}
     </main>

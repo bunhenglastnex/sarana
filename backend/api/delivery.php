@@ -537,6 +537,46 @@ if ($method === 'GET') {
                 'order_id' => $orderId,
                 'status'   => 'on_the_way'
             ]);
+        } elseif ($action === 'notify_arrived' || $action === 'arrived_at_door') {
+            // Rider arrives at customer home / front door -> Notify customer + group
+            $upStmt = $pdo->prepare("UPDATE orders SET status = 'arrived' WHERE id = ? AND status != 'completed'");
+            $upStmt->execute([$orderId]);
+
+            // 📲 TELEGRAM ALERT TO CUSTOMER
+            if (function_exists('sendStatusUpdateToCustomer')) {
+                sendStatusUpdateToCustomer($pdo, $order, 'arrived', "🏠 Rider {$riderName} is right outside your doorstep with Order #{$order['order_number']}!");
+            }
+
+            // 📢 BROADCAST TO TELEGRAM GROUP
+            try {
+                require_once __DIR__ . '/../services/TelegramNotifier.php';
+                $notifier = new TelegramNotifier($pdo);
+                $restoId = isset($order['restaurant_id']) ? (int)$order['restaurant_id'] : null;
+                $groupChatId = $notifier->getSetting('telegram_group_id', env('TELEGRAM_GROUP_CHAT_ID'), $restoId);
+                if (!empty($groupChatId)) {
+                    $notifier->sendRaw(
+                        $groupChatId,
+                        "🏠 <b>RIDER ARRIVED AT DOORSTEP:</b> Rider <b>" . htmlspecialchars($riderName) . "</b> has arrived at the customer address for Order <b>#" . htmlspecialchars($order['order_number']) . "</b>!",
+                        null,
+                        $restoId
+                    );
+                }
+            } catch (\Throwable $te) {}
+
+            logSystemAction(
+                $pdo,
+                'DELIVERY_ARRIVED',
+                'DELIVERY',
+                "Rider '{$riderName}' arrived at customer doorstep for order '{$order['order_number']}'.",
+                'info',
+                $staffId,
+                $riderName
+            );
+
+            jsonResponse(1, 'Customer & Group notified that rider has arrived at doorstep!', [
+                'order_id' => $orderId,
+                'status'   => 'arrived'
+            ]);
         } elseif ($action === 'confirm_delivered') {
             // Rider delivers food & collects Cash on Delivery -> status completed, payment_status paid
             $proofUrl = $input['proof_image'] ?? $input['proof_url'] ?? $input['payment_proof_url'] ?? null;
@@ -579,6 +619,13 @@ if ($method === 'GET') {
                 sendStatusUpdateToCustomer($pdo, $order, 'completed', "Delivered by {$riderName}. Cash Collected!" . ($savedProofPath ? " (Proof Photo Attached)" : ""));
             }
 
+            // 📢 BROADCAST TO TELEGRAM GROUP
+            try {
+                require_once __DIR__ . '/../services/TelegramNotifier.php';
+                $notifier = new TelegramNotifier($pdo);
+                $notifier->sendStatusUpdateBroadcast($order, 'completed', "Delivered by {$riderName}." . ($savedProofPath ? " (Proof Photo Attached)" : ""));
+            } catch (\Throwable $te) {}
+
             // 📜 Log System Action
             logSystemAction(
                 $pdo,
@@ -597,7 +644,7 @@ if ($method === 'GET') {
                 'payment_proof_url' => $savedProofPath
             ]);
         } else {
-            jsonResponse(0, 'Invalid delivery action. Allowed: pickup_from_kitchen, confirm_delivered', null, 400);
+            jsonResponse(0, 'Invalid delivery action. Allowed: pickup_from_kitchen, notify_arrived, confirm_delivered', null, 400);
         }
     } catch (PDOException $e) {
         jsonResponse(0, 'Failed to update delivery action: ' . $e->getMessage(), null, 500);
