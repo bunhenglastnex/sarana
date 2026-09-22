@@ -1,0 +1,239 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 900" width="100%" height="100%" style="background-color: #0F172A; font-family: system-ui, -apple-system, sans-serif;">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#1E293B" />
+    </linearGradient>
+
+    <!-- Arrow Markers -->
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#3B82F6" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#22C55E" />
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#F59E0B" />
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#F97316" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#A855F7" />
+    </marker>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <rect width="1350" height="900" fill="url(#bg-grad)" />
+
+  <!-- HEADER -->
+  <text x="675" y="45" font-size="24" font-weight="bold" fill="#F8FAFC" text-anchor="middle" letter-spacing="1">
+    🍔 ONLINE ORDERING SYSTEM — DATABASE ENTITY RELATIONSHIP DIAGRAM (ERD)
+  </text>
+
+  <!-- RELATIONSHIP LINES (DRAWN BEHIND CARDS) -->
+  <!-- 1. restaurants -> users -->
+  <path d="M 280 140 L 420 140" stroke="#3B82F6" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)" />
+  <rect x="315" y="125" width="70" height="20" rx="4" fill="#1E293B" stroke="#3B82F6" stroke-width="1"/>
+  <text x="350" y="139" font-size="10" fill="#93C5FD" text-anchor="middle" font-weight="bold">0..* : 0..1</text>
+
+  <!-- 2. restaurants -> categories -->
+  <path d="M 160 250 L 160 320" stroke="#3B82F6" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)" />
+  <rect x="125" y="270" width="70" height="20" rx="4" fill="#1E293B" stroke="#3B82F6" stroke-width="1"/>
+  <text x="160" y="284" font-size="10" fill="#93C5FD" text-anchor="middle" font-weight="bold">1..* : 1</text>
+
+  <!-- 3. categories -> foods -->
+  <path d="M 160 470 L 160 540" stroke="#F59E0B" stroke-width="2.5" fill="none" marker-end="url(#arrow-amber)" />
+  <rect x="125" y="490" width="70" height="20" rx="4" fill="#1E293B" stroke="#F59E0B" stroke-width="1"/>
+  <text x="160" y="504" font-size="10" fill="#FDE68A" text-anchor="middle" font-weight="bold">0..* : 0..1</text>
+
+  <!-- 4. restaurants -> foods (Direct tenant FK) -->
+  <path d="M 80 250 C 30 350, 30 480, 80 580" stroke="#3B82F6" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-blue)" />
+
+  <!-- 5. restaurants -> orders -->
+  <path d="M 280 180 C 350 200, 370 300, 420 380" stroke="#3B82F6" stroke-width="2.5" fill="none" marker-end="url(#arrow-blue)" />
+
+  <!-- 6. users -> orders (Customer FK) -->
+  <path d="M 540 270 L 540 330" stroke="#22C55E" stroke-width="2.5" fill="none" marker-end="url(#arrow-green)" />
+  <rect x="505" y="285" width="70" height="20" rx="4" fill="#1E293B" stroke="#22C55E" stroke-width="1"/>
+  <text x="540" y="299" font-size="10" fill="#86EFAC" text-anchor="middle" font-weight="bold">Customer</text>
+
+  <!-- 7. users -> user_addresses -->
+  <path d="M 660 140 L 750 140" stroke="#22C55E" stroke-width="2.5" fill="none" marker-end="url(#arrow-green)" />
+  <rect x="675" y="125" width="60" height="20" rx="4" fill="#1E293B" stroke="#22C55E" stroke-width="1"/>
+  <text x="705" y="139" font-size="10" fill="#86EFAC" text-anchor="middle" font-weight="bold">1..* : 1</text>
+
+  <!-- 8. users -> courier_telemetry -->
+  <path d="M 660 210 C 700 230, 710 270, 750 310" stroke="#22C55E" stroke-width="2.5" fill="none" marker-end="url(#arrow-green)" />
+  <rect x="685" y="245" width="45" height="20" rx="4" fill="#1E293B" stroke="#22C55E" stroke-width="1"/>
+  <text x="707" y="259" font-size="10" fill="#86EFAC" text-anchor="middle" font-weight="bold">1 : 1</text>
+
+  <!-- 9. orders -> order_items -->
+  <path d="M 540 600 L 540 650" stroke="#F97316" stroke-width="2.5" fill="none" marker-end="url(#arrow-orange)" />
+  <rect x="495" y="612" width="90" height="20" rx="4" fill="#1E293B" stroke="#F97316" stroke-width="1"/>
+  <text x="540" y="626" font-size="10" fill="#FDBA74" text-anchor="middle" font-weight="bold">CASCADE (1..*)</text>
+
+  <!-- 10. foods -> order_items (Snapshot FK) -->
+  <path d="M 280 650 L 420 710" stroke="#F59E0B" stroke-width="2" stroke-dasharray="5,5" fill="none" marker-end="url(#arrow-amber)" />
+
+  <!-- 11. users -> orders (Courier Driver FK) -->
+  <path d="M 660 240 C 720 300, 720 450, 660 490" stroke="#22C55E" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-green)" />
+
+  <!-- ================= TABLES (SWIMLANES) ================= -->
+
+  <!-- TABLE 1: RESTAURANTS -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="80" width="230" height="170" rx="8" fill="#1E293B" stroke="#3B82F6" stroke-width="2" />
+    <path d="M 50 80 L 280 80 L 280 115 L 50 115 Z" fill="#1E3A8A" rx="8"/>
+    <text x="65" y="103" font-size="14" font-weight="bold" fill="#60A5FA">🏪 restaurants</text>
+    <text x="65" y="135" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#60A5FA" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="65" y="153" font-size="11" fill="#94A3B8">• name: VARCHAR(150)</text>
+    <text x="65" y="171" font-size="11" fill="#94A3B8">• slug: VARCHAR(150) UNIQUE</text>
+    <text x="65" y="189" font-size="11" fill="#94A3B8">• address, lat, lng, phone</text>
+    <text x="65" y="207" font-size="11" fill="#94A3B8">• delivery_radius_km: 5.0</text>
+    <text x="65" y="225" font-size="11" fill="#94A3B8">• is_active: TINYINT(1)</text>
+  </g>
+
+  <!-- TABLE 2: USERS -->
+  <g filter="url(#shadow)">
+    <rect x="420" y="80" width="240" height="190" rx="8" fill="#1E293B" stroke="#22C55E" stroke-width="2" />
+    <path d="M 420 80 L 660 80 L 660 115 L 420 115 Z" fill="#14532D" rx="8"/>
+    <text x="435" y="103" font-size="14" font-weight="bold" fill="#4ADE80">👤 users</text>
+    <text x="435" y="135" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#4ADE80" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="435" y="153" font-size="11" fill="#94A3B8">• name, phone (UNIQUE), email</text>
+    <text x="435" y="171" font-size="11" fill="#4ADE80">• role: ENUM (admin,driver,cust)</text>
+    <text x="435" y="189" font-size="11" fill="#60A5FA">🔗 <tspan font-weight="bold">restaurant_id</tspan>: INT (FK)</text>
+    <text x="435" y="207" font-size="11" fill="#94A3B8">• customer_tag, preferred_chan</text>
+    <text x="435" y="225" font-size="11" fill="#94A3B8">• telegram_chat_id, status</text>
+  </g>
+
+  <!-- TABLE 3: CATEGORIES -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="320" width="230" height="150" rx="8" fill="#1E293B" stroke="#3B82F6" stroke-width="2" />
+    <path d="M 50 320 L 280 320 L 280 355 L 50 355 Z" fill="#1E3A8A" rx="8"/>
+    <text x="65" y="343" font-size="14" font-weight="bold" fill="#60A5FA">📁 categories</text>
+    <text x="65" y="375" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#60A5FA" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="65" y="393" font-size="11" fill="#60A5FA">🔗 <tspan font-weight="bold">restaurant_id</tspan>: INT (FK)</text>
+    <text x="65" y="411" font-size="11" fill="#94A3B8">• name, slug, icon, image_url</text>
+    <text x="65" y="429" font-size="11" fill="#94A3B8">• description, sort_order</text>
+  </g>
+
+  <!-- TABLE 4: FOODS -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="540" width="230" height="210" rx="8" fill="#1E293B" stroke="#F59E0B" stroke-width="2" />
+    <path d="M 50 540 L 280 540 L 280 575 L 50 575 Z" fill="#78350F" rx="8"/>
+    <text x="65" y="563" font-size="14" font-weight="bold" fill="#FBBF24">🍔 foods</text>
+    <text x="65" y="595" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#FBBF24" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="65" y="613" font-size="11" fill="#60A5FA">🔗 <tspan font-weight="bold">restaurant_id</tspan>: INT (FK)</text>
+    <text x="65" y="631" font-size="11" fill="#60A5FA">🔗 <tspan font-weight="bold">category_id</tspan>: INT (FK)</text>
+    <text x="65" y="649" font-size="11" fill="#94A3B8">• name, price, badge_text, badge_type</text>
+    <text x="65" y="667" font-size="11" fill="#94A3B8">• options (JSON), prep_time_min</text>
+    <text x="65" y="685" font-size="11" fill="#94A3B8">• stock_quantity, status</text>
+  </g>
+
+  <!-- TABLE 5: ORDERS -->
+  <g filter="url(#shadow)">
+    <rect x="420" y="330" width="240" height="270" rx="8" fill="#1E293B" stroke="#F97316" stroke-width="2" />
+    <path d="M 420 330 L 660 330 L 660 365 L 420 365 Z" fill="#7C2D12" rx="8"/>
+    <text x="435" y="353" font-size="14" font-weight="bold" fill="#FB923C">🛒 orders</text>
+    <text x="435" y="385" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#FB923C" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="435" y="403" font-size="11" fill="#94A3B8">• order_number: VARCHAR UNIQUE</text>
+    <text x="435" y="421" font-size="11" fill="#60A5FA">🔗 <tspan font-weight="bold">restaurant_id</tspan>: INT (FK)</text>
+    <text x="435" y="439" font-size="11" fill="#4ADE80">🔗 <tspan font-weight="bold">user_id</tspan>: INT (FK - Customer)</text>
+    <text x="435" y="457" font-size="11" fill="#4ADE80">🔗 <tspan font-weight="bold">delivery_staff_id</tspan>: INT (FK)</text>
+    <text x="435" y="475" font-size="11" fill="#94A3B8">• fulfillment_type, delivery_fee</text>
+    <text x="435" y="493" font-size="11" fill="#94A3B8">• total_amount (USD &amp; KHR)</text>
+    <text x="435" y="511" font-size="11" fill="#FB923C">• payment_method, payment_status</text>
+    <text x="435" y="529" font-size="11" fill="#FB923C">• status: ENUM(pending...delivered)</text>
+  </g>
+
+  <!-- TABLE 6: ORDER ITEMS -->
+  <g filter="url(#shadow)">
+    <rect x="420" y="650" width="240" height="170" rx="8" fill="#1E293B" stroke="#F97316" stroke-width="2" />
+    <path d="M 420 650 L 660 650 L 660 685 L 420 685 Z" fill="#7C2D12" rx="8"/>
+    <text x="435" y="673" font-size="14" font-weight="bold" fill="#FB923C">📦 order_items</text>
+    <text x="435" y="705" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#FB923C" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="435" y="723" font-size="11" fill="#FB923C">🔗 <tspan font-weight="bold">order_id</tspan>: INT (FK CASCADE)</text>
+    <text x="435" y="741" font-size="11" fill="#FBBF24">🔗 <tspan font-weight="bold">food_id</tspan>: INT (FK SET NULL)</text>
+    <text x="435" y="759" font-size="11" fill="#94A3B8">• food_name, price, quantity</text>
+    <text x="435" y="777" font-size="11" fill="#94A3B8">• subtotal, image_url, notes</text>
+  </g>
+
+  <!-- TABLE 7: USER ADDRESSES -->
+  <g filter="url(#shadow)">
+    <rect x="750" y="80" width="240" height="150" rx="8" fill="#1E293B" stroke="#22C55E" stroke-width="2" />
+    <path d="M 750 80 L 990 80 L 990 115 L 750 115 Z" fill="#14532D" rx="8"/>
+    <text x="765" y="103" font-size="14" font-weight="bold" fill="#4ADE80">📍 user_addresses</text>
+    <text x="765" y="135" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#4ADE80" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="765" y="153" font-size="11" fill="#4ADE80">🔗 <tspan font-weight="bold">user_id</tspan>: INT (FK CASCADE)</text>
+    <text x="765" y="171" font-size="11" fill="#94A3B8">• label, address, lat, lng, tag</text>
+    <text x="765" y="189" font-size="11" fill="#94A3B8">• is_default: TINYINT(1)</text>
+  </g>
+
+  <!-- TABLE 8: COURIER TELEMETRY -->
+  <g filter="url(#shadow)">
+    <rect x="750" y="290" width="240" height="170" rx="8" fill="#1E293B" stroke="#22C55E" stroke-width="2" />
+    <path d="M 750 290 L 990 290 L 990 325 L 750 325 Z" fill="#14532D" rx="8"/>
+    <text x="765" y="313" font-size="14" font-weight="bold" fill="#4ADE80">🛵 courier_telemetry</text>
+    <text x="765" y="345" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#4ADE80" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="765" y="363" font-size="11" fill="#4ADE80">🔗 <tspan font-weight="bold">user_id</tspan>: INT (FK UNIQUE)</text>
+    <text x="765" y="381" font-size="11" fill="#94A3B8">• vehicle_type, vehicle_label</text>
+    <text x="765" y="399" font-size="11" fill="#94A3B8">• lat, lng, speed_kmh, temp_celsius</text>
+    <text x="765" y="417" font-size="11" fill="#94A3B8">• status: ENUM (active,on_deliv)</text>
+  </g>
+
+  <!-- TABLE 9: SETTINGS -->
+  <g filter="url(#shadow)">
+    <rect x="750" y="500" width="240" height="130" rx="8" fill="#1E293B" stroke="#A855F7" stroke-width="2" />
+    <path d="M 750 500 L 990 500 L 990 535 L 750 535 Z" fill="#581C87" rx="8"/>
+    <text x="765" y="523" font-size="14" font-weight="bold" fill="#C084FC">⚙️ settings</text>
+    <text x="765" y="555" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#C084FC" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="765" y="573" font-size="11" fill="#60A5FA">🔗 <tspan font-weight="bold">restaurant_id</tspan>: INT (Indexed)</text>
+    <text x="765" y="591" font-size="11" fill="#94A3B8">• setting_key, setting_value, group</text>
+  </g>
+
+  <!-- TABLE 10: SYSTEM LOGS -->
+  <g filter="url(#shadow)">
+    <rect x="750" y="670" width="240" height="140" rx="8" fill="#1E293B" stroke="#64748B" stroke-width="2" />
+    <path d="M 750 670 L 990 670 L 990 705 L 750 705 Z" fill="#334155" rx="8"/>
+    <text x="765" y="693" font-size="14" font-weight="bold" fill="#94A3B8">📋 system_logs</text>
+    <text x="765" y="725" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#94A3B8" font-weight="bold">id</tspan>: BIGINT (PK)</text>
+    <text x="765" y="743" font-size="11" fill="#94A3B8">• action, category, level, desc</text>
+    <text x="765" y="761" font-size="11" fill="#94A3B8">• user_id, user_name, ip_address</text>
+  </g>
+
+  <!-- TABLE 11: RATE LIMITS -->
+  <g filter="url(#shadow)">
+    <rect x="1050" y="80" width="240" height="140" rx="8" fill="#1E293B" stroke="#EF4444" stroke-width="2" />
+    <path d="M 1050 80 L 1290 80 L 1290 115 L 1050 115 Z" fill="#7F1D1D" rx="8"/>
+    <text x="1065" y="103" font-size="14" font-weight="bold" fill="#FCA5A5">🔒 rate_limits</text>
+    <text x="1065" y="135" font-size="11" fill="#F8FAFC">🔑 <tspan fill="#FCA5A5" font-weight="bold">id</tspan>: INT (PK)</text>
+    <text x="1065" y="153" font-size="11" fill="#94A3B8">• ip_address, action (UNIQUE)</text>
+    <text x="1065" y="171" font-size="11" fill="#94A3B8">• attempts, last_attempt_at</text>
+    <text x="1065" y="189" font-size="11" fill="#94A3B8">• locked_until (DATETIME)</text>
+  </g>
+
+  <!-- LEGEND -->
+  <g filter="url(#shadow)">
+    <rect x="1050" y="270" width="240" height="200" rx="8" fill="#1E293B" stroke="#475569" stroke-width="1.5" />
+    <text x="1065" y="295" font-size="13" font-weight="bold" fill="#F8FAFC">📌 RELATIONSHIP LEGEND</text>
+    <line x1="1065" y1="305" x2="1275" y2="305" stroke="#334155" stroke-width="1"/>
+    
+    <line x1="1065" y1="325" x2="1100" y2="325" stroke="#3B82F6" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+    <text x="1110" y="329" font-size="11" fill="#94A3B8">Restaurant FK</text>
+
+    <line x1="1065" y1="355" x2="1100" y2="355" stroke="#22C55E" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+    <text x="1110" y="359" font-size="11" fill="#94A3B8">User / Driver FK</text>
+
+    <line x1="1065" y1="385" x2="1100" y2="385" stroke="#F59E0B" stroke-width="2.5" marker-end="url(#arrow-amber)"/>
+    <text x="1110" y="389" font-size="11" fill="#94A3B8">Category / Food FK</text>
+
+    <line x1="1065" y1="415" x2="1100" y2="415" stroke="#F97316" stroke-width="2.5" marker-end="url(#arrow-orange)"/>
+    <text x="1110" y="419" font-size="11" fill="#94A3B8">Order / Items FK (CASCADE)</text>
+
+    <line x1="1065" y1="445" x2="1100" y2="445" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrow-amber)"/>
+    <text x="1110" y="449" font-size="11" fill="#94A3B8">Historical Snapshot FK</text>
+  </g>
+</svg>

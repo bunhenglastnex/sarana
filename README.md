@@ -57,9 +57,15 @@ While the PHP backend server is running (`http://localhost:8000`), open in brows
 
 > [!NOTE]
 > The database is built on a **Multi-Tenant MySQL Architecture (InnoDB)** with strict FK constraints, cascaded cleanups, and historical line-item snapshot protection.
-> Visual Draw.io diagram file: 🎨 [`DATABASE_RELATIONSHIPS.drawio`](file:///d:/learning/Sarana/Online-Ordering/DATABASE_RELATIONSHIPS.drawio) | Comprehensive specification: [`DATABASE_RELATIONSHIPS.md`](file:///d:/learning/Sarana/Online-Ordering/DATABASE_RELATIONSHIPS.md)
+> - 🎨 **Editable Draw.io Diagram**: [`DATABASE_RELATIONSHIPS.drawio`](file:///d:/learning/Sarana/Online-Ordering/DATABASE_RELATIONSHIPS.drawio)
+> - 📑 **Detailed Schema Specification**: [`DATABASE_RELATIONSHIPS.md`](file:///d:/learning/Sarana/Online-Ordering/DATABASE_RELATIONSHIPS.md)
 
-### 🎨 Visual Entity Relationship Diagram (Mermaid / Draw.io Model)
+### 🎨 Visual Entity Relationship Diagram (Draw.io Visual Model)
+
+![Database Entity Relationship Diagram (ERD)](./DATABASE_RELATIONSHIPS.svg)
+
+<details>
+<summary><b>Click to expand Mermaid Code View</b></summary>
 
 ```mermaid
 erDiagram
@@ -78,6 +84,8 @@ erDiagram
     orders ||--|{ order_items : "contains line items (1..*)"
     foods ||--o{ order_items : "referenced in snapshot (0..*)"
 ```
+
+</details>
 
 ### 📊 Database Entities Summary (11 Core Tables)
 
