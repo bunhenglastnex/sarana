@@ -282,7 +282,7 @@ export const PickupTrackerView: React.FC<PickupTrackerViewProps> = ({
                   <div className="flex flex-col min-w-0 pt-0.5 flex-1">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-xs sm:text-sm text-on-surface-variant">
-                        Handed Over & Completed
+                        Handed Over &amp; Completed
                       </span>
                       <span className="text-[10px] text-on-surface-variant">
                         Pending
@@ -466,7 +466,7 @@ export const PickupTrackerView: React.FC<PickupTrackerViewProps> = ({
                       <span>$26.00</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span>Taxes & Packaging</span>
+                      <span>Taxes &amp; Packaging</span>
                       <span>$2.50</span>
                     </div>
                     <div className="flex items-center justify-between font-bold text-xs sm:text-sm text-on-surface pt-1 border-t border-surface-container">

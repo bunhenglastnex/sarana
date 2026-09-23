@@ -188,7 +188,7 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
                 Order Confirmed!
               </h2>
               <p className="text-xs sm:text-sm text-on-surface-variant max-w-md mx-auto leading-relaxed">
-                Thank you! Amber & Ember kitchen has received your order and
+                Thank you! Amber &amp; Ember kitchen has received your order and
                 started preparing your wood-fired dishes.
               </p>
             </div>
@@ -249,7 +249,7 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
                     </p>
                   </div>
                   <div className="text-right text-xs text-amber-900/80 space-y-0.5">
-                    <p>Food & Tax: ${(subtotal + packagingAndTax).toFixed(2)}</p>
+                    <p>Food &amp; Tax: ${(subtotal + packagingAndTax).toFixed(2)}</p>
                     <p>Delivery Fee: ${deliveryFee.toFixed(2)}</p>
                     <p className="text-amber-800 font-bold">Courier Tip: ${tipParam.toFixed(2)}</p>
                   </div>

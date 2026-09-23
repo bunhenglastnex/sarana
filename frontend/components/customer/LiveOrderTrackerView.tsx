@@ -671,7 +671,7 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
                   className="w-full h-12 rounded-full bg-primary hover:bg-primary-container active:scale-[0.98] transition-all text-on-primary font-extrabold text-sm shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>Back to Menu & Order More</span>
+                  <span>Back to Menu &amp; Order More</span>
                 </button>
               </div>
             </div>
@@ -734,7 +734,7 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
                   Status:
                 </span>
                 <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px] uppercase">
-                  ✓ Verified & Delivered
+                  ✓ Verified &amp; Delivered
                 </span>
               </div>
               <div className="flex items-center justify-between pt-1 border-t border-border/20">
