@@ -118,7 +118,7 @@ function seedDatabase(PDO $pdo): void {
         ('chime_tone', 'Classic Bistro Bell', 'audio'),
         ('chime_repeat_count', '5', 'audio'),
         ('volume_level', '100%', 'audio'),
-        ('telegram_bot_username', 'bunheng1dev_bot', 'telegram'),
+        ('telegram_bot_username', '', 'telegram'),
         ('telegram_notify_new_order', 'true', 'telegram'),
         ('max_delivery_radius_km', '7.5', 'delivery'),
         ('base_delivery_fee', '1.5', 'delivery'),

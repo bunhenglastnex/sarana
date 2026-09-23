@@ -82,8 +82,18 @@ while (true) {
 
                     // Handle /start command
                     if (strpos($text, '/start') === 0) {
+                        $userTag = !empty($username) ? "@{$username}" : "No username";
+                        $timestamp = date('Y-m-d H:i:s');
+                        echo "\n======================================================\n";
+                        echo "🚀 [/start BOT EVENT DETECTED]\n";
+                        echo "👤 User: {$firstName} ({$userTag})\n";
+                        echo "🆔 CHAT ID: {$chatId}\n";
+                        echo "💬 Text: {$text}\n";
+                        echo "⏰ Time: {$timestamp}\n";
+                        echo "======================================================\n";
+
                         $reply = $telegramService->handleStartCommand($chatId, $username, $firstName, $text);
-                        echo "  ➡️ Processed /start & Replied to {$firstName} (Chat ID: {$chatId})\n";
+                        echo "  ✅ Processed /start | Chat ID: {$chatId} | Broadcasted to Group & Customer\n\n";
                     }
                 }
             }

@@ -31,7 +31,7 @@ export const TelegramBotModal: React.FC<TelegramBotModalProps> = ({
   if (!isOpen) return null;
 
   const currentUserName = userName || authName || "Valued Customer";
-  const currentBotUsername = botUsername || process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "bunheng1dev_bot";
+  const currentBotUsername = botUsername || process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "";
   
   let startParam = "";
   if (authUserId) {
