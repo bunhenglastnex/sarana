@@ -206,48 +206,59 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
   const statusProgress = getStatusProgress(status);
 
   return (
-    <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col items-center selection:bg-primary/20 selection:text-primary pb-20">
+    <div className="bg-surface text-on-surface font-sans text-sm min-h-screen flex flex-col items-center selection:bg-primary/20 selection:text-primary pb-20 w-full">
       {/* Sticky Top Header */}
-      <header className="sticky top-0 w-full max-w-md mx-auto z-40 pt-safe bg-surface/90 backdrop-blur-xl border-b border-surface-container/40 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-        <div className="h-16 px-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+      <header className="sticky top-0 w-full z-40 pt-safe bg-surface/90 backdrop-blur-xl border-b border-surface-container/40 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+        <div className="w-full max-w-7xl mx-auto h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <button
               type="button"
               onClick={() => router.push("/")}
               aria-label="Go back"
-              className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors flex-shrink-0"
+              className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors flex-shrink-0 border border-surface-container-high"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <img
               src="/logo.jpg"
               alt="Bistro Logo"
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-primary/20"
+              className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-primary/20 shadow-xs"
             />
             <div className="flex flex-col min-w-0">
-              <h1 className="font-bold text-sm text-on-surface truncate">
+              <h1 className="font-extrabold text-base text-on-surface truncate">
                 Live Order Status
               </h1>
-              <span className="text-[10px] text-primary font-extrabold truncate">
-                #{activeOrderNum}
+              <span className="text-[11px] text-primary font-extrabold truncate">
+                Order #{activeOrderNum}
               </span>
             </div>
           </div>
 
-          {/* 3-Second Live Polling Indicator Badge */}
-          <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1 rounded-full text-[10px] font-bold border border-primary/20">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
-            <span>LIVE SYNC (3s)</span>
+          <div className="flex items-center gap-3">
+            {/* 3-Second Live Polling Indicator Badge */}
+            <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-[11px] font-bold border border-primary/20">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+              </span>
+              <span>LIVE SYNC (3s)</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-bold transition-all border border-surface-container-high"
+            >
+              <Store className="w-4 h-4 text-primary" />
+              <span>Back to Menu</span>
+            </button>
           </div>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="flex flex-col relative w-full max-w-md px-4 pt-4 min-h-screen bg-surface">
-        <div className="flex flex-col w-full pb-8 gap-4">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-surface">
+        <div className="flex flex-col w-full pb-12 gap-6">
           {/* PENDING ADMIN CONFIRMATION GUARD CARD */}
           {!isConfirmedByAdmin && (
             <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-5 text-center flex flex-col items-center gap-3 shadow-md animate-in fade-in">
@@ -266,10 +277,10 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-900 bg-amber-200/80 px-3 py-1 rounded-full border border-amber-400/50">
                   Waiting for Admin / Kitchen Confirmation
                 </span>
-                <h3 className="font-extrabold text-lg text-on-surface mt-2.5">
+                <h3 className="font-extrabold text-lg sm:text-xl text-on-surface mt-2.5">
                   Order Submitted — Pending Approval
                 </h3>
-                <p className="text-xs text-on-surface-variant max-w-xs mx-auto mt-1 leading-relaxed">
+                <p className="text-xs sm:text-sm text-on-surface-variant max-w-md mx-auto mt-1 leading-relaxed">
                   Your order{" "}
                   <strong className="text-on-surface">#{activeOrderNum}</strong>{" "}
                   has been received by our system. Our admin &amp; kitchen team
@@ -277,369 +288,393 @@ export const LiveOrderTrackerView: React.FC<LiveOrderTrackerViewProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 bg-surface-container-lowest px-3 py-1.5 rounded-full border border-amber-500/30 text-[11px] text-amber-900 font-bold mt-1 shadow-xs">
-                <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-700" />
+              <div className="flex items-center gap-2 bg-surface-container-lowest px-4 py-2 rounded-full border border-amber-500/30 text-xs text-amber-900 font-bold mt-1 shadow-xs">
+                <RefreshCw className="w-4 h-4 animate-spin text-amber-700" />
+                <span>Auto-syncing every 3 seconds</span>
               </div>
             </div>
           )}
 
           {/* CONFIRMED ORDER HEADER BANNER */}
           {isConfirmedByAdmin && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 flex items-center gap-3 text-emerald-800 font-bold text-xs animate-in fade-in">
-              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-center gap-3 text-emerald-800 font-bold text-xs sm:text-sm animate-in fade-in shadow-xs">
+              <CheckCircle className="w-6 h-6 text-emerald-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-extrabold text-xs text-emerald-900">
+                <p className="font-extrabold text-sm sm:text-base text-emerald-900">
                   Order Confirmed by Admin / Kitchen!
                 </p>
-                <p className="text-[11px] text-emerald-700 font-normal truncate">
-                  Status: {statusProgress.label}
+                <p className="text-xs text-emerald-700 font-medium truncate">
+                  Current Status: {statusProgress.label}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Restaurant Outlet Card */}
-          <div className="w-full bg-surface-container-lowest rounded-2xl p-3.5 shadow-sm flex items-center justify-between gap-3 border border-surface-container/80">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 border border-primary/20 shadow-xs">
-                {liveOrder?.restaurant_logo ? (
-                  <img
-                    src={liveOrder.restaurant_logo}
-                    alt={liveOrder?.restaurant_name || "Restaurant"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Store className="w-5 h-5 text-primary" />
-                )}
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
-                  Preparing Kitchen Outlet
-                </span>
-                <h2 className="font-extrabold text-sm text-on-surface truncate">
-                  {liveOrder?.restaurant?.name || liveOrder?.restaurant_name || "Amber & Ember Woodfired Bistro"}
-                </h2>
-                <span className="text-[11px] text-on-surface-variant truncate">
-                  {liveOrder?.restaurant?.address || liveOrder?.restaurant_address || "Siem Reap, Cambodia"}
-                </span>
-              </div>
-            </div>
+          {/* 2-Column Responsive Desktop Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            {/* Left Column: Live Map, Status, Stepper Timeline & Driver info */}
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-6">
+              {/* Live Interactive Leaflet Map Card */}
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-md bg-surface-container-high h-64 sm:h-80 lg:h-[420px] border border-surface-container-high">
+                <LiveOrderMap
+                  storeLat={storeLat}
+                  storeLng={storeLng}
+                  storeName={storeName}
+                  storeAddress={storeAddress}
+                  customerLat={customerLat}
+                  customerLng={customerLng}
+                  customerAddress={deliveryAddress}
+                  driverName={driverName}
+                  orderStatus={statusProgress.label}
+                />
 
-            {(liveOrder?.restaurant_phone || settings.store_phone) && (
-              <a
-                href={`tel:${liveOrder?.restaurant_phone || settings.store_phone}`}
-                onClick={() =>
-                  triggerNotice(`Calling restaurant ${liveOrder?.restaurant_phone || settings.store_phone}...`)
-                }
-                className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 active:scale-95 transition-all shadow-xs flex-shrink-0"
-                title="Call Restaurant Kitchen"
-              >
-                <Phone className="w-4 h-4" />
-              </a>
-            )}
-          </div>
-
-          {/* Live Interactive Leaflet Map Card */}
-          <div className="relative w-full rounded-2xl overflow-hidden shadow-md bg-surface-container-high h-64 border border-surface-container-high">
-            <LiveOrderMap
-              storeLat={storeLat}
-              storeLng={storeLng}
-              storeName={storeName}
-              storeAddress={storeAddress}
-              customerLat={customerLat}
-              customerLng={customerLng}
-              customerAddress={deliveryAddress}
-              driverName={driverName}
-              orderStatus={statusProgress.label}
-            />
-
-            {/* Top Floating Signal Pill Overlay */}
-            <div className="absolute top-3 left-3 bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm border border-surface-container/60 z-10">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-              </span>
-              <span className="text-xs font-bold text-on-surface tracking-tight">
-                Live Map ({lastSyncTime})
-              </span>
-            </div>
-
-            {/* Manual Refresh Map Control */}
-            <button
-              type="button"
-              aria-label="Refresh Location"
-              onClick={() => {
-                fetchLiveOrderData();
-                triggerNotice("Synced live GPS data with kitchen server");
-              }}
-              className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-surface-container-lowest shadow-md flex items-center justify-center text-on-surface active:scale-95 transition-all hover:bg-surface-container z-10"
-            >
-              <RefreshCw className="w-4 h-4 text-primary" />
-            </button>
-          </div>
-
-          {/* Status & Timing Highlight Card */}
-          <div className="w-full bg-surface-container-lowest rounded-2xl p-4 shadow-sm flex flex-col gap-3 border border-surface-container/80">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
-                  Order Status
-                </span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="font-extrabold text-xl text-on-surface">
-                    {statusProgress.label}
+                {/* Top Floating Signal Pill Overlay */}
+                <div className="absolute top-3 left-3 bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm border border-surface-container/60 z-10">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                  </span>
+                  <span className="text-xs font-bold text-on-surface tracking-tight">
+                    Live Map ({lastSyncTime})
                   </span>
                 </div>
-              </div>
-              <div className="bg-primary/10 text-primary px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs font-bold text-xs border border-primary/20">
-                <Bike className="w-4 h-4" />
-                <span>{statusProgress.badge}</span>
-              </div>
-            </div>
 
-            {/* Dynamic Linear Progress Meter */}
-            <div className="w-full bg-surface-container-high rounded-full h-2 overflow-hidden mt-1">
-              <div
-                className="bg-primary h-full rounded-full transition-all duration-700 ease-out"
-                style={{ width: `${statusProgress.percent}%` }}
-              />
-            </div>
-
-            <div className="flex items-center gap-2 text-on-surface-variant pt-0.5">
-              <Flame className="w-4 h-4 text-primary flex-shrink-0 fill-primary/20" />
-              <p className="text-xs leading-tight">
-                {status === "on_the_way" && driverName ? (
-                  <>
-                    <strong className="text-on-surface font-semibold">
-                      {driverName}
-                    </strong>{" "}
-                    is carrying your order to your door.
-                  </>
-                ) : status === "preparing" || status === "accepted" ? (
-                  <>
-                    Food is currently being prepared in the kitchen. Courier
-                    will pick up when ready.
-                  </>
-                ) : (
-                  <>
-                    Our kitchen team is reviewing your order details before
-                    starting preparation.
-                  </>
-                )}
-              </p>
-            </div>
-          </div>
-
-          {/* Delivery Location Card */}
-          <div className="w-full bg-surface-container-lowest rounded-2xl p-3.5 shadow-sm flex items-start gap-3 border border-surface-container/80">
-            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
-              <MapPin className="w-5 h-5 fill-primary text-primary" />
-            </div>
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">
-                Customer Delivery Location
-              </span>
-              <p className="font-bold text-xs text-on-surface truncate">
-                {deliveryAddress}
-              </p>
-              <div className="inline-flex items-center gap-1 mt-1 text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-md text-[11px] w-fit">
-                <DoorOpen className="w-3.5 h-3.5" />
-                <span className="italic">Contactless Handoff</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Courier Contact Card (Strictly live data, no fake driver names) */}
-          <div className="w-full bg-surface-container-lowest rounded-2xl p-3.5 shadow-sm flex items-center justify-between gap-3 border border-surface-container/80">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 font-bold text-sm">
-                🛵
-              </div>
-              <div className="flex flex-col min-w-0">
-                <h2 className="font-bold text-xs text-on-surface truncate">
-                  {driverName ||
-                    (status === "on_the_way"
-                      ? "Bistro Express Courier"
-                      : "Courier Assignment Pending")}
-                </h2>
-                <span className="text-[11px] text-on-surface-variant truncate">
-                  {driverName
-                    ? "Assigned Bistro Driver"
-                    : "Will be assigned when food is ready"}
-                </span>
-              </div>
-            </div>
-
-            {driverPhone && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <a
-                  href={`tel:${driverPhone}`}
-                  onClick={() =>
-                    triggerNotice(`Calling courier ${driverPhone}...`)
-                  }
-                  className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-all shadow-sm"
+                {/* Manual Refresh Map Control */}
+                <button
+                  type="button"
+                  aria-label="Refresh Location"
+                  onClick={() => {
+                    fetchLiveOrderData();
+                    triggerNotice("Synced live GPS data with kitchen server");
+                  }}
+                  className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-surface-container-lowest shadow-md flex items-center justify-center text-on-surface active:scale-95 transition-all hover:bg-surface-container z-10 border border-surface-container-high"
                 >
-                  <Phone className="w-4 h-4" />
-                </a>
+                  <RefreshCw className="w-4 h-4 text-primary" />
+                </button>
               </div>
-            )}
-          </div>
 
-          {/* Timeline Stepper */}
-          <div className="w-full bg-surface-container-lowest rounded-2xl p-4 shadow-sm flex flex-col gap-3 border border-surface-container/80">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-xs text-on-surface">
-                Order Progress Timeline
-              </h3>
-              <span className="text-[10px] text-primary font-bold flex items-center gap-1">
-                <Radio className="w-3 h-3 animate-pulse" />
-              </span>
-            </div>
-
-            <div className="relative flex flex-col gap-4 ml-1">
-              <div className="absolute top-3 bottom-4 left-3 w-0.5 bg-surface-variant -translate-x-1/2" />
-              <div
-                className="absolute top-3 left-3 w-0.5 bg-primary -translate-x-1/2 transition-all duration-500"
-                style={{ height: `${statusProgress.percent}%` }}
-              />
-
-              {/* Step 1: Order Submitted */}
-              <div className="relative flex items-start gap-3">
-                <div className="relative z-10 w-6 h-6 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 flex justify-between items-baseline min-w-0 pt-0.5">
-                  <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-xs text-on-surface">
-                      Order Submitted
+              {/* Status & Timing Highlight Card */}
+              <div className="w-full bg-surface-container-lowest rounded-2xl p-5 shadow-sm flex flex-col gap-3 border border-surface-container/80">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-col">
+                    <span className="text-[11px] uppercase tracking-wider text-primary font-bold">
+                      Order Status
                     </span>
-                    <span className="text-[11px] text-on-surface-variant">
-                      Order ticket sent to admin dashboard
-                    </span>
+                    <div className="flex items-baseline gap-2 mt-0.5">
+                      <span className="font-extrabold text-xl sm:text-2xl text-on-surface tracking-tight">
+                        {statusProgress.label}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="bg-primary/10 text-primary px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-xs font-extrabold text-xs sm:text-sm border border-primary/20">
+                    <Bike className="w-4 h-4" />
+                    <span>{statusProgress.badge}</span>
                   </div>
                 </div>
-              </div>
 
-              {/* Step 2: Admin Confirmation */}
-              <div className="relative flex items-start gap-3">
-                <div
-                  className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${
-                    isConfirmedByAdmin
-                      ? "bg-surface-container-lowest text-primary"
-                      : "bg-amber-500 text-white"
-                  }`}
-                >
-                  {isConfirmedByAdmin ? (
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
-                  ) : (
-                    <Hourglass className="w-3.5 h-3.5 animate-spin" />
-                  )}
+                {/* Dynamic Linear Progress Meter */}
+                <div className="w-full bg-surface-container-high rounded-full h-2.5 overflow-hidden mt-2">
+                  <div
+                    className="bg-primary h-full rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${statusProgress.percent}%` }}
+                  />
                 </div>
-                <div className="flex-1 flex justify-between items-baseline min-w-0 pt-0.5">
-                  <div className="flex flex-col min-w-0">
-                    <span
-                      className={`font-bold text-xs ${isConfirmedByAdmin ? "text-on-surface" : "text-amber-700"}`}
-                    >
-                      {isConfirmedByAdmin
-                        ? "Admin / Kitchen Confirmed"
-                        : "Waiting for Admin Confirmation"}
-                    </span>
-                    <span className="text-[11px] text-on-surface-variant">
-                      {isConfirmedByAdmin
-                        ? "Kitchen approved order"
-                        : "Pending admin review"}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Step 3: Dispatch & Delivery */}
-              <div className="relative flex items-start gap-3">
-                <div
-                  className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${
-                    status === "on_the_way" || status === "delivered"
-                      ? "bg-primary text-on-primary"
-                      : "bg-surface-variant text-tertiary"
-                  }`}
-                >
-                  <Bike className="w-3.5 h-3.5" />
-                </div>
-                <div className="flex-1 flex flex-col min-w-0 pt-0.5 bg-surface-container-low p-2.5 rounded-xl border border-surface-container-high">
-                  <div className="flex justify-between items-baseline">
-                    <span className="font-bold text-xs text-on-surface">
-                      Dispatch &amp; Delivery
-                    </span>
-                    <span className="text-[10px] text-primary font-bold">
-                      {statusProgress.badge}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-on-surface-variant mt-0.5">
-                    {status === "on_the_way"
-                      ? "Courier has picked up food and is moving towards your location."
-                      : "Courier will pick up and transport food once kitchen finishes cooking."}
+                <div className="flex items-center gap-2.5 text-on-surface-variant pt-1">
+                  <Flame className="w-5 h-5 text-primary flex-shrink-0 fill-primary/20" />
+                  <p className="text-xs sm:text-sm leading-relaxed">
+                    {status === "on_the_way" && driverName ? (
+                      <>
+                        <strong className="text-on-surface font-semibold">
+                          {driverName}
+                        </strong>{" "}
+                        is carrying your order to your door.
+                      </>
+                    ) : status === "preparing" || status === "accepted" ? (
+                      <>
+                        Food is currently being prepared in the kitchen. Courier
+                        will pick up when ready.
+                      </>
+                    ) : (
+                      <>
+                        Our kitchen team is reviewing your order details before
+                        starting preparation.
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Itemized Order Accordion */}
-          <div className="w-full bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden border border-surface-container/80">
-            <button
-              type="button"
-              onClick={() => setIsAccordionOpen((prev) => !prev)}
-              className="w-full p-3.5 flex items-center justify-between text-left hover:bg-surface-container-low transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-primary" />
-                <span className="font-bold text-xs text-on-surface">
-                  Order Summary ({items.length || 1} items)
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm text-primary">
-                  ${totalAmount.toFixed(2)}
-                </span>
-                {isAccordionOpen ? (
-                  <ChevronUp className="w-4 h-4 text-on-surface-variant" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-on-surface-variant" />
-                )}
-              </div>
-            </button>
-
-            {isAccordionOpen && (
-              <div className="px-3.5 pb-3.5 flex flex-col gap-2 border-t border-surface-container pt-2 text-xs">
-                {items.map((it: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between py-1"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="w-5 h-5 rounded bg-surface-container flex items-center justify-center font-bold text-[11px] text-on-surface">
-                        {it.quantity}×
-                      </span>
-                      <span className="font-semibold text-on-surface truncate">
-                        {it.food_name || it.name}
-                      </span>
-                    </div>
-                    <span className="font-semibold text-on-surface">
-                      $
-                      {(
-                        (parseFloat(it.price) || 0) * (it.quantity || 1)
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-
-                <div className="flex items-center justify-between pt-1 border-t border-surface-container font-bold text-on-surface">
-                  <span>Total Amount</span>
-                  <span className="text-primary text-sm font-extrabold">
-                    ${totalAmount.toFixed(2)}
+              {/* Timeline Stepper Card */}
+              <div className="w-full bg-surface-container-lowest rounded-2xl p-5 shadow-sm flex flex-col gap-4 border border-surface-container/80">
+                <div className="flex items-center justify-between border-b border-surface-container/60 pb-3">
+                  <h3 className="font-extrabold text-sm sm:text-base text-on-surface">
+                    Order Progress Timeline
+                  </h3>
+                  <span className="text-xs text-primary font-extrabold flex items-center gap-1">
+                    <Radio className="w-4 h-4 animate-pulse" />
+                    <span>Live Updates</span>
                   </span>
                 </div>
+
+                <div className="relative flex flex-col gap-5 ml-1 pt-1">
+                  <div className="absolute top-3 bottom-4 left-3 w-0.5 bg-surface-variant -translate-x-1/2" />
+                  <div
+                    className="absolute top-3 left-3 w-0.5 bg-primary -translate-x-1/2 transition-all duration-500"
+                    style={{ height: `${statusProgress.percent}%` }}
+                  />
+
+                  {/* Step 1: Order Submitted */}
+                  <div className="relative flex items-start gap-3.5">
+                    <div className="relative z-10 w-6 h-6 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm">
+                      <CheckCircle2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 flex justify-between items-baseline min-w-0 pt-0.5">
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-xs sm:text-sm text-on-surface">
+                          Order Submitted
+                        </span>
+                        <span className="text-xs text-on-surface-variant">
+                          Order ticket sent to admin dashboard
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Admin Confirmation */}
+                  <div className="relative flex items-start gap-3.5">
+                    <div
+                      className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-sm ${
+                        isConfirmedByAdmin
+                          ? "bg-surface-container-lowest text-primary"
+                          : "bg-amber-500 text-white"
+                      }`}
+                    >
+                      {isConfirmedByAdmin ? (
+                        <CheckCircle2 className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Hourglass className="w-3.5 h-3.5 animate-spin" />
+                      )}
+                    </div>
+                    <div className="flex-1 flex justify-between items-baseline min-w-0 pt-0.5">
+                      <div className="flex flex-col min-w-0">
+                        <span
+                          className={`font-bold text-xs sm:text-sm ${isConfirmedByAdmin ? "text-on-surface" : "text-amber-700"}`}
+                        >
+                          {isConfirmedByAdmin
+                            ? "Admin / Kitchen Confirmed"
+                            : "Waiting for Admin Confirmation"}
+                        </span>
+                        <span className="text-xs text-on-surface-variant">
+                          {isConfirmedByAdmin
+                            ? "Kitchen approved order"
+                            : "Pending admin review"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Dispatch & Delivery */}
+                  <div className="relative flex items-start gap-3.5">
+                    <div
+                      className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${
+                        status === "on_the_way" || status === "delivered"
+                          ? "bg-primary text-on-primary"
+                          : "bg-surface-variant text-tertiary"
+                      }`}
+                    >
+                      <Bike className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex-1 flex flex-col min-w-0 pt-0.5 bg-surface-container-low p-3 rounded-xl border border-surface-container-high">
+                      <div className="flex justify-between items-baseline">
+                        <span className="font-bold text-xs sm:text-sm text-on-surface">
+                          Dispatch &amp; Delivery
+                        </span>
+                        <span className="text-[11px] text-primary font-bold">
+                          {statusProgress.badge}
+                        </span>
+                      </div>
+                      <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
+                        {status === "on_the_way"
+                          ? "Courier has picked up food and is moving towards your location."
+                          : "Courier will pick up and transport food once kitchen finishes cooking."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Courier Contact Card */}
+              <div className="w-full bg-surface-container-lowest rounded-2xl p-4 shadow-sm flex items-center justify-between gap-4 border border-surface-container/80">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 font-bold text-lg border border-primary/20">
+                    🛵
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <h2 className="font-extrabold text-sm sm:text-base text-on-surface truncate">
+                      {driverName ||
+                        (status === "on_the_way"
+                          ? "Bistro Express Courier"
+                          : "Courier Assignment Pending")}
+                    </h2>
+                    <span className="text-xs text-on-surface-variant truncate">
+                      {driverName
+                        ? "Assigned Bistro Driver"
+                        : "Will be assigned when food is ready"}
+                    </span>
+                  </div>
+                </div>
+
+                {driverPhone && (
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <a
+                      href={`tel:${driverPhone}`}
+                      onClick={() =>
+                        triggerNotice(`Calling courier ${driverPhone}...`)
+                      }
+                      className="px-4 py-2 rounded-full bg-primary text-on-primary font-bold text-xs flex items-center gap-2 hover:bg-primary-container active:scale-95 transition-all shadow-sm"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span className="hidden sm:inline">Call Courier</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Outlet Info, Delivery Address, Itemized Summary & Actions */}
+            <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6 lg:sticky lg:top-24">
+              {/* Restaurant Outlet Card */}
+              <div className="w-full bg-surface-container-lowest rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3 border border-surface-container/80">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 border border-primary/20 shadow-xs">
+                    {liveOrder?.restaurant_logo ? (
+                      <img
+                        src={liveOrder.restaurant_logo}
+                        alt={liveOrder?.restaurant_name || "Restaurant"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Store className="w-6 h-6 text-primary" />
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                      Preparing Outlet
+                    </span>
+                    <h2 className="font-extrabold text-sm text-on-surface truncate">
+                      {liveOrder?.restaurant?.name || liveOrder?.restaurant_name || "Amber & Ember Woodfired Bistro"}
+                    </h2>
+                    <span className="text-xs text-on-surface-variant truncate">
+                      {liveOrder?.restaurant?.address || liveOrder?.restaurant_address || "Siem Reap, Cambodia"}
+                    </span>
+                  </div>
+                </div>
+
+                {(liveOrder?.restaurant_phone || settings.store_phone) && (
+                  <a
+                    href={`tel:${liveOrder?.restaurant_phone || settings.store_phone}`}
+                    onClick={() =>
+                      triggerNotice(`Calling restaurant ${liveOrder?.restaurant_phone || settings.store_phone}...`)
+                    }
+                    className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 active:scale-95 transition-all shadow-xs flex-shrink-0 border border-primary/20"
+                    title="Call Restaurant Kitchen"
+                  >
+                    <Phone className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+
+              {/* Delivery Location Card */}
+              <div className="w-full bg-surface-container-lowest rounded-2xl p-4 shadow-sm flex items-start gap-3.5 border border-surface-container/80">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                  <MapPin className="w-5 h-5 fill-primary text-primary" />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">
+                    Customer Delivery Location
+                  </span>
+                  <p className="font-bold text-xs sm:text-sm text-on-surface truncate">
+                    {deliveryAddress}
+                  </p>
+                  <div className="inline-flex items-center gap-1 mt-1 text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-md text-xs w-fit font-medium">
+                    <DoorOpen className="w-3.5 h-3.5" />
+                    <span>Contactless Handoff</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Itemized Order Summary Card */}
+              <div className="w-full bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden border border-surface-container/80">
+                <button
+                  type="button"
+                  onClick={() => setIsAccordionOpen((prev) => !prev)}
+                  className="w-full p-4 flex items-center justify-between text-left hover:bg-surface-container-low transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-primary" />
+                    <span className="font-bold text-xs sm:text-sm text-on-surface">
+                      Order Summary ({items.length || 1} items)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-base text-primary">
+                      ${totalAmount.toFixed(2)}
+                    </span>
+                    {isAccordionOpen ? (
+                      <ChevronUp className="w-4 h-4 text-on-surface-variant" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-on-surface-variant" />
+                    )}
+                  </div>
+                </button>
+
+                {isAccordionOpen && (
+                  <div className="px-4 pb-4 flex flex-col gap-3 border-t border-surface-container pt-3 text-xs sm:text-sm">
+                    {items.map((it: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between py-1.5"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="w-6 h-6 rounded-md bg-surface-container flex items-center justify-center font-bold text-xs text-on-surface flex-shrink-0">
+                            {it.quantity}×
+                          </span>
+                          <span className="font-semibold text-on-surface truncate">
+                            {it.food_name || it.name}
+                          </span>
+                        </div>
+                        <span className="font-bold text-on-surface ml-2 flex-shrink-0">
+                          $
+                          {(
+                            (parseFloat(it.price) || 0) * (it.quantity || 1)
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+
+                    <div className="flex items-center justify-between pt-2 border-t border-surface-container font-bold text-on-surface">
+                      <span>Total Amount Paid</span>
+                      <span className="text-primary text-base font-extrabold">
+                        ${totalAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => router.push("/")}
+                  className="w-full h-12 rounded-full bg-primary hover:bg-primary-container active:scale-[0.98] transition-all text-on-primary font-extrabold text-sm shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Back to Menu & Order More</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </main>
